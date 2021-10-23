@@ -1,0 +1,21 @@
+{
+  "name": "rentable-protocol",
+  "version": "1.0.0",
+  "main": "index.js",
+  "repository": "git@github.com:rentable-world/rentable-protocol.git",
+  "author": "Emiliano Bonassi <emiliano@defi-italy.xyz>",
+  "license": "MIT",
+  "scripts": {
+    "network:testnet": "ganache-cli",
+    "network:mainnet-fork": "hardhat node",
+    "deploy": "brownie run deploy",
+    "mintNFT": "brownie run mintNFT",
+    "console": "brownie console",
+    "fixture:realScenario": "brownie run realScenario"
+  },
+  "devDependencies": {
+    "dotenv": "^10.0.0",
+    "ganache-cli": "^6.12.2",
+    "hardhat": "^2.6.5"
+  }
+}
