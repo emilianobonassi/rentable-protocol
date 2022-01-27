@@ -1,39 +1,93 @@
-
 import click
 
-from brownie import accounts, network, Rentable, WETH9, ORentable, YRentable, WRentable, TestNFT
+from brownie import (
+    accounts,
+    Rentable,
+    ORentable,
+    YRentable,
+    WRentable,
+    EmergencyImplementation,
+    ProxyFactoryInitializable,
+    history,
+)
+
 
 def main():
-    dev = accounts[0]
+    dev = accounts.load("dev")
+    governance = "0xC08618375bb20ac1C4BB806Baa027a4362156fE6"
+    operator = "0x49941c694693371894d6DCc1AbDbC91A7395b703"
+    feeCollector = "0xa55D576DE85dA4295aBc1E2BEa5d5c77Fe189205"
+
     click.echo(f"You are using: 'dev' [{dev.address}]")
 
-    weth = WETH9.deploy({"from": dev})
-    testNFT = TestNFT.deploy({"from": dev})
+    meebits = "0x7Bd29408f11D2bFC23c34f18275bBf23bB716Bc7"
+    eth = "0x0000000000000000000000000000000000000000"
 
-    orentable = ORentable.deploy(testNFT, {"from": dev})
+    proxyFactoryInitializable = ProxyFactoryInitializable.deploy({"from": dev})
+
     yrentable = YRentable.deploy({"from": dev})
-    wrentable = WRentable.deploy(testNFT, {"from": dev})
 
-    n = Rentable.deploy({"from": dev})
+    orentable = ORentable.deploy(meebits, {"from": dev})
+    assert orentable.getWrapped() == meebits
+    wrentable = WRentable.deploy(meebits, {"from": dev})
+    assert wrentable.getWrapped() == meebits
 
-    n.setORentable(testNFT, orentable)
-    orentable.setMinter(n)
+    emergencyImplementation = EmergencyImplementation.deploy({"from": dev})
 
-    n.setYToken(yrentable)
-    yrentable.setMinter(n)
+    r = Rentable.deploy(dev, operator, emergencyImplementation, {"from": dev})
 
-    wrentable.setRentable(n)
-    n.setWRentable(testNFT, wrentable)
+    assert r.emergencyImplementation() == emergencyImplementation.address
+
+    r.enableAllowlist()
+
+    r.enablePaymentToken(eth)
+    assert r.paymentTokenAllowlist(eth) == True
+    r.setFeeCollector(feeCollector)
+    assert r.getFeeCollector() == feeCollector
+
+    r.setYToken(yrentable)
+    yrentable.setMinter(r)
+    assert yrentable.getMinter() == r.address
+    yrentable.transferOwnership(governance)
+    assert yrentable.owner() == governance
+
+    orentable.setRentable(r)
+    assert orentable.getRentable() == r.address
+    assert orentable.getMinter() == r.address
+    orentable.transferOwnership(governance)
+    assert orentable.owner() == governance
+    r.setORentable(meebits, orentable)
+    assert r.getORentable(meebits) == orentable.address
+
+    wrentable.setRentable(r)
+    assert wrentable.getRentable() == r.address
+    assert wrentable.getMinter() == r.address
+    wrentable.transferOwnership(governance)
+    assert wrentable.owner() == governance
+    r.setWRentable(meebits, wrentable)
+    assert r.getWRentable(meebits) == wrentable.address
+
+    r.setGovernance(governance)
+    assert r.pendingGovernance() == governance
+    assert r.operator() == operator
+
+    totalGasUsed = 0
+    for tx in history:
+        totalGasUsed += tx.gas_used
 
     click.echo(
         f"""
     Rentable Deployment Parameters
-                 Owner: {dev.address}
-                  WETH: {weth.address}
-               TestNFT: {testNFT.address}
-             ORentable: {orentable.address}
+              Deployer: {dev.address}
+            Governance: {governance}
+              Operator: {operator}
+          FeeCollector: {feeCollector}
+          ProxyFactory: {proxyFactoryInitializable.address}
+               Meebits: {meebits}
              YRentable: {yrentable.address}
- WRentable for TestNFT: {wrentable.address}
-              Rentable: {n.address}
+             ORentable: {orentable.address}
+             WRentable: {wrentable.address}
+              Rentable: {r.address}
+              TotalGas: {totalGasUsed}
     """
     )

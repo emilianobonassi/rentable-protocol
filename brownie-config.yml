@@ -1,20 +1,19 @@
-# use Ganache's forked mainnet mode as the default network
-# NOTE: You don't *have* to do this, but it is often helpful for testing
-networks:
-  default: mainnet-fork
-
 # automatically fetch contract sources from Etherscan
 autofetch_sources: True
 
 # require OpenZepplin Contracts
 dependencies:
-  - OpenZeppelin/openzeppelin-contracts@4.1.0
+  - OpenZeppelin/openzeppelin-contracts@4.4.2
+  - OpenZeppelin/openzeppelin-contracts-upgradeable@4.4.2
+  - emilianobonassi/security-toolkit@1.0.0
 
 # path remapping to support imports from GitHub/NPM
 compiler:
   solc:
     remappings:
-      - "@openzeppelin=OpenZeppelin/openzeppelin-contracts@4.1.0"
+      - "@openzeppelin=OpenZeppelin/openzeppelin-contracts@4.4.2"
+      - "@openzeppelin-upgradable=OpenZeppelin/openzeppelin-contracts-upgradeable@4.4.2"
+      - "@emilianobonassi-security=emilianobonassi/security-toolkit@1.0.0"
 
 reports:
   exclude_contracts:

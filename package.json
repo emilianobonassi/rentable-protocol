@@ -3,7 +3,7 @@
   "version": "1.0.0",
   "main": "index.js",
   "repository": "git@github.com:rentable-world/rentable-protocol.git",
-  "author": "Emiliano Bonassi <emiliano@defi-italy.xyz>",
+  "author": "Emiliano Bonassi <emiliano@rentable.world>",
   "license": "MIT",
   "scripts": {
     "network:testnet": "ganache-cli",
@@ -11,11 +11,21 @@
     "deploy": "brownie run deploy",
     "mintNFT": "brownie run mintNFT",
     "console": "brownie console",
-    "fixture:realScenario": "brownie run realScenario"
+    "test": "brownie test --network development",
+    "fixture:realScenario": "brownie run realScenario",
+    "format": "prettier --write 'contracts/**/*.sol'",
+    "format:check": "prettier --check '**/*.*(sol|json)'",
+    "format:fix": "pretty-quick --pattern '**/*.*(sol|json)' --staged --verbose",
+    "hint": "solhint \"contracts/**/*.sol\""
   },
   "devDependencies": {
     "dotenv": "^10.0.0",
     "ganache-cli": "^6.12.2",
-    "hardhat": "^2.6.5"
+    "hardhat": "^2.8.2",
+    "prettier": "^2.3.2",
+    "prettier-plugin-solidity": "^1.0.0-beta.17",
+    "pretty-quick": "^3.1.1",
+    "solhint": "^3.3.6",
+    "solhint-plugin-prettier": "^0.0.5"
   }
 }

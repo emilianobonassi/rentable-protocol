@@ -4,7 +4,12 @@ import eth_abi
 from brownie import Wei
 
 
-def test_deposit(rentable, orentable, testNFT, accounts):
+def test_deposit(rentable, orentable, testNFT, accounts, dummylib, eternalstorage):
+
+    rentable.setLibrary(testNFT, dummylib)
+
+    assert rentable.getLibrary(testNFT) == dummylib
+
     user = accounts[0]
 
     tokenId = 123
@@ -15,17 +20,22 @@ def test_deposit(rentable, orentable, testNFT, accounts):
 
     tx = rentable.deposit(testNFT, tokenId, {"from": user})
 
-    evt = tx.events['Deposit']
+    evt = tx.events["Deposit"]
 
-    assert evt['who'] == user
-    assert evt['tokenAddress'] == testNFT.address
-    assert evt['tokenId'] == tokenId
+    assert evt["who"] == user
+    assert evt["tokenAddress"] == testNFT.address
+    assert evt["tokenId"] == tokenId
 
     # Test ownership is on orentable
     assert testNFT.ownerOf(tokenId) == rentable.address
 
     # Test user ownership
     assert orentable.ownerOf(tokenId) == user
+
+    assert eternalstorage.getAddressValue(dummylib.TOKEN_ADDRESS()) == testNFT.address
+    assert eternalstorage.getUIntValue(dummylib.TOKEN_ID()) == tokenId
+    assert eternalstorage.getAddressValue(dummylib.USER()) == user
+
 
 def test_deposit_1tx(rentable, orentable, testNFT, accounts):
     user = accounts[0]
@@ -36,17 +46,18 @@ def test_deposit_1tx(rentable, orentable, testNFT, accounts):
 
     tx = testNFT.safeTransferFrom(user, rentable, tokenId, {"from": user})
 
-    evt = tx.events['Deposit']
+    evt = tx.events["Deposit"]
 
-    assert evt['who'] == user
-    assert evt['tokenAddress'] == testNFT.address
-    assert evt['tokenId'] == tokenId
+    assert evt["who"] == user
+    assert evt["tokenAddress"] == testNFT.address
+    assert evt["tokenId"] == tokenId
 
     # Test ownership is on orentable
     assert testNFT.ownerOf(tokenId) == rentable.address
 
     # Test user ownership
     assert orentable.ownerOf(tokenId) == user
+
 
 def test_depositAndList(rentable, orentable, testNFT, accounts, paymentToken):
     user = accounts[0]
@@ -60,21 +71,23 @@ def test_depositAndList(rentable, orentable, testNFT, accounts, paymentToken):
     maxTimeDuration = 1000  # blocks
     pricePerBlock = 0.001 * (10 ** 18)
 
-    tx = rentable.depositAndList(testNFT, tokenId, paymentToken, maxTimeDuration, pricePerBlock, {"from": user})
+    tx = rentable.depositAndList(
+        testNFT, tokenId, paymentToken, maxTimeDuration, pricePerBlock, {"from": user}
+    )
 
-    evt = tx.events['Deposit']
+    evt = tx.events["Deposit"]
 
-    assert evt['who'] == user
-    assert evt['tokenAddress'] == testNFT.address
-    assert evt['tokenId'] == tokenId
+    assert evt["who"] == user
+    assert evt["tokenAddress"] == testNFT.address
+    assert evt["tokenId"] == tokenId
 
-    evt = tx.events['UpdateLeaseConditions']
+    evt = tx.events["UpdateLeaseConditions"]
 
-    assert evt['tokenAddress'] == testNFT.address
-    assert evt['tokenId'] == tokenId
-    assert evt['paymentTokenAddress'] == paymentToken
-    assert evt['maxTimeDuration'] == maxTimeDuration
-    assert evt['pricePerBlock'] == pricePerBlock
+    assert evt["tokenAddress"] == testNFT.address
+    assert evt["tokenId"] == tokenId
+    assert evt["paymentTokenAddress"] == paymentToken
+    assert evt["maxTimeDuration"] == maxTimeDuration
+    assert evt["pricePerBlock"] == pricePerBlock
 
     # Test ownership is on orentable
     assert testNFT.ownerOf(tokenId) == rentable.address
@@ -96,7 +109,7 @@ def test_depositAndList(rentable, orentable, testNFT, accounts, paymentToken):
     previousFee = currentFee
 
     # Change fees, previous listings not affected only new ones
-    rentable.setFixedFee('0.5 ether')
+    rentable.setFixedFee("0.5 ether")
     rentable.setFee(800)
 
     currentFixedFee = rentable.getFixedFee()
@@ -116,12 +129,15 @@ def test_depositAndList(rentable, orentable, testNFT, accounts, paymentToken):
     maxTimeDuration = 1000  # blocks
     pricePerBlock = 0.001 * (10 ** 18)
 
-    rentable.depositAndList(testNFT, tokenId, paymentToken, maxTimeDuration, pricePerBlock, {"from": user})
+    rentable.depositAndList(
+        testNFT, tokenId, paymentToken, maxTimeDuration, pricePerBlock, {"from": user}
+    )
 
     lease = rentable.leasesConditions(testNFT, tokenId).dict()
 
     assert lease["fixedFee"] == currentFixedFee
     assert lease["fee"] == currentFee
+
 
 def test_depositAndList_1tx(rentable, orentable, testNFT, accounts, paymentToken):
     user = accounts[0]
@@ -134,32 +150,29 @@ def test_depositAndList_1tx(rentable, orentable, testNFT, accounts, paymentToken
     pricePerBlock = int(0.001 * (10 ** 18))
 
     data = eth_abi.encode_abi(
-    [
-        'address', # paymentTokenAddress
-        'uint256', # maxTimeDuration
-        'uint256'  # pricePerBlock
-    ],
-    (
-        paymentToken,
-        maxTimeDuration,
-        pricePerBlock
-    )).hex()
+        [
+            "address",  # paymentTokenAddress
+            "uint256",  # maxTimeDuration
+            "uint256",  # pricePerBlock
+        ],
+        (paymentToken, maxTimeDuration, pricePerBlock),
+    ).hex()
 
     tx = testNFT.safeTransferFrom(user, rentable, tokenId, data, {"from": user})
 
-    evt = tx.events['Deposit']
+    evt = tx.events["Deposit"]
 
-    assert evt['who'] == user
-    assert evt['tokenAddress'] == testNFT.address
-    assert evt['tokenId'] == tokenId
+    assert evt["who"] == user
+    assert evt["tokenAddress"] == testNFT.address
+    assert evt["tokenId"] == tokenId
 
-    evt = tx.events['UpdateLeaseConditions']
+    evt = tx.events["UpdateLeaseConditions"]
 
-    assert evt['tokenAddress'] == testNFT.address
-    assert evt['tokenId'] == tokenId
-    assert evt['paymentTokenAddress'] == paymentToken
-    assert evt['maxTimeDuration'] == maxTimeDuration
-    assert evt['pricePerBlock'] == pricePerBlock
+    assert evt["tokenAddress"] == testNFT.address
+    assert evt["tokenId"] == tokenId
+    assert evt["paymentTokenAddress"] == paymentToken
+    assert evt["maxTimeDuration"] == maxTimeDuration
+    assert evt["pricePerBlock"] == pricePerBlock
 
     # Test ownership is on orentable
     assert testNFT.ownerOf(tokenId) == rentable.address
@@ -181,7 +194,7 @@ def test_depositAndList_1tx(rentable, orentable, testNFT, accounts, paymentToken
     previousFee = currentFee
 
     # Change fees, previous listings not affected only new ones
-    rentable.setFixedFee('0.5 ether')
+    rentable.setFixedFee("0.5 ether")
     rentable.setFee(800)
 
     currentFixedFee = rentable.getFixedFee()
@@ -201,12 +214,15 @@ def test_depositAndList_1tx(rentable, orentable, testNFT, accounts, paymentToken
     maxTimeDuration = 1000  # blocks
     pricePerBlock = 0.001 * (10 ** 18)
 
-    rentable.depositAndList(testNFT, tokenId, paymentToken, maxTimeDuration, pricePerBlock, {"from": user})
+    rentable.depositAndList(
+        testNFT, tokenId, paymentToken, maxTimeDuration, pricePerBlock, {"from": user}
+    )
 
     lease = rentable.leasesConditions(testNFT, tokenId).dict()
 
     assert lease["fixedFee"] == currentFixedFee
     assert lease["fee"] == currentFee
+
 
 def test_withdraw(rentable, orentable, testNFT, accounts):
     user = accounts[0]
@@ -221,11 +237,11 @@ def test_withdraw(rentable, orentable, testNFT, accounts):
 
     tx = rentable.withdraw(testNFT, tokenId, {"from": user})
 
-    evt = tx.events['Withdraw']
+    evt = tx.events["Withdraw"]
 
-    assert evt['who'] == user
-    assert evt['tokenAddress'] == testNFT.address
-    assert evt['tokenId'] == tokenId
+    assert evt["who"] == user
+    assert evt["tokenAddress"] == testNFT.address
+    assert evt["tokenId"] == tokenId
 
     # Test user ownership
     with brownie.reverts("ERC721: owner query for nonexistent token"):
