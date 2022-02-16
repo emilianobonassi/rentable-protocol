@@ -69,7 +69,7 @@ def test_depositAndList(rentable, orentable, testNFT, accounts, paymentToken):
     testNFT.approve(rentable, tokenId, {"from": user})
 
     maxTimeDuration = 1000  # blocks
-    pricePerBlock = 0.001 * (10 ** 18)
+    pricePerBlock = 0.001 * (10**18)
 
     tx = rentable.depositAndList(
         testNFT, tokenId, paymentToken, maxTimeDuration, pricePerBlock, {"from": user}
@@ -127,7 +127,7 @@ def test_depositAndList(rentable, orentable, testNFT, accounts, paymentToken):
     testNFT.approve(rentable, tokenId, {"from": user})
 
     maxTimeDuration = 1000  # blocks
-    pricePerBlock = 0.001 * (10 ** 18)
+    pricePerBlock = 0.001 * (10**18)
 
     rentable.depositAndList(
         testNFT, tokenId, paymentToken, maxTimeDuration, pricePerBlock, {"from": user}
@@ -147,7 +147,7 @@ def test_depositAndList_1tx(rentable, orentable, testNFT, accounts, paymentToken
     testNFT.mint(user, tokenId, {"from": user})
 
     maxTimeDuration = 1000  # blocks
-    pricePerBlock = int(0.001 * (10 ** 18))
+    pricePerBlock = int(0.001 * (10**18))
 
     data = eth_abi.encode_abi(
         [
@@ -212,7 +212,7 @@ def test_depositAndList_1tx(rentable, orentable, testNFT, accounts, paymentToken
     testNFT.approve(rentable, tokenId, {"from": user})
 
     maxTimeDuration = 1000  # blocks
-    pricePerBlock = 0.001 * (10 ** 18)
+    pricePerBlock = 0.001 * (10**18)
 
     rentable.depositAndList(
         testNFT, tokenId, paymentToken, maxTimeDuration, pricePerBlock, {"from": user}

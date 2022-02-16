@@ -47,7 +47,7 @@ def test_flow(rentable, interface, testLand, accounts, chain, deployer):
 
     # List
     maxLeaseBlocks = 10
-    pricePerBlock = int(0.1 * (10 ** 18))
+    pricePerBlock = int(0.1 * (10**18))
     currencyToken = "0x0000000000000000000000000000000000000000"
 
     deposit1tx(

@@ -19,7 +19,7 @@ def test_create_lease(
     rentable.deposit(testNFT, tokenId, {"from": user})
 
     maxTimeDuration = 1000  # blocks
-    pricePerBlock = 0.001 * (10 ** 18)
+    pricePerBlock = 0.001 * (10**18)
 
     rentable.createOrUpdateLeaseConditions(
         testNFT, tokenId, paymentToken, maxTimeDuration, pricePerBlock, {"from": user}
@@ -50,7 +50,7 @@ def test_delete_lease(rentable, testNFT, accounts, paymentToken):
     rentable.deposit(testNFT, tokenId, {"from": user})
 
     maxTimeDuration = 1000  # 7 days
-    pricePerBlock = 0.001 * (10 ** 18)
+    pricePerBlock = 0.001 * (10**18)
 
     rentable.createOrUpdateLeaseConditions(
         testNFT, tokenId, paymentToken, maxTimeDuration, pricePerBlock, {"from": user}
@@ -75,7 +75,7 @@ def test_update_lease(rentable, testNFT, accounts, paymentToken):
     rentable.deposit(testNFT, tokenId, {"from": user})
 
     maxTimeDuration = 1000  # blocks
-    pricePerBlock = 0.001 * (10 ** 18)
+    pricePerBlock = 0.001 * (10**18)
 
     rentable.createOrUpdateLeaseConditions(
         testNFT, tokenId, paymentToken, maxTimeDuration, pricePerBlock, {"from": user}
@@ -88,7 +88,7 @@ def test_update_lease(rentable, testNFT, accounts, paymentToken):
     assert lease["paymentTokenAddress"] == paymentToken
 
     maxTimeDuration = 800  # blocks
-    pricePerBlock = 0.8 * (10 ** 18)
+    pricePerBlock = 0.8 * (10**18)
 
     rentable.createOrUpdateLeaseConditions(
         testNFT, tokenId, paymentToken, maxTimeDuration, pricePerBlock, {"from": user}
@@ -130,7 +130,7 @@ def test_subscribe_lease(
     rentable.deposit(testNFT, tokenId, {"from": user})
 
     maxTimeDuration = 1000  # 7 days
-    pricePerBlock = 0.001 * (10 ** 18)
+    pricePerBlock = 0.001 * (10**18)
 
     rentable.createOrUpdateLeaseConditions(
         testNFT, tokenId, paymentToken, maxTimeDuration, pricePerBlock, {"from": user}
@@ -237,7 +237,7 @@ def test_subscribe_lease_via_depositAndList(
     testNFT.approve(rentable, tokenId, {"from": user})
 
     maxTimeDuration = 1000  # blocks
-    pricePerBlock = 0.001 * (10 ** 18)
+    pricePerBlock = 0.001 * (10**18)
 
     rentable.depositAndList(
         testNFT, tokenId, paymentToken, maxTimeDuration, pricePerBlock, {"from": user}
@@ -354,7 +354,7 @@ def test_redeem_lease(
     rentable.deposit(testNFT, tokenId, {"from": user})
 
     maxTimeDuration = 1000  # blocks
-    pricePerBlock = int(0.001 * (10 ** 18))
+    pricePerBlock = int(0.001 * (10**18))
 
     rentable.createOrUpdateLeaseConditions(
         testNFT, tokenId, paymentToken, maxTimeDuration, pricePerBlock, {"from": user}
@@ -596,7 +596,7 @@ def test_do_not_withdraw_on_lease(
     rentable.deposit(testNFT, tokenId, {"from": user})
 
     maxTimeDuration = 1000  # blocks
-    pricePerBlock = 0.001 * (10 ** 18)
+    pricePerBlock = 0.001 * (10**18)
 
     rentable.createOrUpdateLeaseConditions(
         testNFT, tokenId, paymentToken, maxTimeDuration, pricePerBlock, {"from": user}
@@ -651,7 +651,7 @@ def test_transfer_lease(
     rentable.deposit(testNFT, tokenId, {"from": user})
 
     maxTimeDuration = 1000  # blocks
-    pricePerBlock = 0.001 * (10 ** 18)
+    pricePerBlock = 0.001 * (10**18)
 
     rentable.createOrUpdateLeaseConditions(
         testNFT, tokenId, paymentToken, maxTimeDuration, pricePerBlock, {"from": user}
@@ -717,7 +717,7 @@ def test_transfer_ownership_during_lease(
     rentable.deposit(testNFT, tokenId, {"from": user})
 
     maxTimeDuration = 1000  # blocks
-    pricePerBlock = 0.001 * (10 ** 18)
+    pricePerBlock = 0.001 * (10**18)
 
     rentable.createOrUpdateLeaseConditions(
         testNFT, tokenId, paymentToken, maxTimeDuration, pricePerBlock, {"from": user}

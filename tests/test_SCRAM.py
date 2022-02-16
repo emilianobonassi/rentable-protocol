@@ -30,7 +30,7 @@ def test_SCRAM(
     rentable.deposit(testNFT, tokenId + 1, {"from": user})
 
     maxTimeDuration = 1000  # 7 days
-    pricePerBlock = 0.001 * (10 ** 18)
+    pricePerBlock = 0.001 * (10**18)
 
     rentable.createOrUpdateLeaseConditions(
         testNFT, tokenId, paymentToken, maxTimeDuration, pricePerBlock, {"from": user}
