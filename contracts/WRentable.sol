@@ -4,7 +4,33 @@ pragma solidity ^0.8.11;
 
 import "./ERC721ReadOnlyProxy.sol";
 
-import "./Rentable.sol";
+interface IWRentableHooks {
+    function afterWTokenTransfer(
+        address tokenAddress,
+        address from,
+        address to,
+        uint256 tokenId
+    ) external;
+}
+
+interface IRentable {
+    struct Lease {
+        address paymentTokenAddress;
+        uint256 eta;
+        uint256 qtyToPullRemaining;
+        uint256 feesToPullRemaining;
+        uint256 lastUpdated;
+        address tokenAddress;
+        uint256 tokenId;
+        address from;
+        address to;
+    }
+
+    function currentLeases(address tokenAddress, uint256 tokenId)
+        external
+        view
+        returns (Lease memory);
+}
 
 contract WRentable is ERC721ReadOnlyProxy {
     address internal _rentable;
@@ -43,7 +69,7 @@ contract WRentable is ERC721ReadOnlyProxy {
         override
         returns (address)
     {
-        Rentable.Lease memory lease = Rentable(_rentable).currentLeases(
+        IRentable.Lease memory lease = IRentable(_rentable).currentLeases(
             _wrapped,
             tokenId
         );
@@ -65,6 +91,11 @@ contract WRentable is ERC721ReadOnlyProxy {
         uint256 tokenId
     ) internal virtual override {
         super._transfer(from, to, tokenId);
-        Rentable(_rentable).afterWTokenTransfer(_wrapped, from, to, tokenId);
+        IWRentableHooks(_rentable).afterWTokenTransfer(
+            _wrapped,
+            from,
+            to,
+            tokenId
+        );
     }
 }

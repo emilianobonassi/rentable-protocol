@@ -3,7 +3,15 @@
 pragma solidity ^0.8.11;
 
 import "./ERC721ReadOnlyProxy.sol";
-import "./Rentable.sol";
+
+interface IORentableHooks {
+    function afterOTokenTransfer(
+        address tokenAddress,
+        address from,
+        address to,
+        uint256 tokenId
+    ) external;
+}
 
 contract ORentable is ERC721ReadOnlyProxy {
     address internal _rentable;
@@ -31,6 +39,11 @@ contract ORentable is ERC721ReadOnlyProxy {
         uint256 tokenId
     ) internal virtual override {
         super._transfer(from, to, tokenId);
-        Rentable(_rentable).afterOTokenTransfer(_wrapped, from, to, tokenId);
+        IORentableHooks(_rentable).afterOTokenTransfer(
+            _wrapped,
+            from,
+            to,
+            tokenId
+        );
     }
 }
