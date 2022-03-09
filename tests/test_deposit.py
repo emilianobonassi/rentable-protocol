@@ -36,6 +36,41 @@ def test_deposit(rentable, orentable, testNFT, accounts, dummylib, eternalstorag
     assert eternalstorage.getUIntValue(dummylib.TOKEN_ID()) == tokenId
     assert eternalstorage.getAddressValue(dummylib.USER()) == user
 
+def test_deposit_1155(rentable, orentable1155, testNFT1155, accounts, dummylib, eternalstorage):
+
+    # TODO: add test for hooks
+    # rentable.setLibrary(testNFT, dummylib)
+
+    # assert rentable.getLibrary(testNFT) == dummylib
+
+    user = accounts[0]
+
+    tokenId = 123
+    mintAmount = 3
+    transferAmount = 2
+
+    testNFT1155.mint(user, tokenId, mintAmount, {"from": user})
+
+    testNFT1155.setApprovalForAll(rentable, True, {"from": user})
+
+    tx = rentable.deposit1155(testNFT1155, tokenId, transferAmount, {"from": user})
+
+    evt = tx.events["Deposit1155"]
+
+    assert evt["who"] == user
+    assert evt["tokenAddress"] == testNFT1155.address
+    assert evt["tokenId"] == tokenId
+    assert evt["amount"] == transferAmount
+
+    # Test ownership is on orentable
+    assert testNFT1155.balanceOf(rentable, tokenId) == 2
+
+    # Test user ownership
+    assert orentable1155.balanceOf(user, tokenId) == 2
+
+    # assert eternalstorage.getAddressValue(dummylib.TOKEN_ADDRESS()) == testNFT.address
+    # assert eternalstorage.getUIntValue(dummylib.TOKEN_ID()) == tokenId
+    # assert eternalstorage.getAddressValue(dummylib.USER()) == user
 
 def test_deposit_1tx(rentable, orentable, testNFT, accounts):
     user = accounts[0]

@@ -30,6 +30,9 @@ def weth(WETH9, deployer):
 def orentable(deployer, ORentable, testNFT):
     yield ORentable.deploy(testNFT, {"from": deployer})
 
+@pytest.fixture
+def orentable1155(deployer, ORentable1155, testNFT1155):
+    yield ORentable1155.deploy(testNFT1155, {"from": deployer})
 
 @pytest.fixture
 def yrentable(deployer, YRentable):
@@ -84,9 +87,11 @@ def rentable(
     ORentable,
     WRentable,
     orentable,
+    orentable1155,
     yrentable,
     wrentable,
     testNFT,
+    testNFT1155,
     feeCollector,
     weth,
     testLand,
@@ -103,6 +108,9 @@ def rentable(
 
     n.setORentable(testNFT, orentable)
     orentable.setRentable(n)
+
+    n.setORentable1155(testNFT1155, orentable1155)
+    orentable1155.setRentable(n)
 
     wrentable.setRentable(n)
     n.setWRentable(testNFT, wrentable)
@@ -137,6 +145,9 @@ def rentable(
 def testNFT(deployer, TestNFT):
     yield TestNFT.deploy({"from": deployer})
 
+@pytest.fixture
+def testNFT1155(deployer, TestNFT1155):
+    yield TestNFT1155.deploy({"from": deployer})
 
 @pytest.fixture(
     params=[

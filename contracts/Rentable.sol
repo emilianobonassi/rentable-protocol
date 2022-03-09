@@ -4,6 +4,7 @@ pragma solidity ^0.8.11;
 
 import "@openzeppelin/contracts/token/ERC721/IERC721.sol";
 import "@openzeppelin/contracts/token/ERC721/IERC721Receiver.sol";
+import "@openzeppelin/contracts/token/ERC1155/utils/ERC1155Holder.sol";
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 import "@openzeppelin/contracts/utils/math/SafeMath.sol";
@@ -12,6 +13,7 @@ import "@openzeppelin/contracts/access/Ownable.sol";
 import "@openzeppelin/contracts/security/ReentrancyGuard.sol";
 import "@emilianobonassi-security/contracts/Security4.sol";
 import "./ORentable.sol";
+import "./ORentable1155.sol";
 import "./YRentable.sol";
 import "./WRentable.sol";
 import "./RentableHooks.sol";
@@ -19,6 +21,7 @@ import "./RentableHooks.sol";
 contract Rentable is
     Security4,
     IERC721Receiver,
+    ERC1155Holder,
     RentableHooks,
     ReentrancyGuard
 {
@@ -57,6 +60,7 @@ contract Rentable is
 
     mapping(address => address) internal _wrentables;
     mapping(address => ORentable) internal _orentables;
+    mapping(address => ORentable1155) internal _orentables1155;
 
     mapping(address => bool) public paymentTokenAllowlist;
 
@@ -71,6 +75,14 @@ contract Rentable is
         address indexed tokenAddress,
         uint256 indexed tokenId
     );
+    
+    event Deposit1155(
+        address indexed who,
+        address indexed tokenAddress,
+        uint256 indexed tokenId,
+        uint256 amount
+    );
+
     event UpdateLeaseConditions(
         address indexed tokenAddress,
         uint256 indexed tokenId,
@@ -121,6 +133,13 @@ contract Rentable is
         onlyGovernance
     {
         _orentables[wrapped_] = ORentable(oRentable_);
+    }
+
+    function setORentable1155(address wrapped_, address oRentable_)
+        external
+        onlyGovernance
+    {
+        _orentables1155[wrapped_] = ORentable1155(oRentable_);
     }
 
     function setYToken(address yToken_) external onlyGovernance {
@@ -196,6 +215,19 @@ contract Rentable is
         );
     }
 
+    function _getExistingORentable1155(address tokenAddress)
+        internal
+        view
+        virtual
+        returns (ORentable1155 oRentable)
+    {
+        oRentable = _orentables1155[tokenAddress];
+        require(
+            address(oRentable) != address(0),
+            "Token currently not supported"
+        );
+    }
+
     function _getExistingORentableCheckOwnership(
         address tokenAddress,
         uint256 tokenId,
@@ -239,6 +271,27 @@ contract Rentable is
         emit Deposit(to, tokenAddress, tokenId);
     }
 
+    function _deposit1155(
+        address tokenAddress,
+        uint256 tokenId,
+        uint256 amount,
+        address to,
+        bool skipTransfer
+    ) internal returns (uint256 oRentableId) {
+        ORentable1155 oRentable = _getExistingORentable1155(tokenAddress);
+
+        if (!skipTransfer) {
+            IERC1155(tokenAddress).safeTransferFrom(to, address(this), tokenId, amount, '');
+        }
+
+        //TODO: should check balance changed +x before minting
+        oRentableId = oRentable.mint(to, tokenId, amount);
+
+        _postDeposit(tokenAddress, tokenId, to);
+
+        emit Deposit1155(to, tokenAddress, tokenId, amount);
+    }
+
     function _depositAndList(
         address tokenAddress,
         uint256 tokenId,
@@ -267,6 +320,16 @@ contract Rentable is
         returns (uint256)
     {
         return _deposit(tokenAddress, tokenId, _msgSender(), false);
+    }
+
+    function deposit1155(address tokenAddress, uint256 tokenId, uint256 amount)
+        external
+        nonReentrant
+        whenPausedthenProxy
+        onlyAllowlisted
+        returns (uint256)
+    {
+        return _deposit1155(tokenAddress, tokenId, amount, _msgSender(), false);
     }
 
     function depositAndList(
