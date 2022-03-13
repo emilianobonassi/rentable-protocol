@@ -2,7 +2,7 @@ import pytest
 import brownie
 import eth_abi
 from brownie import Wei
-
+from const import address0
 
 def deposit1tx(
     rentable, nft, depositor, tokenId, maxTimeDuration, pricePerBlock, paymentToken
@@ -48,7 +48,7 @@ def test_flow(rentable, interface, testLand, accounts, chain, deployer):
     # List
     maxLeaseBlocks = 10
     pricePerBlock = int(0.1 * (10**18))
-    currencyToken = "0x0000000000000000000000000000000000000000"
+    currencyToken = address0
 
     deposit1tx(
         rentable,
@@ -101,5 +101,5 @@ def test_flow(rentable, interface, testLand, accounts, chain, deployer):
     rentable.withdraw(testLand, tokenId, {"from": originalOwner})
 
     assert (
-        testLand.updateOperator(tokenId) == "0x0000000000000000000000000000000000000000"
+        testLand.updateOperator(tokenId) == address0
     )  # must not change
