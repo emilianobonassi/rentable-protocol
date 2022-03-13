@@ -1,12 +1,14 @@
 import brownie
-from const import address0
+from utils import *
 
 def test_SCRAM(
     testNFT,
     rentable,
     paymentToken,
+    paymentTokenId,
     operator,
     weth,
+    dummy1155,
     orentable,
     wrentable,
     governance,
@@ -33,13 +35,14 @@ def test_SCRAM(
     pricePerBlock = 0.001 * (10**18)
 
     rentable.createOrUpdateLeaseConditions(
-        testNFT, tokenId, paymentToken, maxTimeDuration, pricePerBlock, address0, {"from": user}
+        testNFT, tokenId, paymentToken, paymentTokenId, maxTimeDuration, pricePerBlock, address0, {"from": user}
     )
 
     rentable.createOrUpdateLeaseConditions(
         testNFT,
         tokenId + 1,
         paymentToken,
+        paymentTokenId,
         maxTimeDuration,
         pricePerBlock,
         address0,
@@ -49,16 +52,11 @@ def test_SCRAM(
     subscriptionDuration = 70  # blocks
     value = "0.07 ether"
 
-    if paymentToken == weth.address:
-        weth.deposit({"from": subscriber, "value": value})
-        weth.approve(rentable, value, {"from": subscriber})
-        rentable.createLease(
-            testNFT, tokenId, subscriptionDuration, {"from": subscriber}
-        )
-    elif paymentToken == address0:
-        rentable.createLease(
-            testNFT, tokenId, subscriptionDuration, {"from": subscriber, "value": value}
-        )
+    depositAndApprove(subscriber, rentable, value, paymentToken, paymentTokenId, weth, dummy1155)
+
+    rentable.createLease(
+        testNFT, tokenId, subscriptionDuration, {"from": subscriber, "value": value}
+    )
 
     rentable.SCRAM({"from": operator})
 
@@ -74,6 +72,7 @@ def test_SCRAM(
             testNFT,
             tokenId,
             paymentToken,
+            paymentTokenId,
             maxTimeDuration,
             pricePerBlock,
             address0,
@@ -88,6 +87,7 @@ def test_SCRAM(
             testNFT,
             tokenId,
             paymentToken,
+            paymentTokenId,
             maxTimeDuration,
             pricePerBlock,
             address0,
@@ -142,17 +142,12 @@ def test_SCRAM(
     )
     assert testNFT.ownerOf(tokenId) == governance.address
     assert testNFT.ownerOf(tokenId + 1) == governance.address
-
-    if paymentToken == weth.address:
-        rbalance = weth.balanceOf(rentable)
-        rentable.emergencyWithdrawERC20ETH(weth, {"from": governance})
-        assert weth.balanceOf(governance) == rbalance
-        assert weth.balanceOf(rentable) == 0
-    elif paymentToken == address0:
-        rbalance = rentable.balance()
-        gbalance = governance.balance()
-        rentable.emergencyWithdrawERC20ETH(
-            address0, {"from": governance}
-        )
-        assert governance.balance() == gbalance + rbalance
-        assert rentable.balance() == 0
+    
+    rbalance = getBalance(rentable, paymentToken, paymentTokenId, weth, dummy1155)
+    gbalance = getBalance(governance, paymentToken, paymentTokenId, weth, dummy1155)
+    if  paymentToken == address0 or paymentToken == weth.address:    
+        rentable.emergencyWithdrawERC20ETH(paymentToken, {"from": governance})
+    elif paymentToken == dummy1155.address:
+        rentable.emergencyWithdrawERC1155(paymentToken, paymentTokenId, {"from": governance})
+    assert getBalance(governance, paymentToken, paymentTokenId, weth, dummy1155) == gbalance + rbalance
+    assert getBalance(rentable, paymentToken, paymentTokenId, weth, dummy1155) == 0
