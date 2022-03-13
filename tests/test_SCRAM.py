@@ -1,5 +1,5 @@
 import brownie
-
+from const import address0
 
 def test_SCRAM(
     testNFT,
@@ -33,7 +33,7 @@ def test_SCRAM(
     pricePerBlock = 0.001 * (10**18)
 
     rentable.createOrUpdateLeaseConditions(
-        testNFT, tokenId, paymentToken, maxTimeDuration, pricePerBlock, {"from": user}
+        testNFT, tokenId, paymentToken, maxTimeDuration, pricePerBlock, address0, {"from": user}
     )
 
     rentable.createOrUpdateLeaseConditions(
@@ -42,6 +42,7 @@ def test_SCRAM(
         paymentToken,
         maxTimeDuration,
         pricePerBlock,
+        address0,
         {"from": user},
     )
 
@@ -54,7 +55,7 @@ def test_SCRAM(
         rentable.createLease(
             testNFT, tokenId, subscriptionDuration, {"from": subscriber}
         )
-    elif paymentToken == "0x0000000000000000000000000000000000000000":
+    elif paymentToken == address0:
         rentable.createLease(
             testNFT, tokenId, subscriptionDuration, {"from": subscriber, "value": value}
         )
@@ -75,6 +76,7 @@ def test_SCRAM(
             paymentToken,
             maxTimeDuration,
             pricePerBlock,
+            address0,
             {"from": user},
         )
 
@@ -88,6 +90,7 @@ def test_SCRAM(
             paymentToken,
             maxTimeDuration,
             pricePerBlock,
+            address0,
             {"from": user},
         )
 
@@ -145,11 +148,11 @@ def test_SCRAM(
         rentable.emergencyWithdrawERC20ETH(weth, {"from": governance})
         assert weth.balanceOf(governance) == rbalance
         assert weth.balanceOf(rentable) == 0
-    elif paymentToken == "0x0000000000000000000000000000000000000000":
+    elif paymentToken == address0:
         rbalance = rentable.balance()
         gbalance = governance.balance()
         rentable.emergencyWithdrawERC20ETH(
-            "0x0000000000000000000000000000000000000000", {"from": governance}
+            address0, {"from": governance}
         )
         assert governance.balance() == gbalance + rbalance
         assert rentable.balance() == 0

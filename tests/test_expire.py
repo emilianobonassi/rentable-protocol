@@ -1,5 +1,5 @@
 import brownie
-
+from const import address0
 
 def test_redeem_after_expire(
     rentable,
@@ -28,7 +28,7 @@ def test_redeem_after_expire(
     pricePerBlock = 0.01 * (10**18)
 
     rentable.createOrUpdateLeaseConditions(
-        testNFT, tokenId, paymentToken, maxTimeDuration, pricePerBlock, {"from": user}
+        testNFT, tokenId, paymentToken, maxTimeDuration, pricePerBlock, address0, {"from": user}
     )
 
     # Test subscribtion
@@ -41,7 +41,7 @@ def test_redeem_after_expire(
         rentable.createLease(
             testNFT, tokenId, subscriptionDuration, {"from": subscriber}
         )
-    elif paymentToken == "0x0000000000000000000000000000000000000000":
+    elif paymentToken == address0:
         rentable.createLease(
             testNFT, tokenId, subscriptionDuration, {"from": subscriber, "value": value}
         )
@@ -87,7 +87,7 @@ def test_subscribe_after_expire(
     pricePerBlock = 0.01 * (10**18)
 
     rentable.createOrUpdateLeaseConditions(
-        testNFT, tokenId, paymentToken, maxTimeDuration, pricePerBlock, {"from": user}
+        testNFT, tokenId, paymentToken, maxTimeDuration, pricePerBlock, address0, {"from": user}
     )
 
     # Test subscribtion
@@ -100,7 +100,7 @@ def test_subscribe_after_expire(
         rentable.createLease(
             testNFT, tokenId, subscriptionDuration, {"from": subscriber}
         )
-    elif paymentToken == "0x0000000000000000000000000000000000000000":
+    elif paymentToken == address0:
         rentable.createLease(
             testNFT, tokenId, subscriptionDuration, {"from": subscriber, "value": value}
         )
@@ -126,7 +126,7 @@ def test_subscribe_after_expire(
         rentable.createLease(
             testNFT, tokenId, subscriptionDuration, {"from": subscriber}
         )
-    elif paymentToken == "0x0000000000000000000000000000000000000000":
+    elif paymentToken == address0:
         rentable.createLease(
             testNFT, tokenId, subscriptionDuration, {"from": subscriber, "value": value}
         )

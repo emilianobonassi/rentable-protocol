@@ -1,5 +1,7 @@
 import pytest
+from const import address0
 
+MINIMAL = False
 
 @pytest.fixture
 def deployer(accounts):
@@ -29,6 +31,7 @@ def weth(WETH9, deployer):
 @pytest.fixture
 def orentable(deployer, ORentable, testNFT):
     yield ORentable.deploy(testNFT, {"from": deployer})
+
 
 
 @pytest.fixture
@@ -72,8 +75,8 @@ def proxyFactoryInitializable(deployer, ProxyFactoryInitializable):
 
 
 @pytest.fixture(
-    params=[["0 ether", 0], ["0.01 ether", 0], ["0 ether", 500], ["0.01 ether", 500]],
-    ids=["no-fees", "fixed-fee-no-fee", "no-fixed-fee-fee", "fixed-fee-fee"],
+    params= [["0 ether", 0]] if MINIMAL else [["0 ether", 0],  ["0.01 ether", 0], ["0 ether", 500], ["0.01 ether", 500]],
+    ids=["no-fees"] if MINIMAL else ["no-fees", "fixed-fee-no-fee", "no-fixed-fee-fee", "fixed-fee-fee"],
 )
 def rentable(
     deployer,
@@ -107,7 +110,7 @@ def rentable(
     wrentable.setRentable(n)
     n.setWRentable(testNFT, wrentable)
 
-    n.enablePaymentToken("0x0000000000000000000000000000000000000000")
+    n.enablePaymentToken(address0)
     n.enablePaymentToken(weth.address)
 
     # Decentraland init
@@ -146,7 +149,7 @@ def testNFT(deployer, TestNFT):
 )
 def paymentToken(request, weth):
     if request.param == "ETH":
-        return "0x0000000000000000000000000000000000000000"
+        return address0
     elif request.param == "WETH":
         return weth.address
     else:
