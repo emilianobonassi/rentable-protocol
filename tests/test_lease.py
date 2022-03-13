@@ -1,9 +1,10 @@
+from multiprocessing import dummy
 import brownie
 import eth_abi
-from const import address0
+from utils import *
 
 def test_create_lease(
-    rentable, testNFT, accounts, paymentToken, dummylib, eternalstorage
+    rentable, testNFT, accounts, paymentToken, paymentTokenId, dummylib, eternalstorage
 ):
 
     rentable.setLibrary(testNFT, dummylib)
@@ -23,7 +24,7 @@ def test_create_lease(
     pricePerBlock = 0.001 * (10**18)
 
     rentable.createOrUpdateLeaseConditions(
-        testNFT, tokenId, paymentToken, maxTimeDuration, pricePerBlock, address0, {"from": user}
+        testNFT, tokenId, paymentToken, paymentTokenId, maxTimeDuration, pricePerBlock, address0, {"from": user}
     )
 
     # Test lease created correctly
@@ -31,6 +32,9 @@ def test_create_lease(
     assert lease["maxTimeDuration"] == maxTimeDuration
     assert lease["pricePerBlock"] == pricePerBlock
     assert lease["paymentTokenAddress"] == paymentToken
+    assert lease["paymentTokenId"] == paymentTokenId
+    assert lease["privateRenter"] == address0
+
 
     assert eternalstorage.getAddressValue(dummylib.TOKEN_ADDRESS()) == testNFT.address
     assert eternalstorage.getUIntValue(dummylib.TOKEN_ID()) == tokenId
@@ -39,7 +43,7 @@ def test_create_lease(
     assert eternalstorage.getUIntValue(dummylib.PRICE_PER_BLOCK()) == pricePerBlock
 
 
-def test_delete_lease(rentable, testNFT, accounts, paymentToken):
+def test_delete_lease(rentable, testNFT, accounts, paymentToken, paymentTokenId):
     user = accounts[0]
 
     tokenId = 123
@@ -54,7 +58,7 @@ def test_delete_lease(rentable, testNFT, accounts, paymentToken):
     pricePerBlock = 0.001 * (10**18)
 
     rentable.createOrUpdateLeaseConditions(
-        testNFT, tokenId, paymentToken, maxTimeDuration, pricePerBlock, address0, {"from": user}
+        testNFT, tokenId, paymentToken, paymentTokenId, maxTimeDuration, pricePerBlock, address0, {"from": user}
     )
     rentable.deleteLeaseConditions(testNFT, tokenId, {"from": user})
 
@@ -64,8 +68,9 @@ def test_delete_lease(rentable, testNFT, accounts, paymentToken):
     assert lease["maxTimeDuration"] == 0
 
 
-def test_update_lease(rentable, testNFT, accounts, paymentToken):
+def test_update_lease(rentable, testNFT, accounts, paymentToken, paymentTokenId):
     user = accounts[0]
+    user1 = accounts[1]
 
     tokenId = 123
 
@@ -79,7 +84,7 @@ def test_update_lease(rentable, testNFT, accounts, paymentToken):
     pricePerBlock = 0.001 * (10**18)
 
     rentable.createOrUpdateLeaseConditions(
-        testNFT, tokenId, paymentToken, maxTimeDuration, pricePerBlock, address0, {"from": user}
+        testNFT, tokenId, paymentToken, paymentTokenId, maxTimeDuration, pricePerBlock, address0, {"from": user}
     )
 
     # Test lease created correctly
@@ -87,12 +92,14 @@ def test_update_lease(rentable, testNFT, accounts, paymentToken):
     assert lease["maxTimeDuration"] == maxTimeDuration
     assert lease["pricePerBlock"] == pricePerBlock
     assert lease["paymentTokenAddress"] == paymentToken
+    assert lease["paymentTokenId"] == paymentTokenId
+    assert lease["privateRenter"] == address0
 
     maxTimeDuration = 800  # blocks
     pricePerBlock = 0.8 * (10**18)
 
     rentable.createOrUpdateLeaseConditions(
-        testNFT, tokenId, paymentToken, maxTimeDuration, pricePerBlock, address0, {"from": user}
+        testNFT, tokenId, paymentToken, paymentTokenId, maxTimeDuration, pricePerBlock, user1, {"from": user}
     )
 
     # Test lease update correctly
@@ -100,69 +107,20 @@ def test_update_lease(rentable, testNFT, accounts, paymentToken):
     assert lease["maxTimeDuration"] == maxTimeDuration
     assert lease["pricePerBlock"] == pricePerBlock
     assert lease["paymentTokenAddress"] == paymentToken
-
-def test_update_lease_private(rentable, testNFT, accounts, paymentToken):
-    user = accounts[0]
-    subscriber1 = accounts[1]
-    subscriber2 = accounts[2]
-
-    tokenId = 123
-
-    testNFT.mint(user, tokenId, {"from": user})
-
-    testNFT.approve(rentable, tokenId, {"from": user})
-
-    rentable.deposit(testNFT, tokenId, {"from": user})
-
-    maxTimeDuration = 1000  # blocks
-    pricePerBlock = 0.001 * (10**18)
-
-    rentable.createOrUpdateLeaseConditions(
-        testNFT, tokenId, paymentToken, maxTimeDuration, pricePerBlock, subscriber1, {"from": user}
-    )
-
-    # Test lease created correctly
-    lease = rentable.leasesConditions(testNFT, tokenId).dict()
-    assert lease["maxTimeDuration"] == maxTimeDuration
-    assert lease["pricePerBlock"] == pricePerBlock
-    assert lease["paymentTokenAddress"] == paymentToken
-    assert lease["privateRenter"] == subscriber1
-
-    maxTimeDuration = 800  # blocks
-    pricePerBlock = 0.8 * (10**18)
-
-    rentable.createOrUpdateLeaseConditions(
-        testNFT, tokenId, paymentToken, maxTimeDuration, pricePerBlock, subscriber2, {"from": user}
-    )
-
-    # Test lease update correctly with a different private renter 
-    lease = rentable.leasesConditions(testNFT, tokenId).dict()
-    assert lease["maxTimeDuration"] == maxTimeDuration
-    assert lease["pricePerBlock"] == pricePerBlock
-    assert lease["paymentTokenAddress"] == paymentToken
-    assert lease["privateRenter"] == subscriber2
-
-    rentable.createOrUpdateLeaseConditions(
-        testNFT, tokenId, paymentToken, maxTimeDuration, pricePerBlock, address0, {"from": user}
-    )
-
-   # Test lease update correctly with no private renter
-    lease = rentable.leasesConditions(testNFT, tokenId).dict()
-    assert lease["maxTimeDuration"] == maxTimeDuration
-    assert lease["pricePerBlock"] == pricePerBlock
-    assert lease["paymentTokenAddress"] == paymentToken
-    assert lease["privateRenter"] == address0
-
+    assert lease["paymentTokenId"] == paymentTokenId
+    assert lease["privateRenter"] == user1
 
 def test_subscribe_lease(
     rentable,
     testNFT,
     paymentToken,
+    paymentTokenId,
     yrentable,
     accounts,
     wrentable,
     chain,
     weth,
+    dummy1155,
     feeCollector,
     dummylib,
     eternalstorage,
@@ -186,38 +144,23 @@ def test_subscribe_lease(
     pricePerBlock = 0.001 * (10**18)
 
     rentable.createOrUpdateLeaseConditions(
-        testNFT, tokenId, paymentToken, maxTimeDuration, pricePerBlock, address0, {"from": user}
+        testNFT, tokenId, paymentToken, paymentTokenId, maxTimeDuration, pricePerBlock, address0, {"from": user}
     )
 
     # Test subscribtion
     subscriptionDuration = 70  # blocks
     value = "0.07 ether"
 
-    preBalanceFeeCollector = (
-        weth.balanceOf(feeCollector)
-        if paymentToken == weth.address
-        else feeCollector.balance()
-    )
+    preBalanceFeeCollector = getBalance(feeCollector, paymentToken, paymentTokenId, weth, dummy1155)
 
-    if paymentToken == weth.address:
-        weth.deposit({"from": subscriber, "value": value})
-        weth.approve(rentable, value, {"from": subscriber})
-        preBalanceSubscriber = weth.balanceOf(subscriber)
+    depositAndApprove(subscriber, rentable, value, paymentToken, paymentTokenId, weth, dummy1155)
+    
+    preBalanceSubscriber = getBalance(subscriber, paymentToken, paymentTokenId, weth, dummy1155)
+    tx = rentable.createLease(
+            testNFT, tokenId, subscriptionDuration, {"from": subscriber, "value": value})
 
-        tx = rentable.createLease(
-            testNFT, tokenId, subscriptionDuration, {"from": subscriber}
-        )
-    elif paymentToken == address0:
-        preBalanceSubscriber = subscriber.balance()
-        tx = rentable.createLease(
-            testNFT, tokenId, subscriptionDuration, {"from": subscriber, "value": value}
-        )
-
-    postBalanceSubscriber = (
-        weth.balanceOf(subscriber)
-        if paymentToken == weth.address
-        else subscriber.balance()
-    )
+    postBalanceSubscriber = getBalance(subscriber, paymentToken, paymentTokenId, weth, dummy1155)
+    
     rentPayed = preBalanceSubscriber - postBalanceSubscriber
 
     evt = tx.events["Rent"]
@@ -230,9 +173,7 @@ def test_subscribe_lease(
     lease = rentable.currentLeases(testNFT, tokenId).dict()
 
     assert lease["eta"] == tx.block_number + subscriptionDuration
-    balanceToCheck = (
-        weth.balanceOf(rentable) if paymentToken == weth.address else rentable.balance()
-    )
+    balanceToCheck = getBalance(rentable, paymentToken, paymentTokenId, weth, dummy1155)
     totalFeesToPay = (
         (rentPayed - rentable.getFixedFee()) * rentable.getFee() / rentable.BASE_FEE()
     )
@@ -241,16 +182,8 @@ def test_subscribe_lease(
     )
     assert balanceToCheck == lease["qtyToPullRemaining"] + lease["feesToPullRemaining"]
     assert lease["feesToPullRemaining"] == totalFeesToPay
-    assert (
-        rentable.getFixedFee()
-        == (
-            weth.balanceOf(feeCollector)
-            if paymentToken == weth.address
-            else feeCollector.balance()
-        )
-        - preBalanceFeeCollector
-    )
-
+    assert rentable.getFixedFee() ==  getBalance(feeCollector, paymentToken, paymentTokenId, weth, dummy1155) - preBalanceFeeCollector
+    
     assert lease["lastUpdated"] == tx.block_number
 
     assert yrentable.ownerOf(1) == user.address
@@ -272,11 +205,13 @@ def test_subscribe_lease_via_depositAndList(
     rentable,
     testNFT,
     paymentToken,
+    paymentTokenId,
     yrentable,
     accounts,
     wrentable,
     chain,
     weth,
+    dummy1155,
     feeCollector,
 ):
     user = accounts[0]
@@ -293,38 +228,23 @@ def test_subscribe_lease_via_depositAndList(
     pricePerBlock = 0.001 * (10**18)
 
     rentable.depositAndList(
-        testNFT, tokenId, paymentToken, maxTimeDuration, pricePerBlock, address0, {"from": user}
+        testNFT, tokenId, paymentToken, paymentTokenId, maxTimeDuration, pricePerBlock, address0, {"from": user}
     )
 
     # Test subscribtion
     subscriptionDuration = 80  # blocks
     value = "0.08 ether"
 
-    preBalanceFeeCollector = (
-        weth.balanceOf(feeCollector)
-        if paymentToken == weth.address
-        else feeCollector.balance()
-    )
+    preBalanceFeeCollector = getBalance(feeCollector, paymentToken, paymentTokenId, weth, dummy1155)
 
-    if paymentToken == weth.address:
-        weth.deposit({"from": subscriber, "value": value})
-        weth.approve(rentable, value, {"from": subscriber})
-        preBalanceSubscriber = weth.balanceOf(subscriber)
+    depositAndApprove(subscriber, rentable, value, paymentToken, paymentTokenId, weth, dummy1155)
+    
+    preBalanceSubscriber = getBalance(subscriber, paymentToken, paymentTokenId, weth, dummy1155)
+    tx = rentable.createLease(
+            testNFT, tokenId, subscriptionDuration, {"from": subscriber, "value": value})
 
-        tx = rentable.createLease(
-            testNFT, tokenId, subscriptionDuration, {"from": subscriber}
-        )
-    elif paymentToken == address0:
-        preBalanceSubscriber = subscriber.balance()
-        tx = rentable.createLease(
-            testNFT, tokenId, subscriptionDuration, {"from": subscriber, "value": value}
-        )
+    postBalanceSubscriber = getBalance(subscriber, paymentToken, paymentTokenId, weth, dummy1155)
 
-    postBalanceSubscriber = (
-        weth.balanceOf(subscriber)
-        if paymentToken == weth.address
-        else subscriber.balance()
-    )
     rentPayed = preBalanceSubscriber - postBalanceSubscriber
 
     evt = tx.events["Rent"]
@@ -337,9 +257,8 @@ def test_subscribe_lease_via_depositAndList(
     lease = rentable.currentLeases(testNFT, tokenId).dict()
 
     assert lease["eta"] == tx.block_number + subscriptionDuration
-    balanceToCheck = (
-        weth.balanceOf(rentable) if paymentToken == weth.address else rentable.balance()
-    )
+    balanceToCheck = getBalance(rentable, paymentToken, paymentTokenId, weth, dummy1155)
+
     totalFeesToPay = (
         (rentPayed - rentable.getFixedFee()) * rentable.getFee() / rentable.BASE_FEE()
     )
@@ -348,15 +267,8 @@ def test_subscribe_lease_via_depositAndList(
     )
     assert balanceToCheck == lease["qtyToPullRemaining"] + lease["feesToPullRemaining"]
     assert lease["feesToPullRemaining"] == totalFeesToPay
-    assert (
-        rentable.getFixedFee()
-        == (
-            weth.balanceOf(feeCollector)
-            if paymentToken == weth.address
-            else feeCollector.balance()
-        )
-        - preBalanceFeeCollector
-    )
+    assert rentable.getFixedFee() == getBalance(feeCollector, paymentToken, paymentTokenId, weth, dummy1155) - preBalanceFeeCollector
+    
 
     assert lease["lastUpdated"] == tx.block_number
 
@@ -384,11 +296,13 @@ def test_subscribe_lease_via_depositAndList_private(
     rentable,
     testNFT,
     paymentToken,
+    paymentTokenId,
     yrentable,
     accounts,
     wrentable,
     chain,
     weth,
+    dummy1155,
     feeCollector,
 ):
     user = accounts[0]
@@ -407,183 +321,29 @@ def test_subscribe_lease_via_depositAndList_private(
     pricePerBlock = 0.001 * (10**18)
 
     rentable.depositAndList(
-        testNFT, tokenId, paymentToken, maxTimeDuration, pricePerBlock, subscriber, {"from": user}
+        testNFT, tokenId, paymentToken, paymentTokenId, maxTimeDuration, pricePerBlock, subscriber, {"from": user}
     )
 
     # Test subscribtion
     subscriptionDuration = 80  # blocks
     value = "0.08 ether"
 
-    preBalanceFeeCollector = (
-        weth.balanceOf(feeCollector)
-        if paymentToken == weth.address
-        else feeCollector.balance()
-    )
+    preBalanceFeeCollector = getBalance(feeCollector, paymentToken, paymentTokenId, weth, dummy1155)
 
-    if paymentToken == weth.address:
-        weth.deposit({"from": subscriber, "value": value})
-        weth.approve(rentable, value, {"from": subscriber})
+    depositAndApprove(subscriber, rentable, value, paymentToken, paymentTokenId, weth, dummy1155)
+    depositAndApprove(wrongSubscriber, rentable, value, paymentToken, paymentTokenId, weth, dummy1155)
 
-        weth.deposit({"from": wrongSubscriber, "value": value})
-        weth.approve(rentable, value, {"from": wrongSubscriber})
-
-        preBalanceSubscriber = weth.balanceOf(subscriber)
-
-        with brownie.reverts("Rental reserved for another user"):
-            tx = rentable.createLease(
-                testNFT, tokenId, subscriptionDuration, {"from": wrongSubscriber}
-            )
-        tx = rentable.createLease(
-            testNFT, tokenId, subscriptionDuration, {"from": subscriber}
-        )
-    elif paymentToken == address0:
-        preBalanceSubscriber = subscriber.balance()
-        
-        with brownie.reverts("Rental reserved for another user"):
-            tx = rentable.createLease(
-                testNFT, tokenId, subscriptionDuration, {"from": wrongSubscriber, "value": value}
-            )
-        tx = rentable.createLease(
-            testNFT, tokenId, subscriptionDuration, {"from": subscriber, "value": value}
-        )
-
-    postBalanceSubscriber = (
-        weth.balanceOf(subscriber)
-        if paymentToken == weth.address
-        else subscriber.balance()
-    )
-    rentPayed = preBalanceSubscriber - postBalanceSubscriber
-
-    evt = tx.events["Rent"]
-
-    assert evt["from"] == user
-    assert evt["to"] == subscriber
-    assert evt["tokenAddress"] == testNFT.address
-    assert evt["tokenId"] == tokenId
-
-    lease = rentable.currentLeases(testNFT, tokenId).dict()
-
-    assert lease["eta"] == tx.block_number + subscriptionDuration
-    balanceToCheck = (
-        weth.balanceOf(rentable) if paymentToken == weth.address else rentable.balance()
-    )
-    totalFeesToPay = (
-        (rentPayed - rentable.getFixedFee()) * rentable.getFee() / rentable.BASE_FEE()
-    )
-    assert lease["qtyToPullRemaining"] == (
-        rentPayed - rentable.getFixedFee() - totalFeesToPay
-    )
-    assert balanceToCheck == lease["qtyToPullRemaining"] + lease["feesToPullRemaining"]
-    assert lease["feesToPullRemaining"] == totalFeesToPay
-    assert (
-        rentable.getFixedFee()
-        == (
-            weth.balanceOf(feeCollector)
-            if paymentToken == weth.address
-            else feeCollector.balance()
-        )
-        - preBalanceFeeCollector
-    )
-
-    assert lease["lastUpdated"] == tx.block_number
-
-    assert yrentable.ownerOf(1) == user.address
-
-    assert wrentable.ownerOf(tokenId) == subscriber.address
-
-    with brownie.reverts("Current lease still pending"):
-        rentable.expireLease(1)
-
-    chain.mine(subscriptionDuration + 1)
-
-    assert wrentable.ownerOf(tokenId) == address0
-
-    tx = rentable.expireLease(1)
-
-    evt = tx.events["RentEnds"]
-
-    assert evt["from"] == user
-    assert evt["to"] == subscriber
-    assert evt["tokenAddress"] == testNFT.address
-    assert evt["tokenId"] == tokenId
-
-
-def test_subscribe_lease_via_safeTransferFromPrivate(
-    rentable,
-    testNFT,
-    paymentToken,
-    yrentable,
-    accounts,
-    wrentable,
-    chain,
-    weth,
-    feeCollector,
-):
-    user = accounts[0]
-    subscriber = accounts[1]
-    wrongSubscriber = accounts[2]
+    preBalanceSubscriber = getBalance(subscriber, paymentToken, paymentTokenId, weth, dummy1155)
     
-    tokenId = 123
-
-    testNFT.mint(user, tokenId, {"from": user})
-
-    maxTimeDuration = 1000  # blocks
-    pricePerBlock = int(0.001 * (10**18))
-
-    data = eth_abi.encode_abi(
-        [
-            "address",  # paymentTokenAddress
-            "uint256",  # maxTimeDuration
-            "uint256",  # pricePerBlock
-            "address",  # privateRenter
-        ],
-        (paymentToken, maxTimeDuration, pricePerBlock, subscriber.address),
-    ).hex()
-
-    tx = testNFT.safeTransferFrom(user, rentable, tokenId, data, {"from": user})
-
-    # Test subscribtion
-    subscriptionDuration = 80  # blocks
-    value = "0.08 ether"
-
-    preBalanceFeeCollector = (
-        weth.balanceOf(feeCollector)
-        if paymentToken == weth.address
-        else feeCollector.balance()
-    )
-
-    if paymentToken == weth.address:
-        weth.deposit({"from": subscriber, "value": value})
-        weth.approve(rentable, value, {"from": subscriber})
-
-        weth.deposit({"from": wrongSubscriber, "value": value})
-        weth.approve(rentable, value, {"from": wrongSubscriber})
-
-        preBalanceSubscriber = weth.balanceOf(subscriber)
-
-        with brownie.reverts("Rental reserved for another user"):
-            tx = rentable.createLease(
-                testNFT, tokenId, subscriptionDuration, {"from": wrongSubscriber}
-            )
+    with brownie.reverts("Rental reserved for another user"):
         tx = rentable.createLease(
-            testNFT, tokenId, subscriptionDuration, {"from": subscriber}
+            testNFT, tokenId, subscriptionDuration, {"from": wrongSubscriber, "value": value}
         )
-    elif paymentToken == address0:
-        preBalanceSubscriber = subscriber.balance()
-        
-        with brownie.reverts("Rental reserved for another user"):
-            tx = rentable.createLease(
-                testNFT, tokenId, subscriptionDuration, {"from": wrongSubscriber}
-            )
-        tx = rentable.createLease(
-            testNFT, tokenId, subscriptionDuration, {"from": subscriber, "value": value}
-        )
+    tx = rentable.createLease(
+            testNFT, tokenId, subscriptionDuration, {"from": subscriber, "value": value})
 
-    postBalanceSubscriber = (
-        weth.balanceOf(subscriber)
-        if paymentToken == weth.address
-        else subscriber.balance()
-    )
+    postBalanceSubscriber = getBalance(subscriber, paymentToken, paymentTokenId, weth, dummy1155)
+
     rentPayed = preBalanceSubscriber - postBalanceSubscriber
 
     evt = tx.events["Rent"]
@@ -596,12 +356,12 @@ def test_subscribe_lease_via_safeTransferFromPrivate(
     lease = rentable.currentLeases(testNFT, tokenId).dict()
 
     assert lease["eta"] == tx.block_number + subscriptionDuration
-    balanceToCheck = (
-        weth.balanceOf(rentable) if paymentToken == weth.address else rentable.balance()
-    )
+    balanceToCheck = getBalance(rentable, paymentToken, paymentTokenId, weth, dummy1155)
+
     totalFeesToPay = (
         (rentPayed - rentable.getFixedFee()) * rentable.getFee() / rentable.BASE_FEE()
     )
+
     assert lease["qtyToPullRemaining"] == (
         rentPayed - rentable.getFixedFee() - totalFeesToPay
     )
@@ -609,11 +369,7 @@ def test_subscribe_lease_via_safeTransferFromPrivate(
     assert lease["feesToPullRemaining"] == totalFeesToPay
     assert (
         rentable.getFixedFee()
-        == (
-            weth.balanceOf(feeCollector)
-            if paymentToken == weth.address
-            else feeCollector.balance()
-        )
+        == getBalance(feeCollector, paymentToken, paymentTokenId, weth, dummy1155)
         - preBalanceFeeCollector
     )
 
@@ -638,18 +394,18 @@ def test_subscribe_lease_via_safeTransferFromPrivate(
     assert evt["to"] == subscriber
     assert evt["tokenAddress"] == testNFT.address
     assert evt["tokenId"] == tokenId
-
-
 
 def test_redeem_lease(
     rentable,
     testNFT,
     paymentToken,
+    paymentTokenId,
     weth,
     accounts,
     chain,
     feeCollector,
     dummylib,
+    dummy1155,
     eternalstorage,
 ):
     rentable.setLibrary(testNFT, dummylib)
@@ -670,32 +426,17 @@ def test_redeem_lease(
     pricePerBlock = int(0.001 * (10**18))
 
     rentable.createOrUpdateLeaseConditions(
-        testNFT, tokenId, paymentToken, maxTimeDuration, pricePerBlock, address0, {"from": user}
+        testNFT, tokenId, paymentToken, paymentTokenId, maxTimeDuration, pricePerBlock, address0, {"from": user}
     )
 
     # Create subscribtion
     subscriptionDuration = 80
     value = "0.08 ether"
-    txCreate = None
-    preBalanceSubscriber = postBalanceSubscriber = 0
-
-    if paymentToken == weth.address:
-        weth.deposit({"from": subscriber, "value": value})
-        weth.approve(rentable, value, {"from": subscriber})
-
-        preBalanceSubscriber = weth.balanceOf(subscriber)
-        txCreate = rentable.createLease(
-            testNFT, tokenId, subscriptionDuration, {"from": subscriber}
-        )
-        postBalanceSubscriber = weth.balanceOf(subscriber)
-
-    elif paymentToken == address0:
-        preBalanceSubscriber = subscriber.balance()
-        txCreate = rentable.createLease(
-            testNFT, tokenId, subscriptionDuration, {"from": subscriber, "value": value}
-        )
-        postBalanceSubscriber = subscriber.balance()
-
+    
+    depositAndApprove(subscriber, rentable, value, paymentToken, paymentTokenId, weth, dummy1155)
+    txCreate = rentable.createLease(
+        testNFT, tokenId, subscriptionDuration, {"from": subscriber, "value": value}
+    )
     evt = txCreate.events["Rent"]
 
     assert evt["from"] == user
@@ -711,25 +452,17 @@ def test_redeem_lease(
 
     leasePreRedeem = initialLease = rentable.currentLeases(testNFT, tokenId).dict()
 
-    preFeeCollectorBalance = (
-        weth.balanceOf(feeCollector)
-        if paymentToken == weth.address
-        else feeCollector.balance()
-    )
-    preBalance = (
-        weth.balanceOf(user) if paymentToken == weth.address else user.balance()
-    )
+    preFeeCollectorBalance = getBalance(feeCollector, paymentToken, paymentTokenId, weth, dummy1155)
+
+    preBalance = getBalance(user, paymentToken, paymentTokenId, weth, dummy1155)
+   
     txRedeem = rentable.redeemLease(1, {"from": user})
-    postBalance = (
-        weth.balanceOf(user) if paymentToken == weth.address else user.balance()
-    )
-    postFeeCollectorBalance = (
-        weth.balanceOf(feeCollector)
-        if paymentToken == weth.address
-        else feeCollector.balance()
-    )
+    postBalance = getBalance(user, paymentToken, paymentTokenId, weth, dummy1155)
+
+    postFeeCollectorBalance = getBalance(feeCollector, paymentToken, paymentTokenId, weth, dummy1155)
 
     duration = txRedeem.block_number - txCreate.block_number
+
     amountToRedeem = (
         leasePreRedeem["qtyToPullRemaining"]
         * duration
@@ -747,6 +480,7 @@ def test_redeem_lease(
     assert evt["tokenAddress"] == testNFT.address
     assert evt["tokenId"] == tokenId
     assert evt["paymentTokenAddress"] == paymentToken
+    assert evt["paymentTokenId"] == paymentTokenId
     assert evt["qty"] == amountToRedeem
 
     assert (postBalance - preBalance) >= amountToRedeem
@@ -779,23 +513,11 @@ def test_redeem_lease(
 
     leasePreRedeem = rentable.currentLeases(testNFT, tokenId).dict()
 
-    preFeeCollectorBalance = (
-        weth.balanceOf(feeCollector)
-        if paymentToken == weth.address
-        else feeCollector.balance()
-    )
-    preBalance = (
-        weth.balanceOf(user) if paymentToken == weth.address else user.balance()
-    )
+    preFeeCollectorBalance = getBalance(feeCollector, paymentToken, paymentTokenId, weth, dummy1155)
+    preBalance = getBalance(user, paymentToken, paymentTokenId, weth, dummy1155)
     txRedeemNext = rentable.redeemLease(1, {"from": user})
-    postBalance = (
-        weth.balanceOf(user) if paymentToken == weth.address else user.balance()
-    )
-    postFeeCollectorBalance = (
-        weth.balanceOf(feeCollector)
-        if paymentToken == weth.address
-        else feeCollector.balance()
-    )
+    postBalance = getBalance(user, paymentToken, paymentTokenId, weth, dummy1155)
+    postFeeCollectorBalance = getBalance(feeCollector, paymentToken, paymentTokenId, weth, dummy1155)
 
     duration = txRedeemNext.block_number - txRedeem.block_number
     txRedeem = txRedeemNext
@@ -816,6 +538,7 @@ def test_redeem_lease(
     assert evt["tokenAddress"] == testNFT.address
     assert evt["tokenId"] == tokenId
     assert evt["paymentTokenAddress"] == paymentToken
+    assert evt["paymentTokenId"] == paymentTokenId
     assert evt["qty"] == amountToRedeem
 
     assert (postBalance - preBalance) >= amountToRedeem
@@ -840,23 +563,12 @@ def test_redeem_lease(
     time = 2000
     chain.mine(time)
 
-    preFeeCollectorBalance = (
-        weth.balanceOf(feeCollector)
-        if paymentToken == weth.address
-        else feeCollector.balance()
-    )
-    preBalance = (
-        weth.balanceOf(user) if paymentToken == weth.address else user.balance()
-    )
+    preFeeCollectorBalance = getBalance(feeCollector, paymentToken, paymentTokenId, weth, dummy1155)
+    preBalance = getBalance(user, paymentToken, paymentTokenId, weth, dummy1155)
+    
     txRedeemNext = rentable.redeemLease(1, {"from": user})
-    postBalance = (
-        weth.balanceOf(user) if paymentToken == weth.address else user.balance()
-    )
-    postFeeCollectorBalance = (
-        weth.balanceOf(feeCollector)
-        if paymentToken == weth.address
-        else feeCollector.balance()
-    )
+    postBalance = getBalance(user, paymentToken, paymentTokenId, weth, dummy1155)
+    postFeeCollectorBalance = getBalance(feeCollector, paymentToken, paymentTokenId, weth, dummy1155)
 
     duration = txRedeemNext.block_number - txRedeem.block_number
     txRedeem = txRedeemNext
@@ -869,6 +581,7 @@ def test_redeem_lease(
     assert evt["tokenAddress"] == testNFT.address
     assert evt["tokenId"] == tokenId
     assert evt["paymentTokenAddress"] == paymentToken
+    assert evt["paymentTokenId"] == paymentTokenId
     assert evt["qty"] == amountToRedeem
 
     lease = rentable.currentLeases(testNFT, tokenId).dict()
@@ -889,13 +602,12 @@ def test_redeem_lease(
     assert (postBalance - preBalance) >= amountToRedeem
     totalRedeemed += amountToRedeem
 
-    assert 0 == (
-        weth.balanceOf(rentable) if paymentToken == weth.address else rentable.balance()
-    )
+    assert 0 == getBalance(rentable, paymentToken, paymentTokenId, weth, dummy1155)
+
 
 
 def test_do_not_withdraw_on_lease(
-    rentable, testNFT, paymentToken, weth, yrentable, accounts, chain
+    rentable, testNFT, paymentToken, paymentTokenId, weth, dummy1155, accounts, chain
 ):
     user = accounts[0]
     subscriber = accounts[1]
@@ -912,24 +624,17 @@ def test_do_not_withdraw_on_lease(
     pricePerBlock = 0.001 * (10**18)
 
     rentable.createOrUpdateLeaseConditions(
-        testNFT, tokenId, paymentToken, maxTimeDuration, pricePerBlock, address0, {"from": user}
+        testNFT, tokenId, paymentToken, paymentTokenId, maxTimeDuration, pricePerBlock, address0, {"from": user}
     )
 
     # Test subscribtion
     subscriptionDuration = 40
     value = "0.04 ether"
 
-    if paymentToken == weth.address:
-        weth.deposit({"from": subscriber, "value": value})
-        weth.approve(rentable, value, {"from": subscriber})
-
-        tx = rentable.createLease(
-            testNFT, tokenId, subscriptionDuration, {"from": subscriber}
-        )
-    elif paymentToken == address0:
-        tx = rentable.createLease(
-            testNFT, tokenId, subscriptionDuration, {"from": subscriber, "value": value}
-        )
+    depositAndApprove(subscriber, rentable, value, paymentToken, paymentTokenId, weth, dummy1155)
+    tx = rentable.createLease(
+        testNFT, tokenId, subscriptionDuration, {"from": subscriber, "value": value}
+    )       
 
     evt = tx.events["Rent"]
 
@@ -947,7 +652,7 @@ def test_do_not_withdraw_on_lease(
 
 
 def test_transfer_lease(
-    rentable, testNFT, paymentToken, weth, accounts, wrentable, dummylib, eternalstorage
+    rentable, testNFT, paymentToken, paymentTokenId, weth, dummy1155, accounts, wrentable, dummylib, eternalstorage
 ):
     rentable.setLibrary(testNFT, dummylib)
     assert rentable.getLibrary(testNFT) == dummylib
@@ -967,23 +672,17 @@ def test_transfer_lease(
     pricePerBlock = 0.001 * (10**18)
 
     rentable.createOrUpdateLeaseConditions(
-        testNFT, tokenId, paymentToken, maxTimeDuration, pricePerBlock, address0, {"from": user}
+        testNFT, tokenId, paymentToken, paymentTokenId, maxTimeDuration, pricePerBlock, address0, {"from": user}
     )
 
     # Test subscribtion
     subscriptionDuration = 40
     value = "0.04 ether"
 
-    if paymentToken == weth.address:
-        weth.deposit({"from": subscriber, "value": value})
-        weth.approve(rentable, value, {"from": subscriber})
-        tx = rentable.createLease(
-            testNFT, tokenId, subscriptionDuration, {"from": subscriber}
-        )
-    elif paymentToken == address0:
-        tx = rentable.createLease(
-            testNFT, tokenId, subscriptionDuration, {"from": subscriber, "value": value}
-        )
+    depositAndApprove(subscriber, rentable, value, paymentToken, paymentTokenId, weth, dummy1155)
+    tx = rentable.createLease(
+        testNFT, tokenId, subscriptionDuration, {"from": subscriber, "value": value}
+    )       
 
     evt = tx.events["Rent"]
 
@@ -1013,7 +712,7 @@ def test_transfer_lease(
 
 
 def test_transfer_ownership_during_lease(
-    rentable, testNFT, paymentToken, weth, accounts, orentable, dummylib, eternalstorage
+    rentable, testNFT, paymentToken, paymentTokenId, weth, dummy1155, accounts, orentable, dummylib, eternalstorage
 ):
     rentable.setLibrary(testNFT, dummylib)
     assert rentable.getLibrary(testNFT) == dummylib
@@ -1033,23 +732,17 @@ def test_transfer_ownership_during_lease(
     pricePerBlock = 0.001 * (10**18)
 
     rentable.createOrUpdateLeaseConditions(
-        testNFT, tokenId, paymentToken, maxTimeDuration, pricePerBlock, address0, {"from": user}
+        testNFT, tokenId, paymentToken, paymentTokenId, maxTimeDuration, pricePerBlock, address0, {"from": user}
     )
 
     # Test subscribtion
     subscriptionDuration = 40
     value = "0.04 ether"
 
-    if paymentToken == weth.address:
-        weth.deposit({"from": subscriber, "value": value})
-        weth.approve(rentable, value, {"from": subscriber})
-        tx = rentable.createLease(
-            testNFT, tokenId, subscriptionDuration, {"from": subscriber}
-        )
-    elif paymentToken == address0:
-        tx = rentable.createLease(
-            testNFT, tokenId, subscriptionDuration, {"from": subscriber, "value": value}
-        )
+    depositAndApprove(subscriber, rentable, value, paymentToken, paymentTokenId, weth, dummy1155)
+    tx = rentable.createLease(
+        testNFT, tokenId, subscriptionDuration, {"from": subscriber, "value": value}
+    )   
 
     evt = tx.events["Rent"]
 
@@ -1076,3 +769,6 @@ def test_transfer_ownership_during_lease(
     assert eternalstorage.getUIntValue(dummylib.TOKEN_ID()) == tokenId
     assert eternalstorage.getAddressValue(dummylib.FROM()) == user
     assert eternalstorage.getAddressValue(dummylib.TO()) == user2
+
+
+
