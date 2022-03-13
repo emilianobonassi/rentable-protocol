@@ -59,7 +59,10 @@ contract Rentable is
     mapping(address => address) internal _wrentables;
     mapping(address => ORentable) internal _orentables;
 
-    mapping(address => bool) public paymentTokenAllowlist;
+    mapping(address => uint8) public paymentTokenAllowlist; // 0 not allowed, 1 ERC20, 2 ERC1155
+
+    uint8 private constant ERC20_TOKEN = 1;
+    uint8 private constant ERC1155_TOKEN = 2;
 
     uint256 public constant BASE_FEE = 10000;
     uint256 internal _fixedFee;
@@ -169,19 +172,26 @@ contract Rentable is
     {
         _feeCollector = feeCollector;
     }
-
+    
     function enablePaymentToken(address paymentTokenAddress)
         external
         onlyGovernance
     {
-        paymentTokenAllowlist[paymentTokenAddress] = true;
+        paymentTokenAllowlist[paymentTokenAddress] = ERC20_TOKEN;
+    }
+
+    function enable1155PaymentToken(address paymentTokenAddress)
+        external
+        onlyGovernance
+    {
+        paymentTokenAllowlist[paymentTokenAddress] = ERC1155_TOKEN;
     }
 
     function disablePaymentToken(address paymentTokenAddress)
         external
         onlyGovernance
     {
-        paymentTokenAllowlist[paymentTokenAddress] = false;
+        paymentTokenAllowlist[paymentTokenAddress] = 0;
     }
 
     function _getExistingORentable(address tokenAddress)
@@ -355,7 +365,7 @@ contract Rentable is
         address privateRenter
     ) internal {
         require(
-            paymentTokenAllowlist[paymentTokenAddress],
+            paymentTokenAllowlist[paymentTokenAddress] > 0,
             "Not supported payment token"
         );
 
@@ -510,7 +520,7 @@ contract Rentable is
             if (leaseCondition.fixedFee > 0) {
                 Address.sendValue(_feeCollector, leaseCondition.fixedFee);
             }
-        } else {
+        } else if(paymentTokenAllowlist[leaseCondition.paymentTokenAddress] == ERC20_TOKEN) {
             IERC20(leaseCondition.paymentTokenAddress).safeTransferFrom(
                 user,
                 address(this),
@@ -526,6 +536,9 @@ contract Rentable is
                     leaseCondition.fixedFee
                 );
             }
+        }
+        else {
+            // 1155
         }
 
         _postCreateRent(leaseId, tokenAddress, tokenId, duration, from, user);
