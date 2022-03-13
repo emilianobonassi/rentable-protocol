@@ -1,7 +1,7 @@
 import pytest
 from const import address0
 
-MINIMAL = False
+MINIMAL = True
 
 @pytest.fixture
 def deployer(accounts):
@@ -142,7 +142,7 @@ def testNFT(deployer, TestNFT):
 
 
 @pytest.fixture(
-    params=[
+    params=["WETH"] if MINIMAL else [
         "ETH",
         "WETH",
     ]
