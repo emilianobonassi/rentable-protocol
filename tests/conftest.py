@@ -1,7 +1,7 @@
 import pytest
-from const import address0
+from utils import address0
 
-MINIMAL = True
+MINIMAL = False
 
 @pytest.fixture
 def deployer(accounts):
@@ -27,22 +27,21 @@ def operator(accounts):
 def weth(WETH9, deployer):
     yield WETH9.deploy({"from": deployer})
 
+@pytest.fixture
+def dummy1155(DummyERC1155, deployer):
+    yield DummyERC1155.deploy({"from": deployer})
 
 @pytest.fixture
 def orentable(deployer, ORentable, testNFT):
     yield ORentable.deploy(testNFT, {"from": deployer})
 
-
-
 @pytest.fixture
 def yrentable(deployer, YRentable):
     yield YRentable.deploy({"from": deployer})
 
-
 @pytest.fixture
 def wrentable(deployer, WRentable, testNFT):
     yield WRentable.deploy(testNFT, {"from": deployer})
-
 
 @pytest.fixture
 def emergencyImplementation(deployer, EmergencyImplementation):
@@ -92,6 +91,7 @@ def rentable(
     testNFT,
     feeCollector,
     weth,
+    dummy1155,
     testLand,
     decentralandCollectionLibrary,
     proxyFactoryInitializable,
@@ -112,6 +112,7 @@ def rentable(
 
     n.enablePaymentToken(address0)
     n.enablePaymentToken(weth.address)
+    n.enable1155PaymentToken(dummy1155.address)
 
     # Decentraland init
     data = orentable.init.encode_input(testLand, deployer)
@@ -142,18 +143,28 @@ def testNFT(deployer, TestNFT):
 
 
 @pytest.fixture(
-    params=["WETH"] if MINIMAL else [
+    params=["ETH"] if MINIMAL else [
         "ETH",
         "WETH",
+        "DUMMY1155"
     ]
 )
-def paymentToken(request, weth):
+def paymentToken(request, weth, dummy1155):
     if request.param == "ETH":
         return address0
     elif request.param == "WETH":
         return weth.address
+    elif request.param == "DUMMY1155":
+        return dummy1155.address
     else:
         raise Exception("paymentToken not supported")
+
+@pytest.fixture
+def paymentTokenId(request, paymentToken, dummy1155):
+    if paymentToken == dummy1155.address:
+        return dummy1155.TOKEN2()
+    else:
+        return 0
 
 
 @pytest.fixture(autouse=True)
