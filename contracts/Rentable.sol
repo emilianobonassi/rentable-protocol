@@ -6,6 +6,8 @@ import "@openzeppelin/contracts/token/ERC721/IERC721.sol";
 import "@openzeppelin/contracts/token/ERC721/IERC721Receiver.sol";
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
+import "@openzeppelin/contracts/token/ERC1155/IERC1155.sol";
+import "@openzeppelin/contracts/token/ERC1155/IERC1155Receiver.sol";
 import "@openzeppelin/contracts/utils/math/SafeMath.sol";
 import "@openzeppelin/contracts/utils/Address.sol";
 import "@openzeppelin/contracts/access/Ownable.sol";
@@ -19,6 +21,7 @@ import "./RentableHooks.sol";
 contract Rentable is
     Security4,
     IERC721Receiver,
+    IERC1155Receiver,
     RentableHooks,
     ReentrancyGuard
 {
@@ -30,6 +33,7 @@ contract Rentable is
         uint256 maxTimeDuration;
         uint256 pricePerBlock;
         address paymentTokenAddress;
+        uint256 paymentTokenId;
         uint256 fixedFee;
         uint256 fee;
         address privateRenter;
@@ -45,6 +49,7 @@ contract Rentable is
         uint256 tokenId;
         address from;
         address to;
+        uint256 paymentTokenId; // TODO: if this field is decleared as second tests do not pass...
     }
 
     address internal _yToken;
@@ -79,8 +84,10 @@ contract Rentable is
         address indexed tokenAddress,
         uint256 indexed tokenId,
         address paymentTokenAddress,
+        uint256 paymentTokenId,
         uint256 maxTimeDuration,
-        uint256 pricePerBlock
+        uint256 pricePerBlock,
+        address privateRenter
     );
     event Withdraw(
         address indexed who,
@@ -99,6 +106,7 @@ contract Rentable is
         address indexed tokenAddress,
         uint256 indexed tokenId,
         address paymentTokenAddress,
+        uint256 paymentTokenId,
         uint256 qty,
         uint256 yTokenId
     );
@@ -256,6 +264,7 @@ contract Rentable is
         address to,
         bool skipTransfer,
         address paymentTokenAddress,
+        uint256 paymentTokenId,
         uint256 maxTimeDuration,
         uint256 pricePerBlock,
         address privateRenter
@@ -266,6 +275,7 @@ contract Rentable is
             tokenAddress,
             tokenId,
             paymentTokenAddress,
+            paymentTokenId,
             maxTimeDuration,
             pricePerBlock,
             privateRenter
@@ -286,6 +296,7 @@ contract Rentable is
         address tokenAddress,
         uint256 tokenId,
         address paymentTokenAddress,
+        uint256 paymentTokenId,
         uint256 maxTimeDuration,
         uint256 pricePerBlock,
         address privateRenter
@@ -303,6 +314,7 @@ contract Rentable is
                 _msgSender(),
                 false,
                 paymentTokenAddress,
+                paymentTokenId, 
                 maxTimeDuration,
                 pricePerBlock,
                 privateRenter
@@ -360,6 +372,7 @@ contract Rentable is
         address tokenAddress,
         uint256 tokenId,
         address paymentTokenAddress,
+        uint256 paymentTokenId,
         uint256 maxTimeDuration,
         uint256 pricePerBlock,
         address privateRenter
@@ -376,6 +389,7 @@ contract Rentable is
         lease.maxTimeDuration = maxTimeDuration;
         lease.pricePerBlock = pricePerBlock;
         lease.paymentTokenAddress = paymentTokenAddress;
+        lease.paymentTokenId = paymentTokenId;
         lease.fixedFee = _fixedFee;
         lease.fee = _fee;
         lease.privateRenter = privateRenter;
@@ -392,8 +406,10 @@ contract Rentable is
             tokenAddress,
             tokenId,
             paymentTokenAddress,
+            paymentTokenId,
             maxTimeDuration,
-            pricePerBlock
+            pricePerBlock,
+            privateRenter
         );
     }
 
@@ -427,6 +443,7 @@ contract Rentable is
         address tokenAddress,
         uint256 tokenId,
         address paymentTokenAddress,
+        uint256 paymentTokenId,
         uint256 maxTimeDuration,
         uint256 pricePerBlock,
         address privateRenter
@@ -440,11 +457,13 @@ contract Rentable is
             tokenAddress,
             tokenId,
             paymentTokenAddress,
+            paymentTokenId,
             maxTimeDuration,
             pricePerBlock,
             privateRenter
         );
     }
+
 
     function deleteLeaseConditions(address tokenAddress, uint256 tokenId)
         external
@@ -506,6 +525,7 @@ contract Rentable is
         lease.from = from;
         lease.to = user;
         lease.paymentTokenAddress = leaseCondition.paymentTokenAddress;
+        lease.paymentTokenId = leaseCondition.paymentTokenId;
 
         _currentLeases[tokenAddress][tokenId] = leaseId;
 
@@ -538,12 +558,34 @@ contract Rentable is
             }
         }
         else {
-            // 1155
+            IERC1155(leaseCondition.paymentTokenAddress).safeTransferFrom(
+                user,
+                address(this),
+                leaseCondition.paymentTokenId,
+                paymentQty,
+                ""
+            );
+
+            if (msg.value > 0) {
+                Address.sendValue(payable(user), msg.value);
+            }
+
+            if (leaseCondition.fixedFee > 0) {
+                IERC1155(leaseCondition.paymentTokenAddress).safeTransferFrom(
+                    address(this),
+                    _feeCollector,
+                    leaseCondition.paymentTokenId,
+                    leaseCondition.fixedFee, 
+                    ""
+                );
+            }
         }
+         
 
         _postCreateRent(leaseId, tokenAddress, tokenId, duration, from, user);
 
         emit Rent(from, user, tokenAddress, tokenId, leaseId);
+        
     }
 
     function redeemLease(uint256 leaseId)
@@ -610,7 +652,7 @@ contract Rentable is
             if (fees2Redeem > 0) {
                 Address.sendValue(_feeCollector, fees2Redeem);
             }
-        } else {
+        } else if(paymentTokenAllowlist[lease2redeem.paymentTokenAddress] == ERC20_TOKEN) {
             IERC20(lease2redeem.paymentTokenAddress).safeTransfer(
                 user,
                 amount2Redeem
@@ -622,12 +664,32 @@ contract Rentable is
                 );
             }
         }
+        else {
+             IERC1155(lease2redeem.paymentTokenAddress).safeTransferFrom(
+                address(this),
+                user,
+                lease2redeem.paymentTokenId,
+                amount2Redeem,
+                ""
+            );
+
+            if (fees2Redeem > 0) {
+                IERC1155(lease2redeem.paymentTokenAddress).safeTransferFrom(
+                    address(this),
+                    _feeCollector,
+                    lease2redeem.paymentTokenId,
+                    fees2Redeem,
+                    ""
+                );
+            }
+        }
 
         emit Claim(
             user,
             lease2redeem.tokenAddress,
             lease2redeem.tokenId,
             lease2redeem.paymentTokenAddress,
+            lease2redeem.paymentTokenId,
             amount2Redeem,
             leaseId
         );
@@ -730,10 +792,11 @@ contract Rentable is
         } else {
 
             address paymentTokenAddress;
+            uint256 paymentTokenId;
             uint256 maxTimeDuration;
             uint256 pricePerBlock;
             address privateRenter;
-
+            
             if (data.length == 96) {
                 (
                     paymentTokenAddress,
@@ -741,14 +804,16 @@ contract Rentable is
                     pricePerBlock
                 ) = abi.decode(data, (address, uint256, uint256));
                 privateRenter = address(0);
+                paymentTokenId = 0;
             }
             else {
                  (
                     paymentTokenAddress,
+                    paymentTokenId,
                     maxTimeDuration,
                     pricePerBlock,
                     privateRenter
-                ) = abi.decode(data, (address, uint256, uint256, address));
+                ) = abi.decode(data, (address, uint256, uint256, uint256, address));
             }
 
             _depositAndList(
@@ -757,6 +822,7 @@ contract Rentable is
                 from,
                 true,
                 paymentTokenAddress,
+                paymentTokenId, 
                 maxTimeDuration,
                 pricePerBlock,
                 privateRenter
@@ -766,4 +832,29 @@ contract Rentable is
 
         return this.onERC721Received.selector;
     }
+
+    function onERC1155Received(
+        address operator,
+        address from,
+        uint256 id,
+        uint256 value,
+        bytes calldata data
+    ) external returns (bytes4){
+        return bytes4(keccak256("onERC1155Received(address,address,uint256,uint256,bytes)"));
+    }
+
+    function onERC1155BatchReceived(
+        address operator,
+        address from,
+        uint256[] calldata ids,
+        uint256[] calldata values,
+        bytes calldata data
+    ) external returns (bytes4) {
+        return bytes4(0);
+    }
+
+    function supportsInterface(bytes4 interfaceId) public view virtual override(IERC165) returns (bool) {
+        return interfaceId == type(IERC1155Receiver).interfaceId;
+    }      
+    
 }
