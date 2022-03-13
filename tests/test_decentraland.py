@@ -2,7 +2,7 @@ import pytest
 import brownie
 import eth_abi
 from brownie import Wei
-from const import address0
+from utils import address0
 
 def deposit1tx(
     rentable, nft, depositor, tokenId, maxTimeDuration, pricePerBlock, paymentToken
