@@ -380,7 +380,7 @@ def test_subscribe_lease_via_depositAndList(
     assert evt["tokenAddress"] == testNFT.address
     assert evt["tokenId"] == tokenId
 
-def test_subscribe_lease_via_depositAndListPrivate(
+def test_subscribe_lease_via_depositAndList_private(
     rentable,
     testNFT,
     paymentToken,
