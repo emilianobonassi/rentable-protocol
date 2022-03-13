@@ -32,6 +32,7 @@ contract Rentable is
         address paymentTokenAddress;
         uint256 fixedFee;
         uint256 fee;
+        address privateRenter;
     }
 
     struct Lease {
@@ -65,7 +66,7 @@ contract Rentable is
     uint256 internal _fee;
 
     address payable _feeCollector;
-
+    
     event Deposit(
         address indexed who,
         address indexed tokenAddress,
@@ -246,7 +247,8 @@ contract Rentable is
         bool skipTransfer,
         address paymentTokenAddress,
         uint256 maxTimeDuration,
-        uint256 pricePerBlock
+        uint256 pricePerBlock,
+        address privateRenter
     ) internal returns (uint256 oRentableId) {
         oRentableId = _deposit(tokenAddress, tokenId, to, skipTransfer);
 
@@ -255,7 +257,8 @@ contract Rentable is
             tokenId,
             paymentTokenAddress,
             maxTimeDuration,
-            pricePerBlock
+            pricePerBlock,
+            privateRenter
         );
     }
 
@@ -274,7 +277,8 @@ contract Rentable is
         uint256 tokenId,
         address paymentTokenAddress,
         uint256 maxTimeDuration,
-        uint256 pricePerBlock
+        uint256 pricePerBlock,
+        address privateRenter
     )
         external
         nonReentrant
@@ -290,7 +294,8 @@ contract Rentable is
                 false,
                 paymentTokenAddress,
                 maxTimeDuration,
-                pricePerBlock
+                pricePerBlock,
+                privateRenter
             );
     }
 
@@ -346,7 +351,8 @@ contract Rentable is
         uint256 tokenId,
         address paymentTokenAddress,
         uint256 maxTimeDuration,
-        uint256 pricePerBlock
+        uint256 pricePerBlock,
+        address privateRenter
     ) internal {
         require(
             paymentTokenAllowlist[paymentTokenAddress],
@@ -362,6 +368,7 @@ contract Rentable is
         lease.paymentTokenAddress = paymentTokenAddress;
         lease.fixedFee = _fixedFee;
         lease.fee = _fee;
+        lease.privateRenter = privateRenter;
 
         _postList(
             tokenAddress,
@@ -411,7 +418,8 @@ contract Rentable is
         uint256 tokenId,
         address paymentTokenAddress,
         uint256 maxTimeDuration,
-        uint256 pricePerBlock
+        uint256 pricePerBlock,
+        address privateRenter
     )
         external
         onlyOTokenOwner(tokenAddress, tokenId)
@@ -423,7 +431,8 @@ contract Rentable is
             tokenId,
             paymentTokenAddress,
             maxTimeDuration,
-            pricePerBlock
+            pricePerBlock,
+            privateRenter
         );
     }
 
@@ -461,6 +470,11 @@ contract Rentable is
         );
 
         address user = _msgSender();
+
+        if (leaseCondition.privateRenter != address(0)){
+            require(leaseCondition.privateRenter == user, "Rental reserved for another user");
+        }
+
         uint256 paymentQty = leaseCondition.pricePerBlock.mul(duration);
 
         // Fee calc
@@ -648,6 +662,7 @@ contract Rentable is
         }
     }
 
+
     function afterOTokenTransfer(
         address tokenAddress,
         address from,
@@ -700,11 +715,28 @@ contract Rentable is
         if (data.length == 0) {
             _deposit(_msgSender(), tokenId, from, true);
         } else {
-            (
-                address paymentTokenAddress,
-                uint256 maxTimeDuration,
-                uint256 pricePerBlock
-            ) = abi.decode(data, (address, uint256, uint256));
+
+            address paymentTokenAddress;
+            uint256 maxTimeDuration;
+            uint256 pricePerBlock;
+            address privateRenter;
+
+            if (data.length == 96) {
+                (
+                    paymentTokenAddress,
+                    maxTimeDuration,
+                    pricePerBlock
+                ) = abi.decode(data, (address, uint256, uint256));
+                privateRenter = address(0);
+            }
+            else {
+                 (
+                    paymentTokenAddress,
+                    maxTimeDuration,
+                    pricePerBlock,
+                    privateRenter
+                ) = abi.decode(data, (address, uint256, uint256, address));
+            }
 
             _depositAndList(
                 _msgSender(),
@@ -713,8 +745,10 @@ contract Rentable is
                 true,
                 paymentTokenAddress,
                 maxTimeDuration,
-                pricePerBlock
+                pricePerBlock,
+                privateRenter
             );
+            
         }
 
         return this.onERC721Received.selector;
