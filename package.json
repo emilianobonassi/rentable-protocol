@@ -13,19 +13,25 @@
     "console": "brownie console",
     "test": "brownie test --network development",
     "fixture:realScenario": "brownie run realScenario",
-    "format": "prettier --write 'contracts/**/*.sol'",
-    "format:check": "prettier --check '**/*.*(sol|json)'",
-    "format:fix": "pretty-quick --pattern '**/*.*(sol|json)' --staged --verbose",
-    "hint": "solhint \"contracts/**/*.sol\""
+    "format:check:sol": "prettier --check '**/*.*(sol|json)'",
+    "format:check:py": "black --check --include '(tests|scripts)' .",
+    "format:check": "yarn format:check:sol && yarn format:check:py",
+    "format:fix:sol": "pretty-quick --pattern '**/*.*(sol|json)' --verbose",
+    "format:fix:py": "black --include '(tests|scripts)' .",
+    "format:fix": "yarn format:fix:sol && yarn format:fix:py",
+    "hint": "solhint \"contracts/**/*.sol\"",
+    "prepare": "husky install"
   },
   "devDependencies": {
     "dotenv": "^10.0.0",
     "ganache-cli": "^6.12.2",
     "hardhat": "^2.8.2",
+    "husky": "^7.0.4",
     "prettier": "^2.3.2",
     "prettier-plugin-solidity": "^1.0.0-beta.17",
     "pretty-quick": "^3.1.1",
     "solhint": "^3.3.6",
     "solhint-plugin-prettier": "^0.0.5"
-  }
+  },
+  "dependencies": {}
 }
