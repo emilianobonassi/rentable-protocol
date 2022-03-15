@@ -2,24 +2,48 @@
 
 pragma solidity ^0.8.11;
 
-import "./ERC1155ReadOnlyProxy.sol";
+import "@openzeppelin-upgradable/contracts/access/OwnableUpgradeable.sol";
+import "@openzeppelin-upgradable/contracts/token/ERC1155/ERC1155Upgradeable.sol";
 
-// interface IORentableHooks {
-//     function afterOTokenTransfer(
-//         address tokenAddress,
-//         address from,
-//         address to,
-//         uint256 tokenId
-//     ) external;
-// }
-
-contract ORentable1155 is ERC1155ReadOnlyProxy {
+contract ORentable1155 is OwnableUpgradeable, ERC1155Upgradeable {
     address internal _rentable;
 
-    constructor(address wrapped_) ERC1155ReadOnlyProxy(wrapped_) {}
+    address internal _minter;
 
-    function init(address wrapped, address owner) external virtual {
-        _init(wrapped, owner);
+    modifier onlyMinter() {
+        require(_msgSender() == _minter, "Only minter");
+        _;
+    }
+
+    constructor() {
+        _init(_msgSender());
+    }
+
+    function _init(address owner) internal initializer {
+        __ERC1155_init("");
+        __Context_init_unchained();
+        _transferOwnership(owner);
+    }
+
+    /**
+     * @dev See {IERC1155MetadataURI-uri}.
+     */
+    function uri(uint256 tokenId)
+        public
+        view
+        virtual
+        override
+        returns (string memory)
+    {
+        return super.uri(tokenId);
+    }
+
+    function getMinter() external view returns (address) {
+        return _minter;
+    }
+
+    function setMinter(address minter_) external onlyOwner {
+        _minter = minter_;
     }
 
     function setRentable(address rentable_) external onlyOwner {
@@ -31,18 +55,21 @@ contract ORentable1155 is ERC1155ReadOnlyProxy {
         return _rentable;
     }
 
-    //TODO: notify Rentable 1155 is transferred
-    /*     function _transfer(
-        address from,
+    function mint(
         address to,
-        uint256 tokenId
-    ) internal virtual override {
-        super._transfer(from, to, tokenId);
-        IORentableHooks(_rentable).afterOTokenTransfer(
-            _wrapped,
-            from,
-            to,
-            tokenId
-        );
-    } */
+        uint256 tokenId,
+        uint256 amount
+    ) external onlyMinter returns (uint256) {
+        _mint(to, tokenId, amount, "");
+
+        return tokenId;
+    }
+
+    function burn(
+        address from,
+        uint256 tokenId,
+        uint256 amount
+    ) external virtual onlyMinter {
+        _burn(from, tokenId, amount);
+    }
 }

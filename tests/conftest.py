@@ -32,8 +32,8 @@ def orentable(deployer, ORentable, testNFT):
 
 
 @pytest.fixture
-def orentable1155(deployer, ORentable1155, testNFT1155):
-    yield ORentable1155.deploy(testNFT1155, {"from": deployer})
+def orentable1155(deployer, ORentable1155):
+    yield ORentable1155.deploy({"from": deployer})
 
 
 @pytest.fixture

@@ -56,7 +56,7 @@ def test_deposit_1155(
 
     testNFT1155.setApprovalForAll(rentable, True, {"from": user})
 
-    tx = rentable.deposit1155(testNFT1155, tokenId, transferAmount, {"from": user})
+    tx = rentable.deposit1155(testNFT1155, tokenId, transferAmount, 0, {"from": user})
 
     evt = tx.events["Deposit1155"]
 
@@ -65,15 +65,125 @@ def test_deposit_1155(
     assert evt["tokenId"] == tokenId
     assert evt["amount"] == transferAmount
 
+    oTokenId = evt["oTokenId"]
+
+    assert rentable.oTokenId2tokenId(orentable1155, oTokenId) == tokenId
+
     # Test ownership is on orentable
     assert testNFT1155.balanceOf(rentable, tokenId) == 2
 
     # Test user ownership
-    assert orentable1155.balanceOf(user, tokenId) == 2
+    assert orentable1155.balanceOf(user, oTokenId) == 2
 
     # assert eternalstorage.getAddressValue(dummylib.TOKEN_ADDRESS()) == testNFT.address
     # assert eternalstorage.getUIntValue(dummylib.TOKEN_ID()) == tokenId
     # assert eternalstorage.getAddressValue(dummylib.USER()) == user
+
+
+def test_cannot_deposit_1155_zero(rentable, testNFT1155, accounts):
+    user = accounts[0]
+
+    tokenId = 123
+    mintAmount = 3
+    transferAmount = 0
+
+    testNFT1155.mint(user, tokenId, mintAmount, {"from": user})
+
+    testNFT1155.setApprovalForAll(rentable, True, {"from": user})
+
+    with brownie.reverts("Cannot deposit 0"):
+        rentable.deposit1155(testNFT1155, tokenId, transferAmount, 0, {"from": user})
+
+
+def test_deposit_1155_twice_same_id(rentable, testNFT1155, accounts):
+
+    user = accounts[0]
+
+    tokenId = 123
+    mintAmount = 3
+    transferAmount = 2
+
+    testNFT1155.mint(user, tokenId, mintAmount, {"from": user})
+
+    testNFT1155.setApprovalForAll(rentable, True, {"from": user})
+
+    tx = rentable.deposit1155(testNFT1155, tokenId, transferAmount, 0, {"from": user})
+
+    evt = tx.events["Deposit1155"]
+
+    oTokenId = evt["oTokenId"]
+
+    tx = rentable.deposit1155(
+        testNFT1155, tokenId, mintAmount - transferAmount, oTokenId, {"from": user}
+    )
+
+    evt = tx.events["Deposit1155"]
+
+    assert evt["oTokenId"] == oTokenId
+
+
+def test_deposit_1155_twice_no_id(rentable, testNFT1155, accounts):
+
+    user = accounts[0]
+
+    tokenId = 123
+    mintAmount = 3
+    transferAmount = 2
+
+    testNFT1155.mint(user, tokenId, mintAmount, {"from": user})
+
+    testNFT1155.setApprovalForAll(rentable, True, {"from": user})
+
+    tx = rentable.deposit1155(testNFT1155, tokenId, transferAmount, 0, {"from": user})
+
+    evt = tx.events["Deposit1155"]
+
+    oTokenId = evt["oTokenId"]
+
+    tx = rentable.deposit1155(
+        testNFT1155, tokenId, mintAmount - transferAmount, 0, {"from": user}
+    )
+
+    evt = tx.events["Deposit1155"]
+
+    assert evt["oTokenId"] != oTokenId
+
+
+def test_cannot_deposit_1155_different_id(
+    rentable, orentable1155, testNFT1155, accounts
+):
+
+    user = accounts[0]
+
+    tokenId = 123
+    mintAmount = 3
+    transferAmount = 2
+
+    testNFT1155.mint(user, tokenId, mintAmount, {"from": user})
+
+    testNFT1155.setApprovalForAll(rentable, True, {"from": user})
+
+    tx = rentable.deposit1155(testNFT1155, tokenId, transferAmount, 0, {"from": user})
+
+    evt = tx.events["Deposit1155"]
+
+    oTokenId = evt["oTokenId"]
+
+    with brownie.reverts("oTokenId not associated to tokenId"):
+        rentable.deposit1155(
+            testNFT1155,
+            tokenId,
+            mintAmount - transferAmount,
+            oTokenId + 1,
+            {"from": user},
+        )
+
+    orentable1155.safeTransferFrom(user, accounts[1], oTokenId, 2, "", {"from": user})
+
+    with brownie.reverts("You cannot deposit on a oTokenId you do not own"):
+        rentable.deposit1155(
+            testNFT1155, tokenId, mintAmount - transferAmount, oTokenId, {"from": user}
+        )
 
 
 def test_deposit_1tx(rentable, orentable, testNFT, accounts):

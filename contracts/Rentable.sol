@@ -70,6 +70,9 @@ contract Rentable is
 
     address payable _feeCollector;
 
+    mapping(address => uint256) private _nextIdORentable1155;
+    mapping(address => mapping(uint256 => uint256)) public oTokenId2tokenId;
+
     event Deposit(
         address indexed who,
         address indexed tokenAddress,
@@ -80,7 +83,8 @@ contract Rentable is
         address indexed who,
         address indexed tokenAddress,
         uint256 indexed tokenId,
-        uint256 amount
+        uint256 amount,
+        uint256 oTokenId
     );
 
     event UpdateLeaseConditions(
@@ -288,9 +292,12 @@ contract Rentable is
         address tokenAddress,
         uint256 tokenId,
         uint256 amount,
+        uint256 oTokenId,
         address to,
         bool skipTransfer
     ) internal returns (uint256 oRentableId) {
+        require(amount > 0, "Cannot deposit 0");
+
         ORentable1155 oRentable = _getExistingORentable1155(tokenAddress);
 
         if (!skipTransfer) {
@@ -304,11 +311,26 @@ contract Rentable is
         }
 
         //TODO: should check balance changed +x before minting
-        oRentableId = oRentable.mint(to, tokenId, amount);
+        if (oTokenId == 0) {
+            oTokenId = _nextIdORentable1155[address(oRentable)] + 1;
+            _nextIdORentable1155[address(oRentable)] = oTokenId;
+            oTokenId2tokenId[address(oRentable)][oTokenId] = tokenId;
+        } else {
+            //TODO: explore cornercases tokenId == 0
+            require(
+                oTokenId2tokenId[address(oRentable)][oTokenId] == tokenId,
+                "oTokenId not associated to tokenId"
+            );
+            require(
+                oRentable.balanceOf(to, oTokenId) > 0,
+                "You cannot deposit on a oTokenId you do not own"
+            );
+        }
+        oRentableId = oRentable.mint(to, oTokenId, amount);
 
         _postDeposit(tokenAddress, tokenId, to);
 
-        emit Deposit1155(to, tokenAddress, tokenId, amount);
+        emit Deposit1155(to, tokenAddress, tokenId, amount, oTokenId);
     }
 
     function _depositAndList(
@@ -335,6 +357,7 @@ contract Rentable is
         address tokenAddress,
         uint256 tokenId,
         uint256 amount,
+        uint256 oTokenId,
         address to,
         bool skipTransfer,
         address paymentTokenAddress,
@@ -345,13 +368,14 @@ contract Rentable is
             tokenAddress,
             tokenId,
             amount,
+            oTokenId,
             to,
             skipTransfer
         );
 
         _createOrUpdateLeaseConditions(
             tokenAddress,
-            tokenId,
+            oRentableId,
             paymentTokenAddress,
             maxTimeDuration,
             pricePerBlock
@@ -371,7 +395,8 @@ contract Rentable is
     function deposit1155(
         address tokenAddress,
         uint256 tokenId,
-        uint256 amount
+        uint256 amount,
+        uint256 oTokenId
     )
         external
         nonReentrant
@@ -379,7 +404,15 @@ contract Rentable is
         onlyAllowlisted
         returns (uint256)
     {
-        return _deposit1155(tokenAddress, tokenId, amount, _msgSender(), false);
+        return
+            _deposit1155(
+                tokenAddress,
+                tokenId,
+                amount,
+                oTokenId,
+                _msgSender(),
+                false
+            );
     }
 
     function depositAndList(
@@ -411,6 +444,7 @@ contract Rentable is
         address tokenAddress,
         uint256 tokenId,
         uint256 amount,
+        uint256 oTokenId,
         address paymentTokenAddress,
         uint256 maxTimeDuration,
         uint256 pricePerBlock
@@ -426,6 +460,7 @@ contract Rentable is
                 tokenAddress,
                 tokenId,
                 amount,
+                oTokenId,
                 _msgSender(),
                 false,
                 paymentTokenAddress,
