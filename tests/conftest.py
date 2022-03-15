@@ -3,6 +3,7 @@ from utils import address0
 
 MINIMAL = False
 
+
 @pytest.fixture
 def deployer(accounts):
     yield accounts[2]
@@ -27,21 +28,26 @@ def operator(accounts):
 def weth(WETH9, deployer):
     yield WETH9.deploy({"from": deployer})
 
+
 @pytest.fixture
 def dummy1155(DummyERC1155, deployer):
     yield DummyERC1155.deploy({"from": deployer})
+
 
 @pytest.fixture
 def orentable(deployer, ORentable, testNFT):
     yield ORentable.deploy(testNFT, {"from": deployer})
 
+
 @pytest.fixture
 def yrentable(deployer, YRentable):
     yield YRentable.deploy({"from": deployer})
 
+
 @pytest.fixture
 def wrentable(deployer, WRentable, testNFT):
     yield WRentable.deploy(testNFT, {"from": deployer})
+
 
 @pytest.fixture
 def emergencyImplementation(deployer, EmergencyImplementation):
@@ -74,8 +80,12 @@ def proxyFactoryInitializable(deployer, ProxyFactoryInitializable):
 
 
 @pytest.fixture(
-    params= [["0 ether", 0]] if MINIMAL else [["0 ether", 0],  ["0.01 ether", 0], ["0 ether", 500], ["0.01 ether", 500]],
-    ids=["no-fees"] if MINIMAL else ["no-fees", "fixed-fee-no-fee", "no-fixed-fee-fee", "fixed-fee-fee"],
+    params=[["0 ether", 0]]
+    if MINIMAL
+    else [["0 ether", 0], ["0.01 ether", 0], ["0 ether", 500], ["0.01 ether", 500]],
+    ids=["no-fees"]
+    if MINIMAL
+    else ["no-fees", "fixed-fee-no-fee", "no-fixed-fee-fee", "fixed-fee-fee"],
 )
 def rentable(
     deployer,
@@ -142,13 +152,7 @@ def testNFT(deployer, TestNFT):
     yield TestNFT.deploy({"from": deployer})
 
 
-@pytest.fixture(
-    params=["ETH"] if MINIMAL else [
-        "ETH",
-        "WETH",
-        "DUMMY1155"
-    ]
-)
+@pytest.fixture(params=["ETH"] if MINIMAL else ["ETH", "WETH", "DUMMY1155"])
 def paymentToken(request, weth, dummy1155):
     if request.param == "ETH":
         return address0
@@ -158,6 +162,7 @@ def paymentToken(request, weth, dummy1155):
         return dummy1155.address
     else:
         raise Exception("paymentToken not supported")
+
 
 @pytest.fixture
 def paymentTokenId(request, paymentToken, dummy1155):

@@ -1,6 +1,7 @@
 import brownie
 from utils import *
 
+
 def test_redeem_after_expire(
     rentable,
     testNFT,
@@ -30,15 +31,23 @@ def test_redeem_after_expire(
     pricePerBlock = 0.01 * (10**18)
 
     rentable.createOrUpdateLeaseConditions(
-        testNFT, tokenId, paymentToken, paymentTokenId, maxTimeDuration, pricePerBlock, address0, {"from": user}
+        testNFT,
+        tokenId,
+        paymentToken,
+        paymentTokenId,
+        maxTimeDuration,
+        pricePerBlock,
+        address0,
+        {"from": user},
     )
 
     # Test subscribtion
     subscriptionDuration = 10  # blocks
     value = "0.1 ether"
 
-
-    depositAndApprove(subscriber, rentable, value, paymentToken, paymentTokenId, weth, dummy1155)
+    depositAndApprove(
+        subscriber, rentable, value, paymentToken, paymentTokenId, weth, dummy1155
+    )
 
     rentable.createLease(
         testNFT, tokenId, subscriptionDuration, {"from": subscriber, "value": value}
@@ -87,14 +96,23 @@ def test_subscribe_after_expire(
     pricePerBlock = 0.01 * (10**18)
 
     rentable.createOrUpdateLeaseConditions(
-        testNFT, tokenId, paymentToken, paymentTokenId, maxTimeDuration, pricePerBlock, address0, {"from": user}
+        testNFT,
+        tokenId,
+        paymentToken,
+        paymentTokenId,
+        maxTimeDuration,
+        pricePerBlock,
+        address0,
+        {"from": user},
     )
 
     # Test subscribtion
     subscriptionDuration = 10  # blocks
     value = "0.1 ether"
 
-    depositAndApprove(subscriber, rentable, value, paymentToken, paymentTokenId, weth, dummy1155)
+    depositAndApprove(
+        subscriber, rentable, value, paymentToken, paymentTokenId, weth, dummy1155
+    )
 
     rentable.createLease(
         testNFT, tokenId, subscriptionDuration, {"from": subscriber, "value": value}
@@ -115,7 +133,9 @@ def test_subscribe_after_expire(
     subscriptionDuration = 10  # blocks
     value = "0.1 ether"
 
-    depositAndApprove(subscriber, rentable, value, paymentToken, paymentTokenId, weth, dummy1155)
+    depositAndApprove(
+        subscriber, rentable, value, paymentToken, paymentTokenId, weth, dummy1155
+    )
 
     rentable.createLease(
         testNFT, tokenId, subscriptionDuration, {"from": subscriber, "value": value}
