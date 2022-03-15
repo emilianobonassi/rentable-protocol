@@ -100,6 +100,7 @@ def test_wrappers_proxy_double_init(
     with brownie.reverts("Initializable: contract is already initialized"):
         wrapperProxy.init(t1, "l", deployer)
 
+
 def test_wrapper_1155(testNFT, deployer, ERC721ReadOnlyProxy, accounts):
     testNFT.mint(deployer, 123, {"from": deployer})
 
@@ -159,6 +160,7 @@ def test_wrappers_proxy_init_1155(
     assert wrapperProxy.getWrapped() == t2.address
 
     assert wrapperProxy.uri(0) == t2.uri(0)
+
 
 def test_wrappers_proxy_double_init_1155(
     TestNFT1155,

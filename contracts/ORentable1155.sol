@@ -32,7 +32,7 @@ contract ORentable1155 is ERC1155ReadOnlyProxy {
     }
 
     //TODO: notify Rentable 1155 is transferred
-/*     function _transfer(
+    /*     function _transfer(
         address from,
         address to,
         uint256 tokenId

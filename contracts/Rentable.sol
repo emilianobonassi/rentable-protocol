@@ -75,7 +75,7 @@ contract Rentable is
         address indexed tokenAddress,
         uint256 indexed tokenId
     );
-    
+
     event Deposit1155(
         address indexed who,
         address indexed tokenAddress,
@@ -281,7 +281,13 @@ contract Rentable is
         ORentable1155 oRentable = _getExistingORentable1155(tokenAddress);
 
         if (!skipTransfer) {
-            IERC1155(tokenAddress).safeTransferFrom(to, address(this), tokenId, amount, '');
+            IERC1155(tokenAddress).safeTransferFrom(
+                to,
+                address(this),
+                tokenId,
+                amount,
+                ""
+            );
         }
 
         //TODO: should check balance changed +x before minting
@@ -312,6 +318,33 @@ contract Rentable is
         );
     }
 
+    function _deposit1155AndList(
+        address tokenAddress,
+        uint256 tokenId,
+        uint256 amount,
+        address to,
+        bool skipTransfer,
+        address paymentTokenAddress,
+        uint256 maxTimeDuration,
+        uint256 pricePerBlock
+    ) internal returns (uint256 oRentableId) {
+        oRentableId = _deposit1155(
+            tokenAddress,
+            tokenId,
+            amount,
+            to,
+            skipTransfer
+        );
+
+        _createOrUpdateLeaseConditions(
+            tokenAddress,
+            tokenId,
+            paymentTokenAddress,
+            maxTimeDuration,
+            pricePerBlock
+        );
+    }
+
     function deposit(address tokenAddress, uint256 tokenId)
         external
         nonReentrant
@@ -322,7 +355,11 @@ contract Rentable is
         return _deposit(tokenAddress, tokenId, _msgSender(), false);
     }
 
-    function deposit1155(address tokenAddress, uint256 tokenId, uint256 amount)
+    function deposit1155(
+        address tokenAddress,
+        uint256 tokenId,
+        uint256 amount
+    )
         external
         nonReentrant
         whenPausedthenProxy
@@ -349,6 +386,33 @@ contract Rentable is
             _depositAndList(
                 tokenAddress,
                 tokenId,
+                _msgSender(),
+                false,
+                paymentTokenAddress,
+                maxTimeDuration,
+                pricePerBlock
+            );
+    }
+
+    function deposit1155AndList(
+        address tokenAddress,
+        uint256 tokenId,
+        uint256 amount,
+        address paymentTokenAddress,
+        uint256 maxTimeDuration,
+        uint256 pricePerBlock
+    )
+        external
+        nonReentrant
+        whenPausedthenProxy
+        onlyAllowlisted
+        returns (uint256)
+    {
+        return
+            _deposit1155AndList(
+                tokenAddress,
+                tokenId,
+                amount,
                 _msgSender(),
                 false,
                 paymentTokenAddress,

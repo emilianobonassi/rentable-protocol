@@ -36,7 +36,10 @@ def test_deposit(rentable, orentable, testNFT, accounts, dummylib, eternalstorag
     assert eternalstorage.getUIntValue(dummylib.TOKEN_ID()) == tokenId
     assert eternalstorage.getAddressValue(dummylib.USER()) == user
 
-def test_deposit_1155(rentable, orentable1155, testNFT1155, accounts, dummylib, eternalstorage):
+
+def test_deposit_1155(
+    rentable, orentable1155, testNFT1155, accounts, dummylib, eternalstorage
+):
 
     # TODO: add test for hooks
     # rentable.setLibrary(testNFT, dummylib)
@@ -71,6 +74,7 @@ def test_deposit_1155(rentable, orentable1155, testNFT1155, accounts, dummylib, 
     # assert eternalstorage.getAddressValue(dummylib.TOKEN_ADDRESS()) == testNFT.address
     # assert eternalstorage.getUIntValue(dummylib.TOKEN_ID()) == tokenId
     # assert eternalstorage.getAddressValue(dummylib.USER()) == user
+
 
 def test_deposit_1tx(rentable, orentable, testNFT, accounts):
     user = accounts[0]
@@ -169,6 +173,101 @@ def test_depositAndList(rentable, orentable, testNFT, accounts, paymentToken):
     )
 
     lease = rentable.leasesConditions(testNFT, tokenId).dict()
+
+    assert lease["fixedFee"] == currentFixedFee
+    assert lease["fee"] == currentFee
+
+
+def test_deposit1155AndList(
+    rentable, orentable1155, testNFT1155, accounts, paymentToken
+):
+    user = accounts[0]
+
+    tokenId = 123
+    mintAmount = 3
+    transferAmount = 2
+
+    testNFT1155.mint(user, tokenId, mintAmount, {"from": user})
+
+    testNFT1155.setApprovalForAll(rentable, True, {"from": user})
+
+    maxTimeDuration = 1000  # blocks
+    pricePerBlock = 0.001 * (10**18)
+
+    tx = rentable.deposit1155AndList(
+        testNFT1155,
+        tokenId,
+        transferAmount,
+        paymentToken,
+        maxTimeDuration,
+        pricePerBlock,
+        {"from": user},
+    )
+
+    evt = tx.events["Deposit1155"]
+
+    assert evt["who"] == user
+    assert evt["tokenAddress"] == testNFT1155.address
+    assert evt["tokenId"] == tokenId
+    assert evt["amount"] == transferAmount
+
+    evt = tx.events["UpdateLeaseConditions"]
+
+    assert evt["tokenAddress"] == testNFT1155.address
+    assert evt["tokenId"] == tokenId
+    assert evt["paymentTokenAddress"] == paymentToken
+    assert evt["maxTimeDuration"] == maxTimeDuration
+    assert evt["pricePerBlock"] == pricePerBlock
+
+    # Test ownership is on orentable
+    assert testNFT1155.balanceOf(rentable, tokenId) == 2
+
+    # Test user ownership
+    assert orentable1155.balanceOf(user, tokenId) == 2
+
+    # Test lease created correctly
+    currentFixedFee = rentable.getFixedFee()
+    currentFee = rentable.getFee()
+    lease = rentable.leasesConditions(testNFT1155, tokenId).dict()
+    assert lease["maxTimeDuration"] == maxTimeDuration
+    assert lease["pricePerBlock"] == pricePerBlock
+    assert lease["paymentTokenAddress"] == paymentToken
+    assert lease["fixedFee"] == currentFixedFee
+    assert lease["fee"] == currentFee
+
+    previousFixedFee = currentFixedFee
+    previousFee = currentFee
+
+    # Change fees, previous listings not affected only new ones
+    rentable.setFixedFee("0.5 ether")
+    rentable.setFee(800)
+
+    currentFixedFee = rentable.getFixedFee()
+    currentFee = rentable.getFee()
+
+    lease = rentable.leasesConditions(testNFT1155, tokenId).dict()
+
+    assert lease["fixedFee"] == previousFixedFee
+    assert lease["fee"] == previousFee
+
+    tokenId = 124
+
+    testNFT1155.mint(user, tokenId, 1, {"from": user})
+
+    maxTimeDuration = 1000  # blocks
+    pricePerBlock = 0.001 * (10**18)
+
+    rentable.deposit1155AndList(
+        testNFT1155,
+        tokenId,
+        1,
+        paymentToken,
+        maxTimeDuration,
+        pricePerBlock,
+        {"from": user},
+    )
+
+    lease = rentable.leasesConditions(testNFT1155, tokenId).dict()
 
     assert lease["fixedFee"] == currentFixedFee
     assert lease["fee"] == currentFee

@@ -19,11 +19,8 @@ contract ERC1155ReadOnlyProxy is OwnableUpgradeable, ERC1155Upgradeable {
         _init(wrapped, _msgSender());
     }
 
-    function _init(
-        address wrapped,
-        address owner
-    ) internal initializer {
-        __ERC1155_init('');
+    function _init(address wrapped, address owner) internal initializer {
+        __ERC1155_init("");
         __Context_init_unchained();
         _transferOwnership(owner);
 
@@ -37,7 +34,13 @@ contract ERC1155ReadOnlyProxy is OwnableUpgradeable, ERC1155Upgradeable {
     /**
      * @dev See {IERC1155MetadataURI-uri}.
      */
-    function uri(uint256 tokenId) public view virtual override returns (string memory) {
+    function uri(uint256 tokenId)
+        public
+        view
+        virtual
+        override
+        returns (string memory)
+    {
         return IERC1155MetadataURIUpgradeable(_wrapped).uri(tokenId);
     }
 
@@ -49,17 +52,21 @@ contract ERC1155ReadOnlyProxy is OwnableUpgradeable, ERC1155Upgradeable {
         _minter = minter_;
     }
 
-    function mint(address to, uint256 tokenId, uint256 amount)
-        external
-        onlyMinter
-        returns (uint256)
-    {
-        _mint(to, tokenId, amount, '');
+    function mint(
+        address to,
+        uint256 tokenId,
+        uint256 amount
+    ) external onlyMinter returns (uint256) {
+        _mint(to, tokenId, amount, "");
 
         return tokenId;
     }
 
-    function burn(address from, uint256 tokenId, uint256 amount) external virtual onlyMinter {
+    function burn(
+        address from,
+        uint256 tokenId,
+        uint256 amount
+    ) external virtual onlyMinter {
         _burn(from, tokenId, amount);
     }
 

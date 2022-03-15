@@ -30,9 +30,11 @@ def weth(WETH9, deployer):
 def orentable(deployer, ORentable, testNFT):
     yield ORentable.deploy(testNFT, {"from": deployer})
 
+
 @pytest.fixture
 def orentable1155(deployer, ORentable1155, testNFT1155):
     yield ORentable1155.deploy(testNFT1155, {"from": deployer})
+
 
 @pytest.fixture
 def yrentable(deployer, YRentable):
@@ -75,8 +77,12 @@ def proxyFactoryInitializable(deployer, ProxyFactoryInitializable):
 
 
 @pytest.fixture(
-    params=[["0 ether", 0], ],#["0.01 ether", 0], ["0 ether", 500], ["0.01 ether", 500]],
-    ids=["no-fees", ]# "fixed-fee-no-fee", "no-fixed-fee-fee", "fixed-fee-fee"],
+    params=[
+        ["0 ether", 0],
+    ],  # ["0.01 ether", 0], ["0 ether", 500], ["0.01 ether", 500]],
+    ids=[
+        "no-fees",
+    ],  # "fixed-fee-no-fee", "no-fixed-fee-fee", "fixed-fee-fee"],
 )
 def rentable(
     deployer,
@@ -145,14 +151,16 @@ def rentable(
 def testNFT(deployer, TestNFT):
     yield TestNFT.deploy({"from": deployer})
 
+
 @pytest.fixture
 def testNFT1155(deployer, TestNFT1155):
     yield TestNFT1155.deploy({"from": deployer})
 
+
 @pytest.fixture(
     params=[
         "ETH",
-        #"WETH",
+        # "WETH",
     ]
 )
 def paymentToken(request, weth):
