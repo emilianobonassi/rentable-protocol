@@ -4,6 +4,7 @@ import eth_abi
 from brownie import Wei
 from const import address0
 
+
 def deposit1tx(
     rentable, nft, depositor, tokenId, maxTimeDuration, pricePerBlock, paymentToken
 ):
@@ -100,6 +101,4 @@ def test_flow(rentable, interface, testLand, accounts, chain, deployer):
 
     rentable.withdraw(testLand, tokenId, {"from": originalOwner})
 
-    assert (
-        testLand.updateOperator(tokenId) == address0
-    )  # must not change
+    assert testLand.updateOperator(tokenId) == address0  # must not change

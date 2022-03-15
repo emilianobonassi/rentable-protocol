@@ -3,6 +3,7 @@ from const import address0
 
 MINIMAL = False
 
+
 @pytest.fixture
 def deployer(accounts):
     yield accounts[2]
@@ -31,7 +32,6 @@ def weth(WETH9, deployer):
 @pytest.fixture
 def orentable(deployer, ORentable, testNFT):
     yield ORentable.deploy(testNFT, {"from": deployer})
-
 
 
 @pytest.fixture
@@ -75,8 +75,12 @@ def proxyFactoryInitializable(deployer, ProxyFactoryInitializable):
 
 
 @pytest.fixture(
-    params= [["0 ether", 0]] if MINIMAL else [["0 ether", 0],  ["0.01 ether", 0], ["0 ether", 500], ["0.01 ether", 500]],
-    ids=["no-fees"] if MINIMAL else ["no-fees", "fixed-fee-no-fee", "no-fixed-fee-fee", "fixed-fee-fee"],
+    params=[["0 ether", 0]]
+    if MINIMAL
+    else [["0 ether", 0], ["0.01 ether", 0], ["0 ether", 500], ["0.01 ether", 500]],
+    ids=["no-fees"]
+    if MINIMAL
+    else ["no-fees", "fixed-fee-no-fee", "no-fixed-fee-fee", "fixed-fee-fee"],
 )
 def rentable(
     deployer,

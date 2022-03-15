@@ -1,6 +1,7 @@
 import brownie
 from const import address0
 
+
 def test_SCRAM(
     testNFT,
     rentable,
@@ -33,7 +34,13 @@ def test_SCRAM(
     pricePerBlock = 0.001 * (10**18)
 
     rentable.createOrUpdateLeaseConditions(
-        testNFT, tokenId, paymentToken, maxTimeDuration, pricePerBlock, address0, {"from": user}
+        testNFT,
+        tokenId,
+        paymentToken,
+        maxTimeDuration,
+        pricePerBlock,
+        address0,
+        {"from": user},
     )
 
     rentable.createOrUpdateLeaseConditions(
@@ -151,8 +158,6 @@ def test_SCRAM(
     elif paymentToken == address0:
         rbalance = rentable.balance()
         gbalance = governance.balance()
-        rentable.emergencyWithdrawERC20ETH(
-            address0, {"from": governance}
-        )
+        rentable.emergencyWithdrawERC20ETH(address0, {"from": governance})
         assert governance.balance() == gbalance + rbalance
         assert rentable.balance() == 0

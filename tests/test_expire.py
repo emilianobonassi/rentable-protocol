@@ -1,6 +1,7 @@
 import brownie
 from const import address0
 
+
 def test_redeem_after_expire(
     rentable,
     testNFT,
@@ -28,7 +29,13 @@ def test_redeem_after_expire(
     pricePerBlock = 0.01 * (10**18)
 
     rentable.createOrUpdateLeaseConditions(
-        testNFT, tokenId, paymentToken, maxTimeDuration, pricePerBlock, address0, {"from": user}
+        testNFT,
+        tokenId,
+        paymentToken,
+        maxTimeDuration,
+        pricePerBlock,
+        address0,
+        {"from": user},
     )
 
     # Test subscribtion
@@ -87,7 +94,13 @@ def test_subscribe_after_expire(
     pricePerBlock = 0.01 * (10**18)
 
     rentable.createOrUpdateLeaseConditions(
-        testNFT, tokenId, paymentToken, maxTimeDuration, pricePerBlock, address0, {"from": user}
+        testNFT,
+        tokenId,
+        paymentToken,
+        maxTimeDuration,
+        pricePerBlock,
+        address0,
+        {"from": user},
     )
 
     # Test subscribtion

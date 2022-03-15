@@ -4,6 +4,7 @@ import eth_abi
 from brownie import Wei
 from const import address0
 
+
 def test_deposit(rentable, orentable, testNFT, accounts, dummylib, eternalstorage):
 
     rentable.setLibrary(testNFT, dummylib)
@@ -72,7 +73,13 @@ def test_depositAndList(rentable, orentable, testNFT, accounts, paymentToken):
     pricePerBlock = 0.001 * (10**18)
 
     tx = rentable.depositAndList(
-        testNFT, tokenId, paymentToken, maxTimeDuration, pricePerBlock, address0, {"from": user}
+        testNFT,
+        tokenId,
+        paymentToken,
+        maxTimeDuration,
+        pricePerBlock,
+        address0,
+        {"from": user},
     )
 
     evt = tx.events["Deposit"]
@@ -130,7 +137,13 @@ def test_depositAndList(rentable, orentable, testNFT, accounts, paymentToken):
     pricePerBlock = 0.001 * (10**18)
 
     rentable.depositAndList(
-        testNFT, tokenId, paymentToken, maxTimeDuration, pricePerBlock, address0, {"from": user}
+        testNFT,
+        tokenId,
+        paymentToken,
+        maxTimeDuration,
+        pricePerBlock,
+        address0,
+        {"from": user},
     )
 
     lease = rentable.leasesConditions(testNFT, tokenId).dict()
@@ -214,7 +227,13 @@ def test_depositAndList_1tx(rentable, orentable, testNFT, accounts, paymentToken
     pricePerBlock = 0.001 * (10**18)
 
     rentable.depositAndList(
-        testNFT, tokenId, paymentToken, maxTimeDuration, pricePerBlock, address0, {"from": user}
+        testNFT,
+        tokenId,
+        paymentToken,
+        maxTimeDuration,
+        pricePerBlock,
+        address0,
+        {"from": user},
     )
 
     lease = rentable.leasesConditions(testNFT, tokenId).dict()
@@ -223,7 +242,9 @@ def test_depositAndList_1tx(rentable, orentable, testNFT, accounts, paymentToken
     assert lease["fee"] == currentFee
 
 
-def test_depositAndPrivateList_1tx(rentable, orentable, testNFT, accounts, paymentToken):
+def test_depositAndPrivateList_1tx(
+    rentable, orentable, testNFT, accounts, paymentToken
+):
     user = accounts[0]
     privateRenter = accounts[1]
 
@@ -300,7 +321,13 @@ def test_depositAndPrivateList_1tx(rentable, orentable, testNFT, accounts, payme
     pricePerBlock = 0.001 * (10**18)
 
     rentable.depositAndList(
-        testNFT, tokenId, paymentToken, maxTimeDuration, pricePerBlock, address0, {"from": user}
+        testNFT,
+        tokenId,
+        paymentToken,
+        maxTimeDuration,
+        pricePerBlock,
+        address0,
+        {"from": user},
     )
 
     lease = rentable.leasesConditions(testNFT, tokenId).dict()
