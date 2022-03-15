@@ -513,9 +513,14 @@ def test_withdraw1155(rentable, orentable1155, testNFT1155, accounts):
 
     testNFT1155.setApprovalForAll(rentable, True, {"from": user})
 
-    rentable.deposit1155(testNFT1155, tokenId, transferAmount, {"from": user})
+    tx = rentable.deposit1155(testNFT1155, tokenId, transferAmount, 0, {"from": user})
 
-    tx = rentable.withdraw1155(testNFT1155, tokenId, transferAmount, {"from": user})
+    tx = rentable.withdraw1155(
+        testNFT1155,
+        tx.events["Deposit1155"]["oTokenId"],
+        transferAmount,
+        {"from": user},
+    )
 
     evt = tx.events["Withdraw1155"]
 
@@ -546,9 +551,12 @@ def test_withdraw1155_less(rentable, orentable1155, testNFT1155, accounts):
 
     testNFT1155.setApprovalForAll(rentable, True, {"from": user})
 
-    rentable.deposit1155(testNFT1155, tokenId, transferAmount, {"from": user})
+    tx = rentable.deposit1155(testNFT1155, tokenId, transferAmount, 0, {"from": user})
+    oTokenId = tx.events["Deposit1155"]["oTokenId"]
 
-    tx = rentable.withdraw1155(testNFT1155, tokenId, transferAmount - 1, {"from": user})
+    tx = rentable.withdraw1155(
+        testNFT1155, oTokenId, transferAmount - 1, {"from": user}
+    )
 
     evt = tx.events["Withdraw1155"]
 
@@ -556,14 +564,15 @@ def test_withdraw1155_less(rentable, orentable1155, testNFT1155, accounts):
     assert evt["tokenAddress"] == testNFT1155.address
     assert evt["tokenId"] == tokenId
     assert evt["amount"] == transferAmount - 1
+    assert evt["oTokenId"] == oTokenId
 
     # Test user ownership
-    assert orentable1155.balanceOf(user, tokenId) == 1
+    assert orentable1155.balanceOf(user, oTokenId) == 1
 
     # Test ownership is back on user
     assert testNFT1155.balanceOf(user, tokenId) == mintAmount - 1
 
-    leaseConditions = rentable.leasesConditions(testNFT1155, tokenId)
+    leaseConditions = rentable.leasesConditions(testNFT1155, oTokenId)
 
     assert leaseConditions != (0, 0, "0x0000000000000000000000000000000000000000", 0, 0)
 
@@ -579,13 +588,13 @@ def test_cannot_withdraw1155_zero(rentable, orentable1155, testNFT1155, accounts
 
     testNFT1155.setApprovalForAll(rentable, True, {"from": user})
 
-    rentable.deposit1155(testNFT1155, tokenId, transferAmount, {"from": user})
+    rentable.deposit1155(testNFT1155, tokenId, transferAmount, 0, {"from": user})
 
     with brownie.reverts("Cannot withdraw 0"):
         tx = rentable.withdraw1155(testNFT1155, tokenId, 0, {"from": user})
 
 
-def test_cannot_withdraw1155_too_much(rentable, orentable1155, testNFT1155, accounts):
+def test_cannot_withdraw1155_too_much(rentable, testNFT1155, accounts):
     user = accounts[0]
 
     tokenId = 123
@@ -596,7 +605,7 @@ def test_cannot_withdraw1155_too_much(rentable, orentable1155, testNFT1155, acco
 
     testNFT1155.setApprovalForAll(rentable, True, {"from": user})
 
-    rentable.deposit1155(testNFT1155, tokenId, transferAmount, {"from": user})
+    rentable.deposit1155(testNFT1155, tokenId, transferAmount, 0, {"from": user})
 
     with brownie.reverts("The token must be yours"):
         tx = rentable.withdraw1155(
