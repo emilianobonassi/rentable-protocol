@@ -308,6 +308,7 @@ def test_deposit1155AndList(
         testNFT1155,
         tokenId,
         transferAmount,
+        0,
         paymentToken,
         maxTimeDuration,
         pricePerBlock,
@@ -321,10 +322,12 @@ def test_deposit1155AndList(
     assert evt["tokenId"] == tokenId
     assert evt["amount"] == transferAmount
 
+    oTokenId = evt["oTokenId"]
+
     evt = tx.events["UpdateLeaseConditions"]
 
     assert evt["tokenAddress"] == testNFT1155.address
-    assert evt["tokenId"] == tokenId
+    assert evt["tokenId"] == oTokenId
     assert evt["paymentTokenAddress"] == paymentToken
     assert evt["maxTimeDuration"] == maxTimeDuration
     assert evt["pricePerBlock"] == pricePerBlock
@@ -333,12 +336,12 @@ def test_deposit1155AndList(
     assert testNFT1155.balanceOf(rentable, tokenId) == 2
 
     # Test user ownership
-    assert orentable1155.balanceOf(user, tokenId) == 2
+    assert orentable1155.balanceOf(user, oTokenId) == 2
 
     # Test lease created correctly
     currentFixedFee = rentable.getFixedFee()
     currentFee = rentable.getFee()
-    lease = rentable.leasesConditions(testNFT1155, tokenId).dict()
+    lease = rentable.leasesConditions(testNFT1155, oTokenId).dict()
     assert lease["maxTimeDuration"] == maxTimeDuration
     assert lease["pricePerBlock"] == pricePerBlock
     assert lease["paymentTokenAddress"] == paymentToken
@@ -355,7 +358,7 @@ def test_deposit1155AndList(
     currentFixedFee = rentable.getFixedFee()
     currentFee = rentable.getFee()
 
-    lease = rentable.leasesConditions(testNFT1155, tokenId).dict()
+    lease = rentable.leasesConditions(testNFT1155, oTokenId).dict()
 
     assert lease["fixedFee"] == previousFixedFee
     assert lease["fee"] == previousFee
@@ -367,17 +370,21 @@ def test_deposit1155AndList(
     maxTimeDuration = 1000  # blocks
     pricePerBlock = 0.001 * (10**18)
 
-    rentable.deposit1155AndList(
+    tx = rentable.deposit1155AndList(
         testNFT1155,
         tokenId,
         1,
+        0,
         paymentToken,
         maxTimeDuration,
         pricePerBlock,
         {"from": user},
     )
 
-    lease = rentable.leasesConditions(testNFT1155, tokenId).dict()
+    evt = tx.events["Deposit1155"]
+    oTokenId = evt["oTokenId"]
+
+    lease = rentable.leasesConditions(testNFT1155, oTokenId).dict()
 
     assert lease["fixedFee"] == currentFixedFee
     assert lease["fee"] == currentFee
