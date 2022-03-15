@@ -95,6 +95,12 @@ contract Rentable is
         address indexed tokenAddress,
         uint256 indexed tokenId
     );
+    event Withdraw1155(
+        address indexed who,
+        address indexed tokenAddress,
+        uint256 indexed tokenId,
+        uint256 amount
+    );
     event Rent(
         address from,
         address indexed to,
@@ -237,6 +243,13 @@ contract Rentable is
 
         require(oRentable.ownerOf(tokenId) == user, "The token must be yours");
     }
+
+    function _getExistingORentable1155CheckOwnership(
+        address tokenAddress,
+        uint256 tokenId,
+        address user,
+        uint256 amount
+    ) internal virtual returns (ORentable1155 oRentable) {}
 
     modifier onlyOTokenOwner(address tokenAddress, uint256 tokenId) {
         _getExistingORentableCheckOwnership(
@@ -450,6 +463,37 @@ contract Rentable is
         oRentable.burn(tokenId);
 
         emit Withdraw(user, tokenAddress, tokenId);
+    }
+
+    function withdraw1155(
+        address tokenAddress,
+        uint256 tokenId,
+        uint256 amount
+    ) external nonReentrant whenPausedthenProxy onlyAllowlisted {
+        require(amount > 0, "Cannot withdraw 0");
+
+        address user = _msgSender();
+
+        ORentable1155 oRentable = _getExistingORentable1155(tokenAddress);
+        uint256 balance = oRentable.balanceOf(user, tokenId);
+        require(balance >= amount, "The token must be yours");
+
+        //TODO: different structure to check 1155 current leases
+
+        IERC1155(tokenAddress).safeTransferFrom(
+            address(this),
+            user,
+            tokenId,
+            amount,
+            ""
+        );
+
+        //TODO: should not cancel conditions if there's still some otoken
+        delete _leasesConditions[tokenAddress][tokenId];
+
+        oRentable.burn(user, tokenId, amount);
+
+        emit Withdraw1155(user, tokenAddress, tokenId, amount);
     }
 
     function leasesConditions(address tokenAddress, uint256 tokenId)
