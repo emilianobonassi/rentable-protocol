@@ -7,7 +7,7 @@ import "@openzeppelin/contracts/token/ERC721/IERC721Receiver.sol";
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 import "@openzeppelin/contracts/token/ERC1155/IERC1155.sol";
-import "@openzeppelin/contracts/token/ERC1155/IERC1155Receiver.sol";
+import "@openzeppelin/contracts/token/ERC1155/utils/ERC1155Holder.sol";
 import "@openzeppelin/contracts/utils/math/SafeMath.sol";
 import "@openzeppelin/contracts/utils/Address.sol";
 import "@openzeppelin/contracts/access/Ownable.sol";
@@ -21,7 +21,7 @@ import "./RentableHooks.sol";
 contract Rentable is
     Security4,
     IERC721Receiver,
-    IERC1155Receiver,
+    ERC1155Holder,
     RentableHooks,
     ReentrancyGuard
 {
@@ -64,8 +64,9 @@ contract Rentable is
     mapping(address => address) internal _wrentables;
     mapping(address => ORentable) internal _orentables;
 
-    mapping(address => uint8) public paymentTokenAllowlist; // 0 not allowed, 1 ERC20, 2 ERC1155
+    mapping(address => uint8) public paymentTokenAllowlist; 
 
+    uint8 private constant NOT_ALLOWED_TOKEN = 1;
     uint8 private constant ERC20_TOKEN = 1;
     uint8 private constant ERC1155_TOKEN = 2;
 
@@ -199,7 +200,7 @@ contract Rentable is
         external
         onlyGovernance
     {
-        paymentTokenAllowlist[paymentTokenAddress] = 0;
+        paymentTokenAllowlist[paymentTokenAddress] = NOT_ALLOWED_TOKEN;
     }
 
     function _getExistingORentable(address tokenAddress)
@@ -378,7 +379,7 @@ contract Rentable is
         address privateRenter
     ) internal {
         require(
-            paymentTokenAllowlist[paymentTokenAddress] > 0,
+            paymentTokenAllowlist[paymentTokenAddress] != NOT_ALLOWED_TOKEN,
             "Not supported payment token"
         );
 
@@ -499,10 +500,8 @@ contract Rentable is
         );
 
         address user = _msgSender();
-
-        if (leaseCondition.privateRenter != address(0)){
-            require(leaseCondition.privateRenter == user, "Rental reserved for another user");
-        }
+        
+        require(leaseCondition.privateRenter == address(0) || leaseCondition.privateRenter == user, "Rental reserved for another user");
 
         uint256 paymentQty = leaseCondition.pricePerBlock.mul(duration);
 
@@ -790,32 +789,13 @@ contract Rentable is
         if (data.length == 0) {
             _deposit(_msgSender(), tokenId, from, true);
         } else {
-
-            address paymentTokenAddress;
-            uint256 paymentTokenId;
-            uint256 maxTimeDuration;
-            uint256 pricePerBlock;
-            address privateRenter;
-            
-            if (data.length == 96) {
-                (
-                    paymentTokenAddress,
-                    maxTimeDuration,
-                    pricePerBlock
-                ) = abi.decode(data, (address, uint256, uint256));
-                privateRenter = address(0);
-                paymentTokenId = 0;
-            }
-            else {
-                 (
-                    paymentTokenAddress,
-                    paymentTokenId,
-                    maxTimeDuration,
-                    pricePerBlock,
-                    privateRenter
-                ) = abi.decode(data, (address, uint256, uint256, uint256, address));
-            }
-
+            (
+                address paymentTokenAddress,
+                uint256 paymentTokenId,
+                uint256 maxTimeDuration,
+                uint256 pricePerBlock,
+                address privateRenter
+            ) = abi.decode(data, (address, uint256, uint256, uint256, address));
             _depositAndList(
                 _msgSender(),
                 tokenId,
@@ -826,35 +806,9 @@ contract Rentable is
                 maxTimeDuration,
                 pricePerBlock,
                 privateRenter
-            );
-            
-        }
+            );   
+        } 
 
         return this.onERC721Received.selector;
     }
-
-    function onERC1155Received(
-        address operator,
-        address from,
-        uint256 id,
-        uint256 value,
-        bytes calldata data
-    ) external returns (bytes4){
-        return bytes4(keccak256("onERC1155Received(address,address,uint256,uint256,bytes)"));
-    }
-
-    function onERC1155BatchReceived(
-        address operator,
-        address from,
-        uint256[] calldata ids,
-        uint256[] calldata values,
-        bytes calldata data
-    ) external returns (bytes4) {
-        return bytes4(0);
-    }
-
-    function supportsInterface(bytes4 interfaceId) public view virtual override(IERC165) returns (bool) {
-        return interfaceId == type(IERC1155Receiver).interfaceId;
-    }      
-    
 }
