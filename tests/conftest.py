@@ -3,7 +3,6 @@ from utils import address0
 
 MINIMAL = False
 
-
 @pytest.fixture
 def deployer(accounts):
     yield accounts[2]

@@ -6,21 +6,23 @@ from utils import address0
 
 
 def deposit1tx(
-    rentable, nft, depositor, tokenId, maxTimeDuration, pricePerBlock, paymentToken
+    rentable, nft, depositor, tokenId, maxTimeDuration, pricePerBlock, paymentToken, paymentTokenId
 ):
     data = eth_abi.encode_abi(
         [
             "address",  # paymentTokenAddress
+            "uint256",  # paymentTokenId
             "uint256",  # maxTimeDuration
             "uint256",  # pricePerBlock
+            "address",  # privateRental
         ],
-        (paymentToken, maxTimeDuration, pricePerBlock),
+        (paymentToken, paymentTokenId, maxTimeDuration, pricePerBlock, address0),
     ).hex()
 
     return nft.safeTransferFrom(depositor, rentable, tokenId, data, {"from": depositor})
 
 
-def test_flow(rentable, interface, testLand, accounts, chain, deployer):
+def test_flow(rentable, interface, testLand, accounts, chain, deployer, paymentTokenId):
     oLand = interface.IERC721(rentable.getORentable(testLand))
     wLand = interface.IERC721(rentable.getWRentable(testLand))
 
@@ -59,6 +61,7 @@ def test_flow(rentable, interface, testLand, accounts, chain, deployer):
         maxLeaseBlocks,
         pricePerBlock,
         currencyToken,
+        paymentTokenId
     )
 
     assert testLand.updateOperator(tokenId) == originalOwner

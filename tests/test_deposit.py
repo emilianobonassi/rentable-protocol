@@ -178,7 +178,7 @@ def test_depositAndList_1tx(
     data = eth_abi.encode_abi(
         [
             "address",  # paymentTokenAddress
-            "uint256",  # maxTimeDuration
+            "uint256",  # paymentTokenId
             "uint256",  # maxTimeDuration
             "uint256",  # pricePerBlock
             "address",  # privateRental
