@@ -66,7 +66,7 @@ contract Rentable is
     uint256 internal _fee;
 
     address payable _feeCollector;
-    
+
     event Deposit(
         address indexed who,
         address indexed tokenAddress,
@@ -471,8 +471,11 @@ contract Rentable is
 
         address user = _msgSender();
 
-        if (leaseCondition.privateRenter != address(0)){
-            require(leaseCondition.privateRenter == user, "Rental reserved for another user");
+        if (leaseCondition.privateRenter != address(0)) {
+            require(
+                leaseCondition.privateRenter == user,
+                "Rental reserved for another user"
+            );
         }
 
         uint256 paymentQty = leaseCondition.pricePerBlock.mul(duration);
@@ -662,7 +665,6 @@ contract Rentable is
         }
     }
 
-
     function afterOTokenTransfer(
         address tokenAddress,
         address from,
@@ -715,22 +717,17 @@ contract Rentable is
         if (data.length == 0) {
             _deposit(_msgSender(), tokenId, from, true);
         } else {
-
             address paymentTokenAddress;
             uint256 maxTimeDuration;
             uint256 pricePerBlock;
             address privateRenter;
 
             if (data.length == 96) {
-                (
-                    paymentTokenAddress,
-                    maxTimeDuration,
-                    pricePerBlock
-                ) = abi.decode(data, (address, uint256, uint256));
+                (paymentTokenAddress, maxTimeDuration, pricePerBlock) = abi
+                    .decode(data, (address, uint256, uint256));
                 privateRenter = address(0);
-            }
-            else {
-                 (
+            } else {
+                (
                     paymentTokenAddress,
                     maxTimeDuration,
                     pricePerBlock,
@@ -748,7 +745,6 @@ contract Rentable is
                 pricePerBlock,
                 privateRenter
             );
-            
         }
 
         return this.onERC721Received.selector;
