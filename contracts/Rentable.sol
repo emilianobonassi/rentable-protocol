@@ -19,6 +19,7 @@ import "./WRentable.sol";
 import "./RentableHooks.sol";
 
 contract Rentable is
+    IRentable,
     Security4,
     IERC721Receiver,
     ERC1155Holder,
@@ -32,24 +33,11 @@ contract Rentable is
     struct LeaseConditions {
         uint256 maxTimeDuration;
         uint256 pricePerBlock;
-        address paymentTokenAddress;
-        uint256 paymentTokenId;
         uint256 fixedFee;
         uint256 fee;
-        address privateRenter;
-    }
-
-    struct Lease {
-        address paymentTokenAddress;
-        uint256 eta;
-        uint256 qtyToPullRemaining;
-        uint256 feesToPullRemaining;
-        uint256 lastUpdated;
-        address tokenAddress;
-        uint256 tokenId;
-        address from;
-        address to;
         uint256 paymentTokenId;
+        address paymentTokenAddress;
+        address privateRenter;
     }
 
     address internal _yToken;
@@ -364,6 +352,8 @@ contract Rentable is
     function currentLeases(address tokenAddress, uint256 tokenId)
         external
         view
+        virtual
+        override
         returns (Lease memory)
     {
         return _leases[_currentLeases[tokenAddress][tokenId]];

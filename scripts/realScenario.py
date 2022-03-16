@@ -16,7 +16,7 @@ def deposit1tx(
     rentable, nft, depositor, tokenId, maxTimeDuration, pricePerBlock, paymentToken
 ):
     maxTimeDuration = 1000  # blocks
-    pricePerBlock = int(0.001 * (10 ** 18))
+    pricePerBlock = int(0.001 * (10**18))
 
     data = eth_abi.encode_abi(
         [

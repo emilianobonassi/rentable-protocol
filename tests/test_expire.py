@@ -28,7 +28,7 @@ def test_redeem_after_expire(
     rentable.deposit(testNFT, tokenId, {"from": user})
 
     maxTimeDuration = 1000  # 7 days
-    pricePerBlock = 0.01 * (10 ** 18)
+    pricePerBlock = 0.01 * (10**18)
 
     rentable.createOrUpdateLeaseConditions(
         testNFT,
@@ -93,7 +93,7 @@ def test_subscribe_after_expire(
     rentable.deposit(testNFT, tokenId, {"from": user})
 
     maxTimeDuration = 1000  # 7 days
-    pricePerBlock = 0.01 * (10 ** 18)
+    pricePerBlock = 0.01 * (10**18)
 
     rentable.createOrUpdateLeaseConditions(
         testNFT,
