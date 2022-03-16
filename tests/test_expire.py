@@ -1,13 +1,16 @@
 import brownie
+from utils import *
 
 
 def test_redeem_after_expire(
     rentable,
     testNFT,
     paymentToken,
+    paymentTokenId,
     accounts,
     chain,
     weth,
+    dummy1155,
     dummylib,
 ):
     rentable.setLibrary(testNFT, dummylib)
@@ -28,23 +31,27 @@ def test_redeem_after_expire(
     pricePerBlock = 0.01 * (10**18)
 
     rentable.createOrUpdateLeaseConditions(
-        testNFT, tokenId, paymentToken, maxTimeDuration, pricePerBlock, {"from": user}
+        testNFT,
+        tokenId,
+        paymentToken,
+        paymentTokenId,
+        maxTimeDuration,
+        pricePerBlock,
+        address0,
+        {"from": user},
     )
 
     # Test subscribtion
     subscriptionDuration = 10  # blocks
     value = "0.1 ether"
 
-    if paymentToken == weth.address:
-        weth.deposit({"from": subscriber, "value": value})
-        weth.approve(rentable, value, {"from": subscriber})
-        rentable.createLease(
-            testNFT, tokenId, subscriptionDuration, {"from": subscriber}
-        )
-    elif paymentToken == "0x0000000000000000000000000000000000000000":
-        rentable.createLease(
-            testNFT, tokenId, subscriptionDuration, {"from": subscriber, "value": value}
-        )
+    depositAndApprove(
+        subscriber, rentable, value, paymentToken, paymentTokenId, weth, dummy1155
+    )
+
+    rentable.createLease(
+        testNFT, tokenId, subscriptionDuration, {"from": subscriber, "value": value}
+    )
 
     leaseId = 1
 
@@ -64,9 +71,11 @@ def test_subscribe_after_expire(
     rentable,
     testNFT,
     paymentToken,
+    paymentTokenId,
     accounts,
     chain,
     weth,
+    dummy1155,
     dummylib,
 ):
     rentable.setLibrary(testNFT, dummylib)
@@ -87,23 +96,27 @@ def test_subscribe_after_expire(
     pricePerBlock = 0.01 * (10**18)
 
     rentable.createOrUpdateLeaseConditions(
-        testNFT, tokenId, paymentToken, maxTimeDuration, pricePerBlock, {"from": user}
+        testNFT,
+        tokenId,
+        paymentToken,
+        paymentTokenId,
+        maxTimeDuration,
+        pricePerBlock,
+        address0,
+        {"from": user},
     )
 
     # Test subscribtion
     subscriptionDuration = 10  # blocks
     value = "0.1 ether"
 
-    if paymentToken == weth.address:
-        weth.deposit({"from": subscriber, "value": value})
-        weth.approve(rentable, value, {"from": subscriber})
-        rentable.createLease(
-            testNFT, tokenId, subscriptionDuration, {"from": subscriber}
-        )
-    elif paymentToken == "0x0000000000000000000000000000000000000000":
-        rentable.createLease(
-            testNFT, tokenId, subscriptionDuration, {"from": subscriber, "value": value}
-        )
+    depositAndApprove(
+        subscriber, rentable, value, paymentToken, paymentTokenId, weth, dummy1155
+    )
+
+    rentable.createLease(
+        testNFT, tokenId, subscriptionDuration, {"from": subscriber, "value": value}
+    )
 
     leaseId = 1
 
@@ -120,13 +133,10 @@ def test_subscribe_after_expire(
     subscriptionDuration = 10  # blocks
     value = "0.1 ether"
 
-    if paymentToken == weth.address:
-        weth.deposit({"from": subscriber, "value": value})
-        weth.approve(rentable, value, {"from": subscriber})
-        rentable.createLease(
-            testNFT, tokenId, subscriptionDuration, {"from": subscriber}
-        )
-    elif paymentToken == "0x0000000000000000000000000000000000000000":
-        rentable.createLease(
-            testNFT, tokenId, subscriptionDuration, {"from": subscriber, "value": value}
-        )
+    depositAndApprove(
+        subscriber, rentable, value, paymentToken, paymentTokenId, weth, dummy1155
+    )
+
+    rentable.createLease(
+        testNFT, tokenId, subscriptionDuration, {"from": subscriber, "value": value}
+    )

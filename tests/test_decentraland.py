@@ -2,24 +2,34 @@ import pytest
 import brownie
 import eth_abi
 from brownie import Wei
+from utils import address0
 
 
 def deposit1tx(
-    rentable, nft, depositor, tokenId, maxTimeDuration, pricePerBlock, paymentToken
+    rentable,
+    nft,
+    depositor,
+    tokenId,
+    maxTimeDuration,
+    pricePerBlock,
+    paymentToken,
+    paymentTokenId,
 ):
     data = eth_abi.encode_abi(
         [
             "address",  # paymentTokenAddress
+            "uint256",  # paymentTokenId
             "uint256",  # maxTimeDuration
             "uint256",  # pricePerBlock
+            "address",  # privateRental
         ],
-        (paymentToken, maxTimeDuration, pricePerBlock),
+        (paymentToken, paymentTokenId, maxTimeDuration, pricePerBlock, address0),
     ).hex()
 
     return nft.safeTransferFrom(depositor, rentable, tokenId, data, {"from": depositor})
 
 
-def test_flow(rentable, interface, testLand, accounts, chain, deployer):
+def test_flow(rentable, interface, testLand, accounts, chain, deployer, paymentTokenId):
     oLand = interface.IERC721(rentable.getORentable(testLand))
     wLand = interface.IERC721(rentable.getWRentable(testLand))
 
@@ -48,7 +58,7 @@ def test_flow(rentable, interface, testLand, accounts, chain, deployer):
     # List
     maxLeaseBlocks = 10
     pricePerBlock = int(0.1 * (10**18))
-    currencyToken = "0x0000000000000000000000000000000000000000"
+    currencyToken = address0
 
     deposit1tx(
         rentable,
@@ -58,6 +68,7 @@ def test_flow(rentable, interface, testLand, accounts, chain, deployer):
         maxLeaseBlocks,
         pricePerBlock,
         currencyToken,
+        paymentTokenId,
     )
 
     assert testLand.updateOperator(tokenId) == originalOwner
@@ -100,6 +111,4 @@ def test_flow(rentable, interface, testLand, accounts, chain, deployer):
 
     rentable.withdraw(testLand, tokenId, {"from": originalOwner})
 
-    assert (
-        testLand.updateOperator(tokenId) == "0x0000000000000000000000000000000000000000"
-    )  # must not change
+    assert testLand.updateOperator(tokenId) == address0  # must not change

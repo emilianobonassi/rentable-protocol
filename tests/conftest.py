@@ -1,4 +1,7 @@
 import pytest
+from utils import address0
+
+MINIMAL = False
 
 
 @pytest.fixture
@@ -24,6 +27,11 @@ def operator(accounts):
 @pytest.fixture
 def weth(WETH9, deployer):
     yield WETH9.deploy({"from": deployer})
+
+
+@pytest.fixture
+def dummy1155(DummyERC1155, deployer):
+    yield DummyERC1155.deploy({"from": deployer})
 
 
 @pytest.fixture
@@ -72,8 +80,12 @@ def proxyFactoryInitializable(deployer, ProxyFactoryInitializable):
 
 
 @pytest.fixture(
-    params=[["0 ether", 0], ["0.01 ether", 0], ["0 ether", 500], ["0.01 ether", 500]],
-    ids=["no-fees", "fixed-fee-no-fee", "no-fixed-fee-fee", "fixed-fee-fee"],
+    params=[["0 ether", 0]]
+    if MINIMAL
+    else [["0 ether", 0], ["0.01 ether", 0], ["0 ether", 500], ["0.01 ether", 500]],
+    ids=["no-fees"]
+    if MINIMAL
+    else ["no-fees", "fixed-fee-no-fee", "no-fixed-fee-fee", "fixed-fee-fee"],
 )
 def rentable(
     deployer,
@@ -89,6 +101,7 @@ def rentable(
     testNFT,
     feeCollector,
     weth,
+    dummy1155,
     testLand,
     decentralandCollectionLibrary,
     proxyFactoryInitializable,
@@ -107,8 +120,9 @@ def rentable(
     wrentable.setRentable(n)
     n.setWRentable(testNFT, wrentable)
 
-    n.enablePaymentToken("0x0000000000000000000000000000000000000000")
+    n.enablePaymentToken(address0)
     n.enablePaymentToken(weth.address)
+    n.enable1155PaymentToken(dummy1155.address)
 
     # Decentraland init
     data = orentable.init.encode_input(testLand, deployer)
@@ -138,19 +152,24 @@ def testNFT(deployer, TestNFT):
     yield TestNFT.deploy({"from": deployer})
 
 
-@pytest.fixture(
-    params=[
-        "ETH",
-        "WETH",
-    ]
-)
-def paymentToken(request, weth):
+@pytest.fixture(params=["ETH"] if MINIMAL else ["ETH", "WETH", "DUMMY1155"])
+def paymentToken(request, weth, dummy1155):
     if request.param == "ETH":
-        return "0x0000000000000000000000000000000000000000"
+        return address0
     elif request.param == "WETH":
         return weth.address
+    elif request.param == "DUMMY1155":
+        return dummy1155.address
     else:
         raise Exception("paymentToken not supported")
+
+
+@pytest.fixture
+def paymentTokenId(request, paymentToken, dummy1155):
+    if paymentToken == dummy1155.address:
+        return dummy1155.TOKEN2()
+    else:
+        return 0
 
 
 @pytest.fixture(autouse=True)

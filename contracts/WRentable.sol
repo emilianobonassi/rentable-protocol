@@ -3,6 +3,7 @@
 pragma solidity ^0.8.11;
 
 import "./ERC721ReadOnlyProxy.sol";
+import "./IRentable.sol";
 
 interface IWRentableHooks {
     function afterWTokenTransfer(
@@ -11,25 +12,6 @@ interface IWRentableHooks {
         address to,
         uint256 tokenId
     ) external;
-}
-
-interface IRentable {
-    struct Lease {
-        address paymentTokenAddress;
-        uint256 eta;
-        uint256 qtyToPullRemaining;
-        uint256 feesToPullRemaining;
-        uint256 lastUpdated;
-        address tokenAddress;
-        uint256 tokenId;
-        address from;
-        address to;
-    }
-
-    function currentLeases(address tokenAddress, uint256 tokenId)
-        external
-        view
-        returns (Lease memory);
 }
 
 contract WRentable is ERC721ReadOnlyProxy {
