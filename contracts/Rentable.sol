@@ -528,6 +528,10 @@ contract Rentable is
             if (leaseCondition.fixedFee > 0) {
                 Address.sendValue(_feeCollector, leaseCondition.fixedFee);
             }
+
+            if (msg.value > paymentQty) {
+                Address.sendValue(payable(msg.sender), msg.value - paymentQty);
+            }
         } else if (
             paymentTokenAllowlist[leaseCondition.paymentTokenAddress] ==
             ERC20_TOKEN
