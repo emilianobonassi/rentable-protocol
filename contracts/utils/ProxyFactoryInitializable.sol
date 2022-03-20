@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: AGPL-3.0
-pragma solidity ^0.8.11;
+pragma solidity ^0.8.13;
 
 contract ProxyFactoryInitializable {
     event ProxyCreated(address indexed proxy, bytes returnData);

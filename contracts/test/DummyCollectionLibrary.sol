@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: MIT
 
-pragma solidity ^0.8.11;
+pragma solidity ^0.8.13;
 
 import "../collectionlibs/ICollectionLibrary.sol";
 import "./EternalStorage.sol";
@@ -60,7 +60,6 @@ contract DummyCollectionLibrary is ICollectionLibrary {
     }
 
     function postCreateRent(
-        uint256 leaseId,
         address tokenAddress,
         uint256 tokenId,
         uint256 duration,
@@ -71,7 +70,6 @@ contract DummyCollectionLibrary is ICollectionLibrary {
             TOKEN_ADDRESS,
             tokenAddress
         );
-        EternalStorage(_eternalStorage).setUIntValue(LEASE_ID, leaseId);
         EternalStorage(_eternalStorage).setUIntValue(TOKEN_ID, tokenId);
         EternalStorage(_eternalStorage).setUIntValue(DURATION, duration);
         EternalStorage(_eternalStorage).setAddressValue(FROM, from);
@@ -79,7 +77,6 @@ contract DummyCollectionLibrary is ICollectionLibrary {
     }
 
     function postExpireRent(
-        uint256 leaseId,
         address tokenAddress,
         uint256 tokenId,
         address from,
@@ -89,7 +86,6 @@ contract DummyCollectionLibrary is ICollectionLibrary {
             TOKEN_ADDRESS,
             tokenAddress
         );
-        EternalStorage(_eternalStorage).setUIntValue(LEASE_ID, leaseId);
         EternalStorage(_eternalStorage).setUIntValue(TOKEN_ID, tokenId);
         EternalStorage(_eternalStorage).setAddressValue(FROM, from);
         EternalStorage(_eternalStorage).setAddressValue(TO, to);

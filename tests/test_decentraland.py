@@ -82,7 +82,6 @@ def test_flow(rentable, interface, testLand, accounts, chain, deployer, paymentT
     tx = rentable.createLease(
         testLand, tokenId, maxLeaseBlocks / 2, {"from": renter, "value": "1 ether"}
     )
-    leaseId = tx.events["Rent"]["yTokenId"]
 
     assert testLand.updateOperator(tokenId) == renter
 
@@ -103,7 +102,7 @@ def test_flow(rentable, interface, testLand, accounts, chain, deployer, paymentT
     chain.mine(maxLeaseBlocks + 1)
 
     # Expire
-    rentable.expireLease(leaseId, {"from": deployer})
+    rentable.expireLease(testLand, tokenId, {"from": deployer})
 
     # Original Owner will be the updateOperator again
 

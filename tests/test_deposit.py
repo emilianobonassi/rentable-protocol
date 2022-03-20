@@ -110,57 +110,12 @@ def test_depositAndList(
     assert orentable.ownerOf(tokenId) == user
 
     # Test lease created correctly
-    currentFixedFee = rentable.getFixedFee()
-    currentFee = rentable.getFee()
     lease = rentable.leasesConditions(testNFT, tokenId).dict()
     assert lease["maxTimeDuration"] == maxTimeDuration
     assert lease["pricePerBlock"] == pricePerBlock
     assert lease["paymentTokenAddress"] == paymentToken
     assert lease["paymentTokenId"] == paymentTokenId
     assert lease["privateRenter"] == address0
-
-    assert lease["fixedFee"] == currentFixedFee
-    assert lease["fee"] == currentFee
-
-    previousFixedFee = currentFixedFee
-    previousFee = currentFee
-
-    # Change fees, previous listings not affected only new ones
-    rentable.setFixedFee("0.5 ether")
-    rentable.setFee(800)
-
-    currentFixedFee = rentable.getFixedFee()
-    currentFee = rentable.getFee()
-
-    lease = rentable.leasesConditions(testNFT, tokenId).dict()
-
-    assert lease["fixedFee"] == previousFixedFee
-    assert lease["fee"] == previousFee
-
-    tokenId = 124
-
-    testNFT.mint(user, tokenId, {"from": user})
-
-    testNFT.approve(rentable, tokenId, {"from": user})
-
-    maxTimeDuration = 1000  # blocks
-    pricePerBlock = 0.001 * (10**18)
-
-    rentable.depositAndList(
-        testNFT,
-        tokenId,
-        paymentToken,
-        paymentTokenId,
-        maxTimeDuration,
-        pricePerBlock,
-        address0,
-        {"from": user},
-    )
-
-    lease = rentable.leasesConditions(testNFT, tokenId).dict()
-
-    assert lease["fixedFee"] == currentFixedFee
-    assert lease["fee"] == currentFee
 
 
 def test_depositAndList_1tx(
@@ -210,57 +165,12 @@ def test_depositAndList_1tx(
     assert orentable.ownerOf(tokenId) == user
 
     # Test lease created correctly
-    currentFixedFee = rentable.getFixedFee()
-    currentFee = rentable.getFee()
     lease = rentable.leasesConditions(testNFT, tokenId).dict()
     assert lease["maxTimeDuration"] == maxTimeDuration
     assert lease["pricePerBlock"] == pricePerBlock
     assert lease["paymentTokenAddress"] == paymentToken
     assert lease["paymentTokenId"] == paymentTokenId
     assert lease["privateRenter"] == address0
-
-    assert lease["fixedFee"] == currentFixedFee
-    assert lease["fee"] == currentFee
-
-    previousFixedFee = currentFixedFee
-    previousFee = currentFee
-
-    # Change fees, previous listings not affected only new ones
-    rentable.setFixedFee("0.5 ether")
-    rentable.setFee(800)
-
-    currentFixedFee = rentable.getFixedFee()
-    currentFee = rentable.getFee()
-
-    lease = rentable.leasesConditions(testNFT, tokenId).dict()
-
-    assert lease["fixedFee"] == previousFixedFee
-    assert lease["fee"] == previousFee
-
-    tokenId = 124
-
-    testNFT.mint(user, tokenId, {"from": user})
-
-    testNFT.approve(rentable, tokenId, {"from": user})
-
-    maxTimeDuration = 1000  # blocks
-    pricePerBlock = 0.001 * (10**18)
-
-    rentable.depositAndList(
-        testNFT,
-        tokenId,
-        paymentToken,
-        paymentTokenId,
-        maxTimeDuration,
-        pricePerBlock,
-        address0,
-        {"from": user},
-    )
-
-    lease = rentable.leasesConditions(testNFT, tokenId).dict()
-
-    assert lease["fixedFee"] == currentFixedFee
-    assert lease["fee"] == currentFee
 
 
 def test_depositAndPrivateList_1tx(
@@ -317,56 +227,12 @@ def test_depositAndPrivateList_1tx(
     assert orentable.ownerOf(tokenId) == user
 
     # Test lease created correctly
-    currentFixedFee = rentable.getFixedFee()
-    currentFee = rentable.getFee()
     lease = rentable.leasesConditions(testNFT, tokenId).dict()
     assert lease["maxTimeDuration"] == maxTimeDuration
     assert lease["pricePerBlock"] == pricePerBlock
     assert lease["paymentTokenAddress"] == paymentToken
     assert lease["paymentTokenId"] == paymentTokenId
     assert lease["privateRenter"] == privateRenter.address
-    assert lease["fixedFee"] == currentFixedFee
-    assert lease["fee"] == currentFee
-
-    previousFixedFee = currentFixedFee
-    previousFee = currentFee
-
-    # Change fees, previous listings not affected only new ones
-    rentable.setFixedFee("0.5 ether")
-    rentable.setFee(800)
-
-    currentFixedFee = rentable.getFixedFee()
-    currentFee = rentable.getFee()
-
-    lease = rentable.leasesConditions(testNFT, tokenId).dict()
-
-    assert lease["fixedFee"] == previousFixedFee
-    assert lease["fee"] == previousFee
-
-    tokenId = 124
-
-    testNFT.mint(user, tokenId, {"from": user})
-
-    testNFT.approve(rentable, tokenId, {"from": user})
-
-    maxTimeDuration = 1000  # blocks
-    pricePerBlock = 0.001 * (10**18)
-
-    rentable.depositAndList(
-        testNFT,
-        tokenId,
-        paymentToken,
-        paymentTokenId,
-        maxTimeDuration,
-        pricePerBlock,
-        address0,
-        {"from": user},
-    )
-
-    lease = rentable.leasesConditions(testNFT, tokenId).dict()
-
-    assert lease["fixedFee"] == currentFixedFee
-    assert lease["fee"] == currentFee
 
 
 def test_withdraw(rentable, orentable, testNFT, accounts):
@@ -384,7 +250,6 @@ def test_withdraw(rentable, orentable, testNFT, accounts):
 
     evt = tx.events["Withdraw"]
 
-    assert evt["who"] == user
     assert evt["tokenAddress"] == testNFT.address
     assert evt["tokenId"] == tokenId
 

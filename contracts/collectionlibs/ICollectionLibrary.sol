@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: MIT
 
-pragma solidity ^0.8.11;
+pragma solidity ^0.8.13;
 
 interface ICollectionLibrary {
     function postDeposit(
@@ -18,7 +18,6 @@ interface ICollectionLibrary {
     ) external;
 
     function postCreateRent(
-        uint256 leaseId,
         address tokenAddress,
         uint256 tokenId,
         uint256 duration,
@@ -27,7 +26,6 @@ interface ICollectionLibrary {
     ) external payable;
 
     function postExpireRent(
-        uint256 leaseId,
         address tokenAddress,
         uint256 tokenId,
         address from,

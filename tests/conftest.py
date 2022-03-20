@@ -40,11 +40,6 @@ def orentable(deployer, ORentable, testNFT):
 
 
 @pytest.fixture
-def yrentable(deployer, YRentable):
-    yield YRentable.deploy({"from": deployer})
-
-
-@pytest.fixture
 def wrentable(deployer, WRentable, testNFT):
     yield WRentable.deploy(testNFT, {"from": deployer})
 
@@ -96,7 +91,6 @@ def rentable(
     ORentable,
     WRentable,
     orentable,
-    yrentable,
     wrentable,
     testNFT,
     feeCollector,
@@ -110,9 +104,6 @@ def rentable(
     n = Rentable.deploy(
         governance, operator, emergencyImplementation, {"from": governance}
     )
-
-    n.setYToken(yrentable)
-    yrentable.setMinter(n)
 
     n.setORentable(testNFT, orentable)
     orentable.setRentable(n)

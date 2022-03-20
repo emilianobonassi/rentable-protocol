@@ -108,13 +108,10 @@ def test_SCRAM(
         rentable.withdraw(testNFT, tokenId, {"from": user})
 
     with brownie.reverts("Emergency in place"):
-        rentable.redeemLease(1, {"from": user})
+        rentable.expireLease(testNFT, tokenId, {"from": user})
 
     with brownie.reverts("Emergency in place"):
-        rentable.expireLease(1, {"from": user})
-
-    with brownie.reverts("Emergency in place"):
-        rentable.expireLeases([1], {"from": user})
+        rentable.expireLeases([testNFT], [tokenId], {"from": user})
 
     with brownie.reverts("Emergency in place"):
         orentable.transferFrom(user, operator, tokenId, {"from": user})
