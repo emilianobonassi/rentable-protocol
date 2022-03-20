@@ -1,17 +1,9 @@
 // SPDX-License-Identifier: MIT
 
-pragma solidity ^0.8.11;
+pragma solidity ^0.8.13;
 
 import "./ERC721ReadOnlyProxy.sol";
-
-interface IORentableHooks {
-    function afterOTokenTransfer(
-        address tokenAddress,
-        address from,
-        address to,
-        uint256 tokenId
-    ) external;
-}
+import "./IORentableHooks.sol";
 
 contract ORentable is ERC721ReadOnlyProxy {
     address internal _rentable;

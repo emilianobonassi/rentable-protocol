@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: MIT
 
-pragma solidity ^0.8.11;
+pragma solidity ^0.8.13;
 
 import "@openzeppelin/contracts/utils/Address.sol";
 import "./collectionlibs/ICollectionLibrary.sol";
@@ -40,7 +40,7 @@ contract RentableHooks {
         uint256 tokenId,
         address user,
         uint256 maxTimeDuration,
-        uint256 pricePerBlock
+        uint256 pricePerSecond
     ) internal {
         address lib = _libraries[tokenAddress];
         if (lib != address(0)) {
@@ -52,7 +52,7 @@ contract RentableHooks {
                         tokenId,
                         user,
                         maxTimeDuration,
-                        pricePerBlock
+                        pricePerSecond
                     )
                 ),
                 ""
@@ -61,7 +61,6 @@ contract RentableHooks {
     }
 
     function _postCreateRent(
-        uint256 leaseId,
         address tokenAddress,
         uint256 tokenId,
         uint256 duration,
@@ -73,15 +72,14 @@ contract RentableHooks {
             lib.functionDelegateCall(
                 abi.encodeCall(
                     ICollectionLibrary(lib).postCreateRent,
-                    (leaseId, tokenAddress, tokenId, duration, from, to)
+                    (tokenAddress, tokenId, duration, from, to)
                 ),
                 ""
             );
         }
     }
 
-    function _postExpireRent(
-        uint256 leaseId,
+    function _postexpireRental(
         address tokenAddress,
         uint256 tokenId,
         address from,
@@ -91,8 +89,8 @@ contract RentableHooks {
         if (lib != address(0)) {
             lib.functionDelegateCall(
                 abi.encodeCall(
-                    ICollectionLibrary(lib).postExpireRent,
-                    (leaseId, tokenAddress, tokenId, from, to)
+                    ICollectionLibrary(lib).postexpireRental,
+                    (tokenAddress, tokenId, from, to)
                 ),
                 ""
             );

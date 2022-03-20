@@ -1,20 +1,13 @@
+dotenv: .env
 # automatically fetch contract sources from Etherscan
 autofetch_sources: True
-
-# require OpenZepplin Contracts
-dependencies:
-  - OpenZeppelin/openzeppelin-contracts@4.4.2
-  - OpenZeppelin/openzeppelin-contracts-upgradeable@4.4.2
-  - emilianobonassi/security-toolkit@1.0.0
 
 # path remapping to support imports from GitHub/NPM
 compiler:
   solc:
     remappings:
-      - "@openzeppelin=OpenZeppelin/openzeppelin-contracts@4.4.2"
-      - "@openzeppelin-upgradable=OpenZeppelin/openzeppelin-contracts-upgradeable@4.4.2"
-      - "@emilianobonassi-security=emilianobonassi/security-toolkit@1.0.0"
-
-reports:
-  exclude_contracts:
-    - SafeMath
+      - "@openzeppelin-upgradable=lib/openzeppelin-contracts-upgradeable/"
+      - "@openzeppelin=lib/openzeppelin-contracts/"
+      - "@emilianobonassi-security=lib/security-toolkit/"
+      - "ds-test=lib/ds-test/src/"
+      - "solmate=lib/solmate/src/"

@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: MIT
 
-pragma solidity ^0.8.11;
+pragma solidity ^0.8.13;
 
 import "../ICollectionLibrary.sol";
 import "./ILandRegistry.sol";
@@ -23,7 +23,6 @@ contract DecentralandCollectionLibrary is ICollectionLibrary {
     ) public {}
 
     function postCreateRent(
-        uint256,
         address tokenAddress,
         uint256 tokenId,
         uint256,
@@ -33,8 +32,7 @@ contract DecentralandCollectionLibrary is ICollectionLibrary {
         ILandRegistry(tokenAddress).setUpdateOperator(tokenId, to);
     }
 
-    function postExpireRent(
-        uint256,
+    function postexpireRental(
         address tokenAddress,
         uint256 tokenId,
         address from,

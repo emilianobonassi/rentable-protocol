@@ -1,0 +1,16 @@
+
+[submodule "lib/openzeppelin-contracts-upgradeable"]
+	path = lib/openzeppelin-contracts-upgradeable
+	url = https://github.com/OpenZeppelin/openzeppelin-contracts-upgradeable
+[submodule "lib/openzeppelin-contracts"]
+	path = lib/openzeppelin-contracts
+	url = https://github.com/OpenZeppelin/openzeppelin-contracts
+[submodule "lib/solmate"]
+	path = lib/solmate
+	url = https://github.com/Rari-Capital/solmate
+[submodule "lib/security-toolkit"]
+	path = lib/security-toolkit
+	url = https://github.com/emilianobonassi/security-toolkit
+[submodule "lib/ds-test"]
+	path = lib/ds-test
+	url = https://github.com/dapphub/ds-test

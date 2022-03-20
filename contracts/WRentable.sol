@@ -1,18 +1,10 @@
 // SPDX-License-Identifier: MIT
 
-pragma solidity ^0.8.11;
+pragma solidity ^0.8.13;
 
 import "./ERC721ReadOnlyProxy.sol";
 import "./IRentable.sol";
-
-interface IWRentableHooks {
-    function afterWTokenTransfer(
-        address tokenAddress,
-        address from,
-        address to,
-        uint256 tokenId
-    ) external;
-}
+import "./IWRentableHooks.sol";
 
 contract WRentable is ERC721ReadOnlyProxy {
     address internal _rentable;
@@ -51,12 +43,9 @@ contract WRentable is ERC721ReadOnlyProxy {
         override
         returns (address)
     {
-        IRentable.Lease memory lease = IRentable(_rentable).currentLeases(
-            _wrapped,
-            tokenId
-        );
-
-        if (lease.eta > 0 && lease.eta > block.number) {
+        if (
+            IRentable(_rentable).expiresAt(_wrapped, tokenId) > block.timestamp
+        ) {
             return super.ownerOf(tokenId);
         } else {
             return address(0);

@@ -2,12 +2,14 @@
 
 pragma solidity ^0.8.13;
 
-interface ICollectionLibrary {
+import "../../collectionlibs/ICollectionLibrary.sol";
+
+contract DummyCollectionLibrary is ICollectionLibrary {
     function postDeposit(
         address tokenAddress,
         uint256 tokenId,
         address user
-    ) external;
+    ) external {}
 
     function postList(
         address tokenAddress,
@@ -15,7 +17,7 @@ interface ICollectionLibrary {
         address user,
         uint256 maxTimeDuration,
         uint256 pricePerSecond
-    ) external;
+    ) external {}
 
     function postCreateRent(
         address tokenAddress,
@@ -23,21 +25,21 @@ interface ICollectionLibrary {
         uint256 duration,
         address from,
         address to
-    ) external payable;
+    ) external payable {}
 
     function postexpireRental(
         address tokenAddress,
         uint256 tokenId,
         address from,
         address to
-    ) external payable;
+    ) external payable {}
 
     function postWTokenTransfer(
         address tokenAddress,
         uint256 tokenId,
         address from,
         address to
-    ) external;
+    ) external {}
 
     function postOTokenTransfer(
         address tokenAddress,
@@ -45,5 +47,5 @@ interface ICollectionLibrary {
         address from,
         address to,
         bool rented
-    ) external;
+    ) external {}
 }

@@ -26,25 +26,15 @@ Rentable: 0xB1d46a10CD78776E61B1475bf73886Ff48aA6922
 
 ## Experimental Deployment (Rinkeby)
 
-Deployer: 0xf6798a60B576658461eeFebf583C2AaECD732334
-
-Governance: 0xf6798a60B576658461eeFebf583C2AaECD732334
-
-Operator: 0xf6798a60B576658461eeFebf583C2AaECD732334
-
-FeeCollector: 0xf6798a60B576658461eeFebf583C2AaECD732334
-
-ProxyFactory: 0x9D3Be1c943Cb4BaAa6efA552D95Da7D6b581EE06
-
-TestNFT: 0xa9c29B9694D647004680617D29a3a5B6be1a7904
-
-YRentable: 0x3C98157c5239f8Ae20FC05E6f1085dD84F97d9f4
-
-ORentable: 0x6D850aff68c924F670Ef5Ae5A787D98da8C6dEB5
-
-WRentable: 0x174F2094Da15F91C14e920b159f662EB3ef8C592
-
-Rentable: 0x636EE014fbeF2Ea657ADA106196E51877639Fd24
+              Deployer: 0xf6798a60B576658461eeFebf583C2AaECD732334
+            Governance: 0xf6798a60B576658461eeFebf583C2AaECD732334
+              Operator: 0xf6798a60B576658461eeFebf583C2AaECD732334
+          FeeCollector: 0xf6798a60B576658461eeFebf583C2AaECD732334
+          ProxyFactory: 0xA5f17fCabA1e1C41A2aF795E83680Cb7A4226443
+               TestNFT: 0x4aB8a4e7B2fAbbDcaA8398A3829718DeAC831196
+             ORentable: 0x6ac64FAdD69F06392F235880d33CAF7b098F696a
+             WRentable: 0xB67635eEf4B00145cE1bd84ed4399AaBcE8939B1
+              Rentable: 0xFec9DfE525ec5a2214AD5a223AA6E484953E2D70
 
 ## Requirements
 
@@ -81,7 +71,7 @@ Remember to [add](https://metamask.zendesk.com/hc/en-us/articles/360043227612-Ho
 
 Run the following commands respectively and keep the session open. Network is ephemeral, when you close the command you reset it.
 
-#### Local Testnet 
+#### Local Testnet
 
 ```bash
 yarn network:testnet
@@ -91,7 +81,7 @@ yarn network:testnet
 
 Useful to interact with other protocols in mainnet via a local fork.
 
-You need local env variables for [Etherscan API](https://etherscan.io/apis) and [Infura](https://infura.io/) (`ETHERSCAN_TOKEN` `WEB3_INFURA_PROJECT_ID`). 
+You need local env variables for [Etherscan API](https://etherscan.io/apis) and [Infura](https://infura.io/) (`ETHERSCAN_TOKEN` `WEB3_INFURA_PROJECT_ID`).
 
 Set them in `.env` file following `.env.example`
 
@@ -116,6 +106,7 @@ yarn mintNFT
 ### Use network console
 
 Run the console
+
 ```bash
 yarn console
 ```

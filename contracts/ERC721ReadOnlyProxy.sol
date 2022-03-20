@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: MIT
 
-pragma solidity ^0.8.11;
+pragma solidity ^0.8.13;
 
 import "@openzeppelin-upgradable/contracts/access/OwnableUpgradeable.sol";
 import "@openzeppelin-upgradable/contracts/token/ERC721/ERC721Upgradeable.sol";
@@ -61,14 +61,8 @@ contract ERC721ReadOnlyProxy is OwnableUpgradeable, ERC721Upgradeable {
         _minter = minter_;
     }
 
-    function mint(address to, uint256 tokenId)
-        external
-        onlyMinter
-        returns (uint256)
-    {
+    function mint(address to, uint256 tokenId) external onlyMinter {
         _mint(to, tokenId);
-
-        return tokenId;
     }
 
     function burn(uint256 tokenId) external virtual onlyMinter {

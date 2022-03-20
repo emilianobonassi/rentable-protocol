@@ -1,16 +1,11 @@
 // SPDX-License-Identifier: MIT
 
-pragma solidity ^0.8.11;
+pragma solidity ^0.8.13;
 
 import "@openzeppelin/contracts/token/ERC721/ERC721.sol";
-import "@openzeppelin/contracts/token/ERC721/IERC721.sol";
-import "@openzeppelin/contracts/utils/Counters.sol";
 import "@openzeppelin/contracts/token/ERC721/extensions/ERC721URIStorage.sol";
 
 contract TestNFT is ERC721URIStorage {
-    using Counters for Counters.Counter;
-    Counters.Counter internal _tokenIds;
-
     constructor() ERC721("TestNFT", "TNFT") {}
 
     function mint(address to, uint256 tokenId) external {
@@ -24,5 +19,16 @@ contract TestNFT is ERC721URIStorage {
     ) external {
         _mint(to, tokenId);
         _setTokenURI(tokenId, _tokenURI);
+    }
+
+    function mintBatch(
+        address[] memory to,
+        uint256[] memory tokenIds,
+        string[] memory _tokenURIs
+    ) external {
+        for (uint256 i = 0; i < to.length; i++) {
+            _mint(to[i], tokenIds[i]);
+            _setTokenURI(tokenIds[i], _tokenURIs[i]);
+        }
     }
 }
