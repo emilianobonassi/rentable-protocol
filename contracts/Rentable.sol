@@ -275,7 +275,7 @@ contract Rentable is
         );
 
         require(
-            !_expireRental(tokenAddress, tokenId, false),
+            !_expireRental(address(0), tokenAddress, tokenId, false),
             "Current rent still pending"
         );
 
@@ -348,6 +348,7 @@ contract Rentable is
     }
 
     function _expireRental(
+        address oTokenOwner,
         address tokenAddress,
         uint256 tokenId,
         bool skipExistCheck
@@ -356,9 +357,10 @@ contract Rentable is
             skipExistCheck ||
             WRentable(_wrentables[tokenAddress]).exists(tokenId)
         ) {
-            if (block.number >= _etas[tokenAddress][tokenId]) {
-                address currentRentee = ORentable(_orentables[tokenAddress])
-                    .ownerOf(tokenId);
+            if (block.number >= (_etas[tokenAddress][tokenId])) {
+                address currentRentee = oTokenOwner == address(0)
+                    ? ORentable(_orentables[tokenAddress]).ownerOf(tokenId)
+                    : oTokenOwner;
                 address currentRenter = WRentable(_wrentables[tokenAddress])
                     .ownerOf(tokenId);
                 WRentable(_wrentables[tokenAddress]).burn(tokenId);
@@ -429,7 +431,7 @@ contract Rentable is
         require(rcs.maxTimeDuration > 0, "Not available");
 
         require(
-            !_expireRental(tokenAddress, tokenId, false),
+            !_expireRental(address(0), tokenAddress, tokenId, false),
             "Current rent still pending"
         );
 
@@ -519,7 +521,7 @@ contract Rentable is
         external
         whenPausedthenProxy
     {
-        _expireRental(tokenAddress, tokenId, false);
+        _expireRental(address(0), tokenAddress, tokenId, false);
     }
 
     function expireRentals(
@@ -527,7 +529,7 @@ contract Rentable is
         uint256[] calldata tokenIds
     ) external whenPausedthenProxy {
         for (uint256 i = 0; i < tokenAddresses.length; i++) {
-            _expireRental(tokenAddresses[i], tokenIds[i], false);
+            _expireRental(address(0), tokenAddresses[i], tokenIds[i], false);
         }
     }
 
@@ -542,7 +544,7 @@ contract Rentable is
             "Only proper WRentables allowed"
         );
 
-        _expireRental(tokenAddress, tokenId, true);
+        _expireRental(address(0), tokenAddress, tokenId, true);
 
         address lib = _libraries[tokenAddress];
         if (lib != address(0)) {
@@ -567,7 +569,7 @@ contract Rentable is
             "Only proper ORentables allowed"
         );
 
-        bool rented = _expireRental(tokenAddress, tokenId, false);
+        bool rented = _expireRental(address(0), tokenAddress, tokenId, false);
 
         address lib = _libraries[tokenAddress];
         if (lib != address(0)) {
