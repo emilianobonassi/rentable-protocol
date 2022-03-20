@@ -82,6 +82,17 @@ def proxyFactoryInitializable(deployer, ProxyFactoryInitializable):
     if MINIMAL
     else ["no-fees", "fixed-fee-no-fee", "no-fixed-fee-fee", "fixed-fee-fee"],
 )
+def rentableWithFees(
+    rentable,
+    request,
+):
+    rentable.setFixedFee(request.param[0])
+    rentable.setFee(request.param[1])
+
+    yield rentable
+
+
+@pytest.fixture
 def rentable(
     deployer,
     governance,
@@ -99,7 +110,6 @@ def rentable(
     testLand,
     decentralandCollectionLibrary,
     proxyFactoryInitializable,
-    request,
 ):
     n = Rentable.deploy(
         governance, operator, emergencyImplementation, {"from": governance}
@@ -131,8 +141,6 @@ def rentable(
     n.setWRentable(testLand, wd)
     n.setLibrary(testLand, decentralandCollectionLibrary)
 
-    n.setFixedFee(request.param[0])
-    n.setFee(request.param[1])
     n.setFeeCollector(feeCollector)
 
     yield n
