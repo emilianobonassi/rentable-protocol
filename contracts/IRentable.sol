@@ -17,7 +17,7 @@ interface IRentable {
         - Call safeTransferFrom(ownerAddress, rentableAddress, data) on the NFT contract with empty data
         
         B. To deposit and list (i.e. set price and max duration) an NFT:
-        - Encode listing info: paymentTokenAddress (address), paymentTokenId (uint256), maxTimeDuration (uint256), pricePerBlock (uint256), privateRenter (address) as documented in function depositAndList. 
+        - Encode listing info (RentableConditions). 
         - Call safeTransferFrom(ownerAddress, rentableAddress, data) with data encoded before
         - This will automatically call depositAndList on Rentable without the need of approvals.
         OR (not preferred)
@@ -25,7 +25,8 @@ interface IRentable {
         - Call depositAndList
 
         On A - B flows, the depositor will safely receive an NFT (oToken) which represent the deposit
-        Depositor, if smart contract, must implement IERC721Receiver - https://docs.openzeppelin.com/contracts/2.x/api/token/erc721#IERC721Receiver
+        Depositor, if smart contract, must implement IERC721Receiver
+        https://docs.openzeppelin.com/contracts/2.x/api/token/erc721#IERC721Receiver
 
         C. To update rental conditions for an NFT
         - Call createOrUpdateRentalConditions
