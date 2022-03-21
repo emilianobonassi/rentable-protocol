@@ -25,14 +25,6 @@ contract Rentable is
     using Address for address;
     using SafeERC20 for IERC20;
 
-    struct RentalConditions {
-        uint256 maxTimeDuration;
-        uint256 pricePerSecond;
-        uint256 paymentTokenId;
-        address paymentTokenAddress;
-        address privateRenter;
-    }
-
     mapping(address => mapping(uint256 => RentalConditions))
         internal _rentalConditions;
 
