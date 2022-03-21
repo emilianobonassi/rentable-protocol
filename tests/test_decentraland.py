@@ -17,13 +17,13 @@ def deposit1tx(
 ):
     data = eth_abi.encode_abi(
         [
-            "address",  # paymentTokenAddress
-            "uint256",  # paymentTokenId
             "uint256",  # maxTimeDuration
             "uint256",  # pricePerBlock
+            "uint256",  # paymentTokenId
+            "address",  # paymentTokenAddress
             "address",  # privateRental
         ],
-        (paymentToken, paymentTokenId, maxTimeDuration, pricePerBlock, address0),
+        (maxTimeDuration, pricePerBlock, paymentTokenId, paymentToken, address0),
     ).hex()
 
     return nft.safeTransferFrom(depositor, rentable, tokenId, data, {"from": depositor})
@@ -34,7 +34,7 @@ def test_flow(rentable, interface, testLand, accounts, chain, deployer, paymentT
     wLand = interface.IERC721(rentable.getWRentable(testLand))
 
     # Land owned by originalOwner and with originalOperator as operator
-    # List for maxLeaseBlocks and pricePerBlock payed in currencyToken
+    # List for maxRentBlocks and pricePerBlock payed in currencyToken
     # Onwer transfer to newOwner
     # Renter rent for half of the time
     # Transfer to newRenter
@@ -56,7 +56,7 @@ def test_flow(rentable, interface, testLand, accounts, chain, deployer, paymentT
     assert testLand.updateOperator(tokenId) == originalOperator
 
     # List
-    maxLeaseBlocks = 10
+    maxRentBlocks = 10
     pricePerBlock = int(0.1 * (10**18))
     currencyToken = address0
 
@@ -65,7 +65,7 @@ def test_flow(rentable, interface, testLand, accounts, chain, deployer, paymentT
         testLand,
         originalOwner,
         tokenId,
-        maxLeaseBlocks,
+        maxRentBlocks,
         pricePerBlock,
         currencyToken,
         paymentTokenId,
@@ -78,9 +78,9 @@ def test_flow(rentable, interface, testLand, accounts, chain, deployer, paymentT
 
     assert testLand.updateOperator(tokenId) == newOwner
 
-    # Lease
-    tx = rentable.createLease(
-        testLand, tokenId, maxLeaseBlocks / 2, {"from": renter, "value": "1 ether"}
+    # Rent
+    tx = rentable.rent(
+        testLand, tokenId, maxRentBlocks / 2, {"from": renter, "value": "1 ether"}
     )
 
     assert testLand.updateOperator(tokenId) == renter
@@ -99,10 +99,10 @@ def test_flow(rentable, interface, testLand, accounts, chain, deployer, paymentT
 
     # Timemachine
 
-    chain.mine(maxLeaseBlocks + 1)
+    chain.mine(maxRentBlocks + 1)
 
     # Expire
-    rentable.expireLease(testLand, tokenId, {"from": deployer})
+    rentable.expireRental(testLand, tokenId, {"from": deployer})
 
     # Original Owner will be the updateOperator again
 

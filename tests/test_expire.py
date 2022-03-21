@@ -1,7 +1,7 @@
 from utils import *
 
 
-def test_subscribe_after_expire(
+def test_rent_after_expire(
     rentable,
     wrentable,
     testNFT,
@@ -17,7 +17,7 @@ def test_subscribe_after_expire(
     assert rentable.getLibrary(testNFT) == dummylib
 
     user = accounts[0]
-    subscriber = accounts[1]
+    renter = accounts[1]
 
     tokenId = 123
 
@@ -30,7 +30,7 @@ def test_subscribe_after_expire(
     maxTimeDuration = 1000  # 7 days
     pricePerBlock = 0.01 * (10**18)
 
-    rentable.createOrUpdateLeaseConditions(
+    rentable.createOrUpdateRentalConditions(
         testNFT,
         tokenId,
         paymentToken,
@@ -41,40 +41,36 @@ def test_subscribe_after_expire(
         {"from": user},
     )
 
-    # Test subscribtion
-    subscriptionDuration = 10  # blocks
+    # Test rent
+    rentalDuration = 10  # blocks
     value = "0.1 ether"
 
     depositAndApprove(
-        subscriber, rentable, value, paymentToken, paymentTokenId, weth, dummy1155
+        renter, rentable, value, paymentToken, paymentTokenId, weth, dummy1155
     )
 
-    rentable.createLease(
-        testNFT, tokenId, subscriptionDuration, {"from": subscriber, "value": value}
-    )
+    rentable.rent(testNFT, tokenId, rentalDuration, {"from": renter, "value": value})
 
     chain.mine(5)
 
-    rentable.expireLeases([testNFT], [tokenId])
+    rentable.expireRentals([testNFT], [tokenId])
 
-    # Check still exists after nullpotent expireLeases
+    # Check still exists after nullpotent expireRentals
     assert wrentable.exists(tokenId) == True
 
     chain.mine(6)
 
-    rentable.expireLeases([testNFT], [tokenId])
+    rentable.expireRentals([testNFT], [tokenId])
 
     # Check wtoken is burned
     assert wrentable.exists(tokenId) == False
 
-    # Test subscribtion
-    subscriptionDuration = 10  # blocks
+    # Test rent
+    rentalDuration = 10  # blocks
     value = "0.1 ether"
 
     depositAndApprove(
-        subscriber, rentable, value, paymentToken, paymentTokenId, weth, dummy1155
+        renter, rentable, value, paymentToken, paymentTokenId, weth, dummy1155
     )
 
-    rentable.createLease(
-        testNFT, tokenId, subscriptionDuration, {"from": subscriber, "value": value}
-    )
+    rentable.rent(testNFT, tokenId, rentalDuration, {"from": renter, "value": value})

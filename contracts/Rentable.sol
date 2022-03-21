@@ -28,7 +28,7 @@ contract Rentable is
     using Address for address;
     using SafeERC20 for IERC20;
 
-    struct LeaseConditions {
+    struct RentalConditions {
         uint256 maxTimeDuration;
         uint256 pricePerBlock;
         uint256 paymentTokenId;
@@ -36,8 +36,8 @@ contract Rentable is
         address privateRenter;
     }
 
-    mapping(address => mapping(uint256 => LeaseConditions))
-        internal _leasesConditions;
+    mapping(address => mapping(uint256 => RentalConditions))
+        internal _rentalConditions;
 
     mapping(address => mapping(uint256 => uint256)) internal _etas;
 
@@ -61,7 +61,7 @@ contract Rentable is
         address indexed tokenAddress,
         uint256 indexed tokenId
     );
-    event UpdateLeaseConditions(
+    event UpdateRentalConditions(
         address indexed tokenAddress,
         uint256 indexed tokenId,
         address paymentTokenAddress,
@@ -211,7 +211,7 @@ contract Rentable is
     ) internal returns (uint256 oRentableId) {
         oRentableId = _deposit(tokenAddress, tokenId, to, skipTransfer);
 
-        _createOrUpdateLeaseConditions(
+        _createOrUpdateRentalConditions(
             tokenAddress,
             tokenId,
             paymentTokenAddress,
@@ -275,11 +275,11 @@ contract Rentable is
         );
 
         require(
-            !_expireLease(tokenAddress, tokenId, false),
-            "Current lease still pending"
+            !_expireRental(tokenAddress, tokenId, false),
+            "Current rent still pending"
         );
 
-        _deleteLeaseConditions(tokenAddress, tokenId);
+        _deleteRentalConditions(tokenAddress, tokenId);
 
         oRentable.burn(tokenId);
 
@@ -288,12 +288,12 @@ contract Rentable is
         emit Withdraw(tokenAddress, tokenId);
     }
 
-    function leasesConditions(address tokenAddress, uint256 tokenId)
+    function rentalConditions(address tokenAddress, uint256 tokenId)
         external
         view
-        returns (LeaseConditions memory)
+        returns (RentalConditions memory)
     {
-        return _leasesConditions[tokenAddress][tokenId];
+        return _rentalConditions[tokenAddress][tokenId];
     }
 
     function expiresAt(address tokenAddress, uint256 tokenId)
@@ -306,7 +306,7 @@ contract Rentable is
         return _etas[tokenAddress][tokenId];
     }
 
-    function _createOrUpdateLeaseConditions(
+    function _createOrUpdateRentalConditions(
         address tokenAddress,
         uint256 tokenId,
         address paymentTokenAddress,
@@ -320,15 +320,13 @@ contract Rentable is
             "Not supported payment token"
         );
 
-        LeaseConditions storage lease = _leasesConditions[tokenAddress][
-            tokenId
-        ];
-
-        lease.maxTimeDuration = maxTimeDuration;
-        lease.pricePerBlock = pricePerBlock;
-        lease.paymentTokenAddress = paymentTokenAddress;
-        lease.paymentTokenId = paymentTokenId;
-        lease.privateRenter = privateRenter;
+        _rentalConditions[tokenAddress][tokenId] = RentalConditions({
+            maxTimeDuration: maxTimeDuration,
+            pricePerBlock: pricePerBlock,
+            paymentTokenAddress: paymentTokenAddress,
+            paymentTokenId: paymentTokenId,
+            privateRenter: privateRenter
+        });
 
         _postList(
             tokenAddress,
@@ -338,7 +336,7 @@ contract Rentable is
             pricePerBlock
         );
 
-        emit UpdateLeaseConditions(
+        emit UpdateRentalConditions(
             tokenAddress,
             tokenId,
             paymentTokenAddress,
@@ -349,7 +347,7 @@ contract Rentable is
         );
     }
 
-    function _expireLease(
+    function _expireRental(
         address tokenAddress,
         uint256 tokenId,
         bool skipExistCheck
@@ -364,7 +362,7 @@ contract Rentable is
                 address currentRenter = WRentable(_wrentables[tokenAddress])
                     .ownerOf(tokenId);
                 WRentable(_wrentables[tokenAddress]).burn(tokenId);
-                _postExpireRent(
+                _postexpireRental(
                     tokenAddress,
                     tokenId,
                     currentRentee,
@@ -379,7 +377,7 @@ contract Rentable is
         return currentlyRented;
     }
 
-    function createOrUpdateLeaseConditions(
+    function createOrUpdateRentalConditions(
         address tokenAddress,
         uint256 tokenId,
         address paymentTokenAddress,
@@ -393,7 +391,7 @@ contract Rentable is
         whenPausedthenProxy
         onlyAllowlisted
     {
-        _createOrUpdateLeaseConditions(
+        _createOrUpdateRentalConditions(
             tokenAddress,
             tokenId,
             paymentTokenAddress,
@@ -404,22 +402,22 @@ contract Rentable is
         );
     }
 
-    function _deleteLeaseConditions(address tokenAddress, uint256 tokenId)
+    function _deleteRentalConditions(address tokenAddress, uint256 tokenId)
         internal
     {
-        (_leasesConditions[tokenAddress][tokenId]).maxTimeDuration = 0;
+        (_rentalConditions[tokenAddress][tokenId]).maxTimeDuration = 0;
     }
 
-    function deleteLeaseConditions(address tokenAddress, uint256 tokenId)
+    function deleteRentalConditions(address tokenAddress, uint256 tokenId)
         external
         onlyOTokenOwner(tokenAddress, tokenId)
         whenPausedthenProxy
         onlyAllowlisted
     {
-        _deleteLeaseConditions(tokenAddress, tokenId);
+        _deleteRentalConditions(tokenAddress, tokenId);
     }
 
-    function createLease(
+    function rent(
         address tokenAddress,
         uint256 tokenId,
         uint256 duration
@@ -427,39 +425,37 @@ contract Rentable is
         ORentable oRentable = _getExistingORentable(tokenAddress);
         address payable rentee = payable(oRentable.ownerOf(tokenId));
 
-        LeaseConditions memory leaseCondition = _leasesConditions[tokenAddress][
-            tokenId
-        ];
-        require(leaseCondition.maxTimeDuration > 0, "Not available");
+        RentalConditions memory rcs = _rentalConditions[tokenAddress][tokenId];
+        require(rcs.maxTimeDuration > 0, "Not available");
 
         require(
-            !_expireLease(tokenAddress, tokenId, false),
-            "Current lease still pending"
+            !_expireRental(tokenAddress, tokenId, false),
+            "Current rent still pending"
         );
 
         require(
-            duration <= leaseCondition.maxTimeDuration,
+            duration <= rcs.maxTimeDuration,
             "Duration greater than conditions"
         );
 
         require(
-            leaseCondition.privateRenter == address(0) ||
-                leaseCondition.privateRenter == msg.sender,
+            rcs.privateRenter == address(0) || rcs.privateRenter == msg.sender,
             "Rental reserved for another user"
         );
 
-        uint256 paymentQty = leaseCondition.pricePerBlock * duration;
+        uint256 paymentQty = rcs.pricePerBlock * duration;
 
         // Fee calc
         uint256 feesForFeeCollector = fixedFee +
             (((paymentQty - fixedFee) * fee) / BASE_FEE);
         uint256 feesForRentee = paymentQty - feesForFeeCollector;
 
-        _etas[tokenAddress][tokenId] = block.number + duration;
+        uint256 eta = block.number + duration;
+        _etas[tokenAddress][tokenId] = eta;
 
         WRentable(_wrentables[tokenAddress]).mint(msg.sender, tokenId);
 
-        if (leaseCondition.paymentTokenAddress == address(0)) {
+        if (rcs.paymentTokenAddress == address(0)) {
             require(msg.value >= paymentQty, "Not enough funds");
             if (feesForFeeCollector > 0) {
                 Address.sendValue(feeCollector, feesForFeeCollector);
@@ -471,37 +467,36 @@ contract Rentable is
                 Address.sendValue(payable(msg.sender), msg.value - paymentQty);
             }
         } else if (
-            paymentTokenAllowlist[leaseCondition.paymentTokenAddress] ==
-            ERC20_TOKEN
+            paymentTokenAllowlist[rcs.paymentTokenAddress] == ERC20_TOKEN
         ) {
             if (feesForFeeCollector > 0) {
-                IERC20(leaseCondition.paymentTokenAddress).safeTransferFrom(
+                IERC20(rcs.paymentTokenAddress).safeTransferFrom(
                     msg.sender,
                     feeCollector,
                     feesForFeeCollector
                 );
             }
 
-            IERC20(leaseCondition.paymentTokenAddress).safeTransferFrom(
+            IERC20(rcs.paymentTokenAddress).safeTransferFrom(
                 msg.sender,
                 rentee,
                 feesForRentee
             );
         } else {
             if (feesForFeeCollector > 0) {
-                IERC1155(leaseCondition.paymentTokenAddress).safeTransferFrom(
+                IERC1155(rcs.paymentTokenAddress).safeTransferFrom(
                     msg.sender,
                     feeCollector,
-                    leaseCondition.paymentTokenId,
+                    rcs.paymentTokenId,
                     feesForFeeCollector,
                     ""
                 );
             }
 
-            IERC1155(leaseCondition.paymentTokenAddress).safeTransferFrom(
+            IERC1155(rcs.paymentTokenAddress).safeTransferFrom(
                 msg.sender,
                 rentee,
-                leaseCondition.paymentTokenId,
+                rcs.paymentTokenId,
                 feesForRentee,
                 ""
             );
@@ -514,25 +509,25 @@ contract Rentable is
             msg.sender,
             tokenAddress,
             tokenId,
-            leaseCondition.paymentTokenAddress,
-            leaseCondition.paymentTokenId,
-            block.number + duration
+            rcs.paymentTokenAddress,
+            rcs.paymentTokenId,
+            eta
         );
     }
 
-    function expireLease(address tokenAddress, uint256 tokenId)
+    function expireRental(address tokenAddress, uint256 tokenId)
         external
         whenPausedthenProxy
     {
-        _expireLease(tokenAddress, tokenId, false);
+        _expireRental(tokenAddress, tokenId, false);
     }
 
-    function expireLeases(
+    function expireRentals(
         address[] calldata tokenAddresses,
         uint256[] calldata tokenIds
     ) external whenPausedthenProxy {
         for (uint256 i = 0; i < tokenAddresses.length; i++) {
-            _expireLease(tokenAddresses[i], tokenIds[i], false);
+            _expireRental(tokenAddresses[i], tokenIds[i], false);
         }
     }
 
@@ -547,7 +542,7 @@ contract Rentable is
             "Only proper WRentables allowed"
         );
 
-        _expireLease(tokenAddress, tokenId, true);
+        _expireRental(tokenAddress, tokenId, true);
 
         address lib = _libraries[tokenAddress];
         if (lib != address(0)) {
@@ -572,7 +567,7 @@ contract Rentable is
             "Only proper ORentables allowed"
         );
 
-        bool rented = _expireLease(tokenAddress, tokenId, false);
+        bool rented = _expireRental(tokenAddress, tokenId, false);
 
         address lib = _libraries[tokenAddress];
         if (lib != address(0)) {
@@ -607,24 +602,18 @@ contract Rentable is
         if (data.length == 0) {
             _deposit(msg.sender, tokenId, from, true);
         } else {
-            (
-                address paymentTokenAddress,
-                uint256 paymentTokenId,
-                uint256 maxTimeDuration,
-                uint256 pricePerBlock,
-                address privateRenter
-            ) = abi.decode(data, (address, uint256, uint256, uint256, address));
+            RentalConditions memory rc = abi.decode(data, (RentalConditions));
 
             _depositAndList(
                 msg.sender,
                 tokenId,
                 from,
                 true,
-                paymentTokenAddress,
-                paymentTokenId,
-                maxTimeDuration,
-                pricePerBlock,
-                privateRenter
+                rc.paymentTokenAddress,
+                rc.paymentTokenId,
+                rc.maxTimeDuration,
+                rc.pricePerBlock,
+                rc.privateRenter
             );
         }
 

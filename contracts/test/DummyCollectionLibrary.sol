@@ -16,7 +16,7 @@ contract DummyCollectionLibrary is ICollectionLibrary {
     bytes32 public constant PRICE_PER_BLOCK = "pricePerBlock";
     bytes32 public constant FROM = "from";
     bytes32 public constant TO = "to";
-    bytes32 public constant LEASE_ID = "leaseId";
+    bytes32 public constant RENT_ID = "rentId";
     bytes32 public constant RENTED = "rented";
 
     constructor(address eternalStorage) {
@@ -76,7 +76,7 @@ contract DummyCollectionLibrary is ICollectionLibrary {
         EternalStorage(_eternalStorage).setAddressValue(TO, to);
     }
 
-    function postExpireRent(
+    function postexpireRental(
         address tokenAddress,
         uint256 tokenId,
         address from,

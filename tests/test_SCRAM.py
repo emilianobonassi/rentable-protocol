@@ -19,7 +19,7 @@ def test_SCRAM(
     # 2 subscription, SCRAM, operation stopped, safe withdrawal by governance
 
     user = accounts[0]
-    subscriber = accounts[1]
+    renter = accounts[1]
 
     tokenId = 123
     testNFT.mint(user, tokenId, {"from": user})
@@ -35,7 +35,7 @@ def test_SCRAM(
     maxTimeDuration = 1000  # 7 days
     pricePerBlock = 0.001 * (10**18)
 
-    rentable.createOrUpdateLeaseConditions(
+    rentable.createOrUpdateRentalConditions(
         testNFT,
         tokenId,
         paymentToken,
@@ -46,7 +46,7 @@ def test_SCRAM(
         {"from": user},
     )
 
-    rentable.createOrUpdateLeaseConditions(
+    rentable.createOrUpdateRentalConditions(
         testNFT,
         tokenId + 1,
         paymentToken,
@@ -57,16 +57,14 @@ def test_SCRAM(
         {"from": user},
     )
 
-    subscriptionDuration = 70  # blocks
+    rentalDuration = 70  # blocks
     value = "0.07 ether"
 
     depositAndApprove(
-        subscriber, rentable, value, paymentToken, paymentTokenId, weth, dummy1155
+        renter, rentable, value, paymentToken, paymentTokenId, weth, dummy1155
     )
 
-    rentable.createLease(
-        testNFT, tokenId, subscriptionDuration, {"from": subscriber, "value": value}
-    )
+    rentable.rent(testNFT, tokenId, rentalDuration, {"from": renter, "value": value})
 
     rentable.SCRAM({"from": operator})
 
@@ -78,7 +76,7 @@ def test_SCRAM(
         rentable.deposit(testNFT, tokenId, {"from": user})
 
     with brownie.reverts("Emergency in place"):
-        rentable.createOrUpdateLeaseConditions(
+        rentable.createOrUpdateRentalConditions(
             testNFT,
             tokenId,
             paymentToken,
@@ -90,7 +88,7 @@ def test_SCRAM(
         )
 
     with brownie.reverts("Emergency in place"):
-        rentable.deleteLeaseConditions(testNFT, tokenId, {"from": user})
+        rentable.deleteRentalConditions(testNFT, tokenId, {"from": user})
 
     with brownie.reverts("Emergency in place"):
         rentable.depositAndList(
@@ -108,16 +106,16 @@ def test_SCRAM(
         rentable.withdraw(testNFT, tokenId, {"from": user})
 
     with brownie.reverts("Emergency in place"):
-        rentable.expireLease(testNFT, tokenId, {"from": user})
+        rentable.expireRental(testNFT, tokenId, {"from": user})
 
     with brownie.reverts("Emergency in place"):
-        rentable.expireLeases([testNFT], [tokenId], {"from": user})
+        rentable.expireRentals([testNFT], [tokenId], {"from": user})
 
     with brownie.reverts("Emergency in place"):
         orentable.transferFrom(user, operator, tokenId, {"from": user})
 
     with brownie.reverts("Emergency in place"):
-        wrentable.transferFrom(subscriber, operator, tokenId, {"from": subscriber})
+        wrentable.transferFrom(renter, operator, tokenId, {"from": renter})
 
     with brownie.reverts("Emergency in place"):
         testNFT.safeTransferFrom(user, rentable, tokenId + 2, {"from": user})

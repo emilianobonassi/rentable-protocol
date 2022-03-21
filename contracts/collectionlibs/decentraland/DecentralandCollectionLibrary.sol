@@ -32,7 +32,7 @@ contract DecentralandCollectionLibrary is ICollectionLibrary {
         ILandRegistry(tokenAddress).setUpdateOperator(tokenId, to);
     }
 
-    function postExpireRent(
+    function postexpireRental(
         address tokenAddress,
         uint256 tokenId,
         address from,

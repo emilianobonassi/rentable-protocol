@@ -92,7 +92,7 @@ def test_depositAndList(
     assert evt["tokenAddress"] == testNFT.address
     assert evt["tokenId"] == tokenId
 
-    evt = tx.events["UpdateLeaseConditions"]
+    evt = tx.events["UpdateRentalConditions"]
 
     assert evt["tokenAddress"] == testNFT.address
     assert evt["tokenId"] == tokenId
@@ -109,13 +109,13 @@ def test_depositAndList(
     # Test user ownership
     assert orentable.ownerOf(tokenId) == user
 
-    # Test lease created correctly
-    lease = rentable.leasesConditions(testNFT, tokenId).dict()
-    assert lease["maxTimeDuration"] == maxTimeDuration
-    assert lease["pricePerBlock"] == pricePerBlock
-    assert lease["paymentTokenAddress"] == paymentToken
-    assert lease["paymentTokenId"] == paymentTokenId
-    assert lease["privateRenter"] == address0
+    # Test rent created correctly
+    rent = rentable.rentalConditions(testNFT, tokenId).dict()
+    assert rent["maxTimeDuration"] == maxTimeDuration
+    assert rent["pricePerBlock"] == pricePerBlock
+    assert rent["paymentTokenAddress"] == paymentToken
+    assert rent["paymentTokenId"] == paymentTokenId
+    assert rent["privateRenter"] == address0
 
 
 def test_depositAndList_1tx(
@@ -132,13 +132,13 @@ def test_depositAndList_1tx(
 
     data = eth_abi.encode_abi(
         [
-            "address",  # paymentTokenAddress
-            "uint256",  # paymentTokenId
             "uint256",  # maxTimeDuration
             "uint256",  # pricePerBlock
+            "uint256",  # paymentTokenId
+            "address",  # paymentTokenAddress
             "address",  # privateRental
         ],
-        (paymentToken, paymentTokenId, maxTimeDuration, pricePerBlock, address0),
+        (maxTimeDuration, pricePerBlock, paymentTokenId, paymentToken, address0),
     ).hex()
 
     tx = testNFT.safeTransferFrom(user, rentable, tokenId, data, {"from": user})
@@ -148,7 +148,7 @@ def test_depositAndList_1tx(
     assert evt["tokenAddress"] == testNFT.address
     assert evt["tokenId"] == tokenId
 
-    evt = tx.events["UpdateLeaseConditions"]
+    evt = tx.events["UpdateRentalConditions"]
 
     assert evt["tokenAddress"] == testNFT.address
     assert evt["tokenId"] == tokenId
@@ -164,13 +164,13 @@ def test_depositAndList_1tx(
     # Test user ownership
     assert orentable.ownerOf(tokenId) == user
 
-    # Test lease created correctly
-    lease = rentable.leasesConditions(testNFT, tokenId).dict()
-    assert lease["maxTimeDuration"] == maxTimeDuration
-    assert lease["pricePerBlock"] == pricePerBlock
-    assert lease["paymentTokenAddress"] == paymentToken
-    assert lease["paymentTokenId"] == paymentTokenId
-    assert lease["privateRenter"] == address0
+    # Test rent created correctly
+    rent = rentable.rentalConditions(testNFT, tokenId).dict()
+    assert rent["maxTimeDuration"] == maxTimeDuration
+    assert rent["pricePerBlock"] == pricePerBlock
+    assert rent["paymentTokenAddress"] == paymentToken
+    assert rent["paymentTokenId"] == paymentTokenId
+    assert rent["privateRenter"] == address0
 
 
 def test_depositAndPrivateList_1tx(
@@ -188,17 +188,17 @@ def test_depositAndPrivateList_1tx(
 
     data = eth_abi.encode_abi(
         [
-            "address",  # paymentTokenAddress
-            "uint256",  # paymentTokenId
             "uint256",  # maxTimeDuration
             "uint256",  # pricePerBlock
-            "address",  # privateRenter
+            "uint256",  # paymentTokenId
+            "address",  # paymentTokenAddress
+            "address",  # privateRental
         ],
         (
-            paymentToken,
-            paymentTokenId,
             maxTimeDuration,
             pricePerBlock,
+            paymentTokenId,
+            paymentToken,
             privateRenter.address,
         ),
     ).hex()
@@ -210,7 +210,7 @@ def test_depositAndPrivateList_1tx(
     assert evt["tokenAddress"] == testNFT.address
     assert evt["tokenId"] == tokenId
 
-    evt = tx.events["UpdateLeaseConditions"]
+    evt = tx.events["UpdateRentalConditions"]
 
     assert evt["tokenAddress"] == testNFT.address
     assert evt["tokenId"] == tokenId
@@ -226,13 +226,13 @@ def test_depositAndPrivateList_1tx(
     # Test user ownership
     assert orentable.ownerOf(tokenId) == user
 
-    # Test lease created correctly
-    lease = rentable.leasesConditions(testNFT, tokenId).dict()
-    assert lease["maxTimeDuration"] == maxTimeDuration
-    assert lease["pricePerBlock"] == pricePerBlock
-    assert lease["paymentTokenAddress"] == paymentToken
-    assert lease["paymentTokenId"] == paymentTokenId
-    assert lease["privateRenter"] == privateRenter.address
+    # Test rent created correctly
+    rent = rentable.rentalConditions(testNFT, tokenId).dict()
+    assert rent["maxTimeDuration"] == maxTimeDuration
+    assert rent["pricePerBlock"] == pricePerBlock
+    assert rent["paymentTokenAddress"] == paymentToken
+    assert rent["paymentTokenId"] == paymentTokenId
+    assert rent["privateRenter"] == privateRenter.address
 
 
 def test_withdraw(rentable, orentable, testNFT, accounts):

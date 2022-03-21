@@ -79,7 +79,7 @@ contract RentableHooks {
         }
     }
 
-    function _postExpireRent(
+    function _postexpireRental(
         address tokenAddress,
         uint256 tokenId,
         address from,
@@ -89,7 +89,7 @@ contract RentableHooks {
         if (lib != address(0)) {
             lib.functionDelegateCall(
                 abi.encodeCall(
-                    ICollectionLibrary(lib).postExpireRent,
+                    ICollectionLibrary(lib).postexpireRental,
                     (tokenAddress, tokenId, from, to)
                 ),
                 ""
