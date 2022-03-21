@@ -216,9 +216,9 @@ def test_subscribe_lease(
     assert evt["tokenAddress"] == testNFT.address
     assert evt["tokenId"] == tokenId
 
-    lease = rentable.currentLeases(testNFT, tokenId).dict()
-
-    assert lease["eta"] == tx.block_number + subscriptionDuration
+    assert (
+        rentable.expiresAt(testNFT, tokenId) == tx.block_number + subscriptionDuration
+    )
 
     totalFeesToPay = (
         ((rentPayed - rentable.fixedFee()) * rentable.fee() / rentable.BASE_FEE())
@@ -320,9 +320,9 @@ def test_subscribe_lease_via_depositAndList(
     assert evt["tokenAddress"] == testNFT.address
     assert evt["tokenId"] == tokenId
 
-    lease = rentable.currentLeases(testNFT, tokenId).dict()
-
-    assert lease["eta"] == tx.block_number + subscriptionDuration
+    assert (
+        rentable.expiresAt(testNFT, tokenId) == tx.block_number + subscriptionDuration
+    )
 
     totalFeesToPay = (
         ((rentPayed - rentable.fixedFee()) * rentable.fee() / rentable.BASE_FEE())
@@ -438,9 +438,9 @@ def test_subscribe_lease_via_depositAndList_private(
     assert evt["tokenAddress"] == testNFT.address
     assert evt["tokenId"] == tokenId
 
-    lease = rentable.currentLeases(testNFT, tokenId).dict()
-
-    assert lease["eta"] == tx.block_number + subscriptionDuration
+    assert (
+        rentable.expiresAt(testNFT, tokenId) == tx.block_number + subscriptionDuration
+    )
     totalFeesToPay = (
         ((rentPayed - rentable.fixedFee()) * rentable.fee() / rentable.BASE_FEE())
     ) + rentable.fixedFee()

@@ -51,12 +51,7 @@ contract WRentable is ERC721ReadOnlyProxy {
         override
         returns (address)
     {
-        IRentable.Lease memory lease = IRentable(_rentable).currentLeases(
-            _wrapped,
-            tokenId
-        );
-
-        if (lease.eta > 0 && lease.eta > block.number) {
+        if (IRentable(_rentable).expiresAt(_wrapped, tokenId) > block.number) {
             return super.ownerOf(tokenId);
         } else {
             return address(0);

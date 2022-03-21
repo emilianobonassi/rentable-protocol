@@ -39,7 +39,7 @@ contract Rentable is
     mapping(address => mapping(uint256 => LeaseConditions))
         internal _leasesConditions;
 
-    mapping(address => mapping(uint256 => Lease)) internal _currentLeases;
+    mapping(address => mapping(uint256 => uint256)) internal _etas;
 
     mapping(address => address) internal _wrentables;
     mapping(address => ORentable) internal _orentables;
@@ -293,14 +293,14 @@ contract Rentable is
         return _leasesConditions[tokenAddress][tokenId];
     }
 
-    function currentLeases(address tokenAddress, uint256 tokenId)
+    function expiresAt(address tokenAddress, uint256 tokenId)
         external
         view
         virtual
         override
-        returns (Lease memory)
+        returns (uint256)
     {
-        return _currentLeases[tokenAddress][tokenId];
+        return _etas[tokenAddress][tokenId];
     }
 
     function _createOrUpdateLeaseConditions(
@@ -355,7 +355,7 @@ contract Rentable is
             skipExistCheck ||
             WRentable(_wrentables[tokenAddress]).exists(tokenId)
         ) {
-            if (block.number >= (_currentLeases[tokenAddress][tokenId]).eta) {
+            if (block.number >= _etas[tokenAddress][tokenId]) {
                 address currentRentee = ORentable(_orentables[tokenAddress])
                     .ownerOf(tokenId);
                 address currentRenter = WRentable(_wrentables[tokenAddress])
@@ -452,9 +452,7 @@ contract Rentable is
             (((paymentQty - fixedFee) * fee) / BASE_FEE);
         uint256 feesForRentee = paymentQty - feesForFeeCollector;
 
-        _currentLeases[tokenAddress][tokenId] = Lease({
-            eta: block.number + duration
-        });
+        _etas[tokenAddress][tokenId] = block.number + duration;
 
         WRentable(_wrentables[tokenAddress]).mint(msg.sender, tokenId);
 
