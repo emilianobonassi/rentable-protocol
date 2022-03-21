@@ -215,6 +215,9 @@ def test_subscribe_lease(
     assert evt["to"] == subscriber
     assert evt["tokenAddress"] == testNFT.address
     assert evt["tokenId"] == tokenId
+    assert evt["paymentTokenAddress"] == paymentToken
+    assert evt["paymentTokenId"] == paymentTokenId
+    assert evt["expiresAt"] == tx.block_number + subscriptionDuration
 
     assert (
         rentable.expiresAt(testNFT, tokenId) == tx.block_number + subscriptionDuration
@@ -319,6 +322,9 @@ def test_subscribe_lease_via_depositAndList(
     assert evt["to"] == subscriber
     assert evt["tokenAddress"] == testNFT.address
     assert evt["tokenId"] == tokenId
+    assert evt["paymentTokenAddress"] == paymentToken
+    assert evt["paymentTokenId"] == paymentTokenId
+    assert evt["expiresAt"] == tx.block_number + subscriptionDuration
 
     assert (
         rentable.expiresAt(testNFT, tokenId) == tx.block_number + subscriptionDuration
@@ -437,6 +443,9 @@ def test_subscribe_lease_via_depositAndList_private(
     assert evt["to"] == subscriber
     assert evt["tokenAddress"] == testNFT.address
     assert evt["tokenId"] == tokenId
+    assert evt["paymentTokenAddress"] == paymentToken
+    assert evt["paymentTokenId"] == paymentTokenId
+    assert evt["expiresAt"] == tx.block_number + subscriptionDuration
 
     assert (
         rentable.expiresAt(testNFT, tokenId) == tx.block_number + subscriptionDuration
@@ -517,6 +526,9 @@ def test_do_not_withdraw_on_lease(
     assert evt["to"] == subscriber
     assert evt["tokenAddress"] == testNFT.address
     assert evt["tokenId"] == tokenId
+    assert evt["paymentTokenAddress"] == paymentToken
+    assert evt["paymentTokenId"] == paymentTokenId
+    assert evt["expiresAt"] == tx.block_number + subscriptionDuration
 
     with brownie.reverts("Current lease still pending"):
         rentable.withdraw(testNFT, tokenId, {"from": user})
@@ -583,6 +595,9 @@ def test_transfer_lease(
     assert evt["to"] == subscriber
     assert evt["tokenAddress"] == testNFT.address
     assert evt["tokenId"] == tokenId
+    assert evt["paymentTokenAddress"] == paymentToken
+    assert evt["paymentTokenId"] == paymentTokenId
+    assert evt["expiresAt"] == tx.block_number + subscriptionDuration
 
     user2 = accounts[2]
 
@@ -649,6 +664,9 @@ def test_transfer_ownership_during_lease(
     assert evt["to"] == subscriber
     assert evt["tokenAddress"] == testNFT.address
     assert evt["tokenId"] == tokenId
+    assert evt["paymentTokenAddress"] == paymentToken
+    assert evt["paymentTokenId"] == paymentTokenId
+    assert evt["expiresAt"] == tx.block_number + subscriptionDuration
 
     user2 = accounts[2]
 

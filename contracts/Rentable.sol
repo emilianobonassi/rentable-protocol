@@ -75,7 +75,10 @@ contract Rentable is
         address from,
         address indexed to,
         address indexed tokenAddress,
-        uint256 indexed tokenId
+        uint256 indexed tokenId,
+        address paymentTokenAddress,
+        uint256 paymentTokenId,
+        uint256 expiresAt
     );
     event RentEnds(address indexed tokenAddress, uint256 indexed tokenId);
 
@@ -506,7 +509,15 @@ contract Rentable is
 
         _postCreateRent(tokenAddress, tokenId, duration, rentee, msg.sender);
 
-        emit Rent(rentee, msg.sender, tokenAddress, tokenId);
+        emit Rent(
+            rentee,
+            msg.sender,
+            tokenAddress,
+            tokenId,
+            leaseCondition.paymentTokenAddress,
+            leaseCondition.paymentTokenId,
+            block.number + duration
+        );
     }
 
     function expireLease(address tokenAddress, uint256 tokenId)
