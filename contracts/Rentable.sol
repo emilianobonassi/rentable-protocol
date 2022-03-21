@@ -272,7 +272,7 @@ contract Rentable is
         );
 
         require(
-            !_expireRental(address(0), tokenAddress, tokenId, false),
+            !_expireRental(user, tokenAddress, tokenId, false),
             "Current rent still pending"
         );
 
@@ -428,7 +428,7 @@ contract Rentable is
         require(rcs.maxTimeDuration > 0, "Not available");
 
         require(
-            !_expireRental(address(0), tokenAddress, tokenId, false),
+            !_expireRental(rentee, tokenAddress, tokenId, false),
             "Current rent still pending"
         );
 
@@ -566,7 +566,7 @@ contract Rentable is
             "Only proper ORentables allowed"
         );
 
-        bool rented = _expireRental(address(0), tokenAddress, tokenId, false);
+        bool rented = _expireRental(from, tokenAddress, tokenId, false);
 
         address lib = _libraries[tokenAddress];
         if (lib != address(0)) {
