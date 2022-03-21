@@ -43,11 +43,8 @@ interface IRentable {
         @dev Deposits an NFT into the Rentable smart contract (without listing it), trasfers an oToken to the caller
         @param tokenAddress The address of the NFT smart contract to deposit
         @param tokenId The token id of the NFT smart contract to deposit
-        @return The tokenId of the transferred oToken (equals to tokenId deposited)
     */
-    function deposit(address tokenAddress, uint256 tokenId)
-        external
-        returns (uint256);
+    function deposit(address tokenAddress, uint256 tokenId) external;
 
     /**  
         @dev Deposits an NFT into the Rentable smart contract and list it with specified conditions. 
@@ -59,7 +56,6 @@ interface IRentable {
         @param maxTimeDuration The maximum duration of a single rental in numbers of blocks
         @param pricePerBlock The price of rental per block in the specified currency
         @param privateRenter The address of the user that reserved the rental (use address(0) for public rentals)
-        @return The tokenId of the transferred oToken (equals to tokenId)
     */
     function depositAndList(
         address tokenAddress,
@@ -69,7 +65,7 @@ interface IRentable {
         uint256 maxTimeDuration,
         uint256 pricePerBlock,
         address privateRenter
-    ) external returns (uint256);
+    ) external;
 
     /**  
         @dev Withdraws the specified NFT if the caller owns the respective oToken

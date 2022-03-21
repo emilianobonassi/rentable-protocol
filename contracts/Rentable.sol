@@ -172,7 +172,7 @@ contract Rentable is
         uint256 tokenId,
         address to,
         bool skipTransfer
-    ) internal returns (uint256 oRentableId) {
+    ) internal {
         ORentable oRentable = _getExistingORentable(tokenAddress);
 
         if (!skipTransfer) {
@@ -184,7 +184,7 @@ contract Rentable is
             );
         }
 
-        oRentableId = oRentable.mint(to, tokenId);
+        oRentable.mint(to, tokenId);
 
         _postDeposit(tokenAddress, tokenId, to);
 
@@ -201,8 +201,8 @@ contract Rentable is
         uint256 maxTimeDuration,
         uint256 pricePerSecond,
         address privateRenter
-    ) internal returns (uint256 oRentableId) {
-        oRentableId = _deposit(tokenAddress, tokenId, to, skipTransfer);
+    ) internal {
+        _deposit(tokenAddress, tokenId, to, skipTransfer);
 
         _createOrUpdateRentalConditions(
             tokenAddress,
@@ -222,9 +222,8 @@ contract Rentable is
         nonReentrant
         whenPausedthenProxy
         onlyAllowlisted
-        returns (uint256)
     {
-        return _deposit(tokenAddress, tokenId, msg.sender, false);
+        _deposit(tokenAddress, tokenId, msg.sender, false);
     }
 
     function depositAndList(
@@ -242,20 +241,18 @@ contract Rentable is
         nonReentrant
         whenPausedthenProxy
         onlyAllowlisted
-        returns (uint256)
     {
-        return
-            _depositAndList(
-                tokenAddress,
-                tokenId,
-                msg.sender,
-                false,
-                paymentTokenAddress,
-                paymentTokenId,
-                maxTimeDuration,
-                pricePerSecond,
-                privateRenter
-            );
+        _depositAndList(
+            tokenAddress,
+            tokenId,
+            msg.sender,
+            false,
+            paymentTokenAddress,
+            paymentTokenId,
+            maxTimeDuration,
+            pricePerSecond,
+            privateRenter
+        );
     }
 
     function withdraw(address tokenAddress, uint256 tokenId)
