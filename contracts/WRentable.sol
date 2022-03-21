@@ -4,15 +4,7 @@ pragma solidity ^0.8.13;
 
 import "./ERC721ReadOnlyProxy.sol";
 import "./IRentable.sol";
-
-interface IWRentableHooks {
-    function afterWTokenTransfer(
-        address tokenAddress,
-        address from,
-        address to,
-        uint256 tokenId
-    ) external;
-}
+import "./IWRentableHooks.sol";
 
 contract WRentable is ERC721ReadOnlyProxy {
     address internal _rentable;

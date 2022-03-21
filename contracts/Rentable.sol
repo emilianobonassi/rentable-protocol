@@ -14,9 +14,13 @@ import "@emilianobonassi-security/contracts/Security4.sol";
 import "./ORentable.sol";
 import "./WRentable.sol";
 import "./RentableHooks.sol";
+import "./IORentableHooks.sol";
+import "./IWRentableHooks.sol";
 
 contract Rentable is
     IRentable,
+    IORentableHooks,
+    IWRentableHooks,
     Security4,
     IERC721Receiver,
     RentableHooks,
@@ -213,6 +217,8 @@ contract Rentable is
 
     function deposit(address tokenAddress, uint256 tokenId)
         external
+        virtual
+        override
         nonReentrant
         whenPausedthenProxy
         onlyAllowlisted
@@ -231,6 +237,8 @@ contract Rentable is
         address privateRenter
     )
         external
+        virtual
+        override
         nonReentrant
         whenPausedthenProxy
         onlyAllowlisted
@@ -252,6 +260,8 @@ contract Rentable is
 
     function withdraw(address tokenAddress, uint256 tokenId)
         external
+        virtual
+        override
         nonReentrant
         whenPausedthenProxy
         onlyAllowlisted
@@ -280,6 +290,8 @@ contract Rentable is
     function rentalConditions(address tokenAddress, uint256 tokenId)
         external
         view
+        virtual
+        override
         returns (RentalConditions memory)
     {
         return _rentalConditions[tokenAddress][tokenId];
@@ -378,6 +390,8 @@ contract Rentable is
         address privateRenter
     )
         external
+        virtual
+        override
         onlyOTokenOwner(tokenAddress, tokenId)
         whenPausedthenProxy
         onlyAllowlisted
@@ -401,6 +415,8 @@ contract Rentable is
 
     function deleteRentalConditions(address tokenAddress, uint256 tokenId)
         external
+        virtual
+        override
         onlyOTokenOwner(tokenAddress, tokenId)
         whenPausedthenProxy
         onlyAllowlisted
@@ -412,7 +428,7 @@ contract Rentable is
         address tokenAddress,
         uint256 tokenId,
         uint256 duration
-    ) external payable nonReentrant whenPausedthenProxy {
+    ) external payable virtual override nonReentrant whenPausedthenProxy {
         ORentable oRentable = _getExistingORentable(tokenAddress);
         address payable rentee = payable(oRentable.ownerOf(tokenId));
 
@@ -508,6 +524,8 @@ contract Rentable is
 
     function expireRental(address tokenAddress, uint256 tokenId)
         external
+        virtual
+        override
         whenPausedthenProxy
     {
         _expireRental(address(0), tokenAddress, tokenId, false);
@@ -516,7 +534,7 @@ contract Rentable is
     function expireRentals(
         address[] calldata tokenAddresses,
         uint256[] calldata tokenIds
-    ) external whenPausedthenProxy {
+    ) external virtual override whenPausedthenProxy {
         for (uint256 i = 0; i < tokenAddresses.length; i++) {
             _expireRental(address(0), tokenAddresses[i], tokenIds[i], false);
         }
@@ -527,7 +545,7 @@ contract Rentable is
         address from,
         address to,
         uint256 tokenId
-    ) external whenPausedthenProxy {
+    ) external virtual override whenPausedthenProxy {
         require(
             msg.sender == _wrentables[tokenAddress],
             "Only proper WRentables allowed"
@@ -552,7 +570,7 @@ contract Rentable is
         address from,
         address to,
         uint256 tokenId
-    ) external whenPausedthenProxy {
+    ) external virtual override whenPausedthenProxy {
         require(
             msg.sender == address(_orentables[tokenAddress]),
             "Only proper ORentables allowed"
