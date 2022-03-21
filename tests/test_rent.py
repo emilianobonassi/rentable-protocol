@@ -1,6 +1,4 @@
-from multiprocessing import dummy
 import brownie
-import eth_abi
 from utils import *
 
 
@@ -21,8 +19,8 @@ def test_create_rental_conditions(
 
     rentable.deposit(testNFT, tokenId, {"from": user})
 
-    maxTimeDuration = 1000  # blocks
-    pricePerBlock = 0.001 * (10**18)
+    maxTimeDuration = 1000  # seconds
+    pricePerSecond = 0.001 * (10**18)
 
     rentable.createOrUpdateRentalConditions(
         testNFT,
@@ -30,7 +28,7 @@ def test_create_rental_conditions(
         paymentToken,
         paymentTokenId,
         maxTimeDuration,
-        pricePerBlock,
+        pricePerSecond,
         address0,
         {"from": user},
     )
@@ -38,7 +36,7 @@ def test_create_rental_conditions(
     # Test rent created correctly
     rent = rentable.rentalConditions(testNFT, tokenId).dict()
     assert rent["maxTimeDuration"] == maxTimeDuration
-    assert rent["pricePerBlock"] == pricePerBlock
+    assert rent["pricePerSecond"] == pricePerSecond
     assert rent["paymentTokenAddress"] == paymentToken
     assert rent["paymentTokenId"] == paymentTokenId
     assert rent["privateRenter"] == address0
@@ -47,7 +45,7 @@ def test_create_rental_conditions(
     assert eternalstorage.getUIntValue(dummylib.TOKEN_ID()) == tokenId
     assert eternalstorage.getAddressValue(dummylib.USER()) == user
     assert eternalstorage.getUIntValue(dummylib.MAX_TIME_DURATION()) == maxTimeDuration
-    assert eternalstorage.getUIntValue(dummylib.PRICE_PER_BLOCK()) == pricePerBlock
+    assert eternalstorage.getUIntValue(dummylib.PRICE_PER_SECOND()) == pricePerSecond
 
 
 def test_delete_rental_conditions(
@@ -64,7 +62,7 @@ def test_delete_rental_conditions(
     rentable.deposit(testNFT, tokenId, {"from": user})
 
     maxTimeDuration = 1000  # 7 days
-    pricePerBlock = 0.001 * (10**18)
+    pricePerSecond = 0.001 * (10**18)
 
     rentable.createOrUpdateRentalConditions(
         testNFT,
@@ -72,7 +70,7 @@ def test_delete_rental_conditions(
         paymentToken,
         paymentTokenId,
         maxTimeDuration,
-        pricePerBlock,
+        pricePerSecond,
         address0,
         {"from": user},
     )
@@ -98,8 +96,8 @@ def test_update_rental_conditions(
 
     rentable.deposit(testNFT, tokenId, {"from": user})
 
-    maxTimeDuration = 1000  # blocks
-    pricePerBlock = 0.001 * (10**18)
+    maxTimeDuration = 1000  # seconds
+    pricePerSecond = 0.001 * (10**18)
 
     rentable.createOrUpdateRentalConditions(
         testNFT,
@@ -107,7 +105,7 @@ def test_update_rental_conditions(
         paymentToken,
         paymentTokenId,
         maxTimeDuration,
-        pricePerBlock,
+        pricePerSecond,
         address0,
         {"from": user},
     )
@@ -115,13 +113,13 @@ def test_update_rental_conditions(
     # Test rent created correctly
     rent = rentable.rentalConditions(testNFT, tokenId).dict()
     assert rent["maxTimeDuration"] == maxTimeDuration
-    assert rent["pricePerBlock"] == pricePerBlock
+    assert rent["pricePerSecond"] == pricePerSecond
     assert rent["paymentTokenAddress"] == paymentToken
     assert rent["paymentTokenId"] == paymentTokenId
     assert rent["privateRenter"] == address0
 
-    maxTimeDuration = 800  # blocks
-    pricePerBlock = 0.8 * (10**18)
+    maxTimeDuration = 800  # seconds
+    pricePerSecond = 0.8 * (10**18)
 
     rentable.createOrUpdateRentalConditions(
         testNFT,
@@ -129,7 +127,7 @@ def test_update_rental_conditions(
         paymentToken,
         paymentTokenId,
         maxTimeDuration,
-        pricePerBlock,
+        pricePerSecond,
         user1,
         {"from": user},
     )
@@ -137,14 +135,14 @@ def test_update_rental_conditions(
     # Test rent update correctly
     rent = rentable.rentalConditions(testNFT, tokenId).dict()
     assert rent["maxTimeDuration"] == maxTimeDuration
-    assert rent["pricePerBlock"] == pricePerBlock
+    assert rent["pricePerSecond"] == pricePerSecond
     assert rent["paymentTokenAddress"] == paymentToken
     assert rent["paymentTokenId"] == paymentTokenId
     assert rent["privateRenter"] == user1
 
 
 def test_rent(
-    rentable,
+    rentableWithFees,
     testNFT,
     paymentToken,
     paymentTokenId,
@@ -157,37 +155,37 @@ def test_rent(
     dummylib,
     eternalstorage,
 ):
-    rentable.setLibrary(testNFT, dummylib)
-    assert rentable.getLibrary(testNFT) == dummylib
+    rentableWithFees.setLibrary(testNFT, dummylib)
+    assert rentableWithFees.getLibrary(testNFT) == dummylib
 
     user = accounts[0]
     renter = accounts[1]
-    feeCollector = accounts.at(rentable.feeCollector())
+    feeCollector = accounts.at(rentableWithFees.feeCollector())
 
     tokenId = 123
 
     testNFT.mint(user, tokenId, {"from": user})
 
-    testNFT.approve(rentable, tokenId, {"from": user})
+    testNFT.approve(rentableWithFees, tokenId, {"from": user})
 
-    rentable.deposit(testNFT, tokenId, {"from": user})
+    rentableWithFees.deposit(testNFT, tokenId, {"from": user})
 
     maxTimeDuration = 1000  # 7 days
-    pricePerBlock = 0.001 * (10**18)
+    pricePerSecond = 0.001 * (10**18)
 
-    rentable.createOrUpdateRentalConditions(
+    rentableWithFees.createOrUpdateRentalConditions(
         testNFT,
         tokenId,
         paymentToken,
         paymentTokenId,
         maxTimeDuration,
-        pricePerBlock,
+        pricePerSecond,
         address0,
         {"from": user},
     )
 
     # Test rent
-    rentalDuration = 70  # blocks
+    rentalDuration = 70  # seconds
     value = "0.07 ether"
 
     preBalanceUser = getBalance(user, paymentToken, paymentTokenId, weth, dummy1155)
@@ -197,11 +195,11 @@ def test_rent(
     )
 
     depositAndApprove(
-        renter, rentable, value, paymentToken, paymentTokenId, weth, dummy1155
+        renter, rentableWithFees, value, paymentToken, paymentTokenId, weth, dummy1155
     )
 
     preBalanceRenter = getBalance(renter, paymentToken, paymentTokenId, weth, dummy1155)
-    tx = rentable.rent(
+    tx = rentableWithFees.rent(
         testNFT, tokenId, rentalDuration, {"from": renter, "value": value}
     )
 
@@ -219,13 +217,17 @@ def test_rent(
     assert evt["tokenId"] == tokenId
     assert evt["paymentTokenAddress"] == paymentToken
     assert evt["paymentTokenId"] == paymentTokenId
-    assert evt["expiresAt"] == tx.block_number + rentalDuration
+    assert evt["expiresAt"] == tx.timestamp + rentalDuration
 
-    assert rentable.expiresAt(testNFT, tokenId) == tx.block_number + rentalDuration
+    assert rentableWithFees.expiresAt(testNFT, tokenId) == tx.timestamp + rentalDuration
 
     totalFeesToPay = (
-        ((rentPayed - rentable.fixedFee()) * rentable.fee() / rentable.BASE_FEE())
-    ) + rentable.fixedFee()
+        (
+            (rentPayed - rentableWithFees.fixedFee())
+            * rentableWithFees.fee()
+            / rentableWithFees.BASE_FEE()
+        )
+    ) + rentableWithFees.fixedFee()
 
     assert (
         getBalance(feeCollector, paymentToken, paymentTokenId, weth, dummy1155)
@@ -248,13 +250,13 @@ def test_rent(
     assert eternalstorage.getAddressValue(dummylib.TO()) == renter.address
     assert eternalstorage.getUIntValue(dummylib.DURATION()) == rentalDuration
 
-    chain.mine(rentalDuration + 1)
+    chain.mine(1, None, rentalDuration + 1)
 
     assert wrentable.ownerOf(tokenId) == address0
 
 
 def test_rent_via_depositAndList(
-    rentable,
+    rentableWithFees,
     testNFT,
     paymentToken,
     paymentTokenId,
@@ -267,30 +269,30 @@ def test_rent_via_depositAndList(
 ):
     user = accounts[0]
     renter = accounts[1]
-    feeCollector = accounts.at(rentable.feeCollector())
+    feeCollector = accounts.at(rentableWithFees.feeCollector())
 
     tokenId = 123
 
     testNFT.mint(user, tokenId, {"from": user})
 
-    testNFT.approve(rentable, tokenId, {"from": user})
+    testNFT.approve(rentableWithFees, tokenId, {"from": user})
 
-    maxTimeDuration = 1000  # blocks
-    pricePerBlock = 0.001 * (10**18)
+    maxTimeDuration = 1000  # seconds
+    pricePerSecond = 0.001 * (10**18)
 
-    rentable.depositAndList(
+    rentableWithFees.depositAndList(
         testNFT,
         tokenId,
         paymentToken,
         paymentTokenId,
         maxTimeDuration,
-        pricePerBlock,
+        pricePerSecond,
         address0,
         {"from": user},
     )
 
     # Test rent
-    rentalDuration = 80  # blocks
+    rentalDuration = 80  # seconds
     value = "0.08 ether"
 
     preBalanceUser = getBalance(user, paymentToken, paymentTokenId, weth, dummy1155)
@@ -300,11 +302,11 @@ def test_rent_via_depositAndList(
     )
 
     depositAndApprove(
-        renter, rentable, value, paymentToken, paymentTokenId, weth, dummy1155
+        renter, rentableWithFees, value, paymentToken, paymentTokenId, weth, dummy1155
     )
 
     preBalanceRenter = getBalance(renter, paymentToken, paymentTokenId, weth, dummy1155)
-    tx = rentable.rent(
+    tx = rentableWithFees.rent(
         testNFT, tokenId, rentalDuration, {"from": renter, "value": value}
     )
 
@@ -322,13 +324,17 @@ def test_rent_via_depositAndList(
     assert evt["tokenId"] == tokenId
     assert evt["paymentTokenAddress"] == paymentToken
     assert evt["paymentTokenId"] == paymentTokenId
-    assert evt["expiresAt"] == tx.block_number + rentalDuration
+    assert evt["expiresAt"] == tx.timestamp + rentalDuration
 
-    assert rentable.expiresAt(testNFT, tokenId) == tx.block_number + rentalDuration
+    assert rentableWithFees.expiresAt(testNFT, tokenId) == tx.timestamp + rentalDuration
 
     totalFeesToPay = (
-        ((rentPayed - rentable.fixedFee()) * rentable.fee() / rentable.BASE_FEE())
-    ) + rentable.fixedFee()
+        (
+            (rentPayed - rentableWithFees.fixedFee())
+            * rentableWithFees.fee()
+            / rentableWithFees.BASE_FEE()
+        )
+    ) + rentableWithFees.fixedFee()
 
     assert (
         getBalance(feeCollector, paymentToken, paymentTokenId, weth, dummy1155)
@@ -345,11 +351,11 @@ def test_rent_via_depositAndList(
 
     assert wrentable.ownerOf(tokenId) == renter.address
 
-    chain.mine(rentalDuration + 1)
+    chain.mine(1, None, rentalDuration + 1)
 
     assert wrentable.ownerOf(tokenId) == address0
 
-    tx = rentable.expireRental(testNFT, tokenId)
+    tx = rentableWithFees.expireRental(testNFT, tokenId)
 
     evt = tx.events["RentEnds"]
 
@@ -358,7 +364,7 @@ def test_rent_via_depositAndList(
 
 
 def test_rent_via_depositAndList_private(
-    rentable,
+    rentableWithFees,
     testNFT,
     paymentToken,
     paymentTokenId,
@@ -373,30 +379,30 @@ def test_rent_via_depositAndList_private(
     renter = accounts[1]
     wrongRenter = accounts[2]
 
-    feeCollector = accounts.at(rentable.feeCollector())
+    feeCollector = accounts.at(rentableWithFees.feeCollector())
 
     tokenId = 123
 
     testNFT.mint(user, tokenId, {"from": user})
 
-    testNFT.approve(rentable, tokenId, {"from": user})
+    testNFT.approve(rentableWithFees, tokenId, {"from": user})
 
-    maxTimeDuration = 1000  # blocks
-    pricePerBlock = 0.001 * (10**18)
+    maxTimeDuration = 1000  # seconds
+    pricePerSecond = 0.001 * (10**18)
 
-    rentable.depositAndList(
+    rentableWithFees.depositAndList(
         testNFT,
         tokenId,
         paymentToken,
         paymentTokenId,
         maxTimeDuration,
-        pricePerBlock,
+        pricePerSecond,
         renter,
         {"from": user},
     )
 
     # Test rent
-    rentalDuration = 80  # blocks
+    rentalDuration = 80  # seconds
     value = "0.08 ether"
 
     preBalanceUser = getBalance(user, paymentToken, paymentTokenId, weth, dummy1155)
@@ -406,22 +412,28 @@ def test_rent_via_depositAndList_private(
     )
 
     depositAndApprove(
-        renter, rentable, value, paymentToken, paymentTokenId, weth, dummy1155
+        renter, rentableWithFees, value, paymentToken, paymentTokenId, weth, dummy1155
     )
     depositAndApprove(
-        wrongRenter, rentable, value, paymentToken, paymentTokenId, weth, dummy1155
+        wrongRenter,
+        rentableWithFees,
+        value,
+        paymentToken,
+        paymentTokenId,
+        weth,
+        dummy1155,
     )
 
     preBalanceRenter = getBalance(renter, paymentToken, paymentTokenId, weth, dummy1155)
 
     with brownie.reverts("Rental reserved for another user"):
-        tx = rentable.rent(
+        tx = rentableWithFees.rent(
             testNFT,
             tokenId,
             rentalDuration,
             {"from": wrongRenter, "value": value},
         )
-    tx = rentable.rent(
+    tx = rentableWithFees.rent(
         testNFT, tokenId, rentalDuration, {"from": renter, "value": value}
     )
 
@@ -439,12 +451,17 @@ def test_rent_via_depositAndList_private(
     assert evt["tokenId"] == tokenId
     assert evt["paymentTokenAddress"] == paymentToken
     assert evt["paymentTokenId"] == paymentTokenId
-    assert evt["expiresAt"] == tx.block_number + rentalDuration
+    assert evt["expiresAt"] == tx.timestamp + rentalDuration
 
-    assert rentable.expiresAt(testNFT, tokenId) == tx.block_number + rentalDuration
+    assert rentableWithFees.expiresAt(testNFT, tokenId) == tx.timestamp + rentalDuration
+
     totalFeesToPay = (
-        ((rentPayed - rentable.fixedFee()) * rentable.fee() / rentable.BASE_FEE())
-    ) + rentable.fixedFee()
+        (
+            (rentPayed - rentableWithFees.fixedFee())
+            * rentableWithFees.fee()
+            / rentableWithFees.BASE_FEE()
+        )
+    ) + rentableWithFees.fixedFee()
 
     assert (
         getBalance(feeCollector, paymentToken, paymentTokenId, weth, dummy1155)
@@ -461,11 +478,11 @@ def test_rent_via_depositAndList_private(
 
     assert wrentable.ownerOf(tokenId) == renter.address
 
-    chain.mine(rentalDuration + 1)
+    chain.mine(1, None, rentalDuration + 1)
 
     assert wrentable.ownerOf(tokenId) == address0
 
-    tx = rentable.expireRental(testNFT, tokenId)
+    tx = rentableWithFees.expireRental(testNFT, tokenId)
 
     evt = tx.events["RentEnds"]
 
@@ -487,8 +504,8 @@ def test_do_not_withdraw_on_rent(
 
     rentable.deposit(testNFT, tokenId, {"from": user})
 
-    maxTimeDuration = 1000  # blocks
-    pricePerBlock = 0.001 * (10**18)
+    maxTimeDuration = 1000  # seconds
+    pricePerSecond = 0.001 * (10**18)
 
     rentable.createOrUpdateRentalConditions(
         testNFT,
@@ -496,7 +513,7 @@ def test_do_not_withdraw_on_rent(
         paymentToken,
         paymentTokenId,
         maxTimeDuration,
-        pricePerBlock,
+        pricePerSecond,
         address0,
         {"from": user},
     )
@@ -520,12 +537,12 @@ def test_do_not_withdraw_on_rent(
     assert evt["tokenId"] == tokenId
     assert evt["paymentTokenAddress"] == paymentToken
     assert evt["paymentTokenId"] == paymentTokenId
-    assert evt["expiresAt"] == tx.block_number + rentalDuration
+    assert evt["expiresAt"] == tx.timestamp + rentalDuration
 
     with brownie.reverts("Current rent still pending"):
         rentable.withdraw(testNFT, tokenId, {"from": user})
 
-    chain.mine(40 + 1)
+    chain.mine(1, None, 40 + 1)
 
     rentable.withdraw(testNFT, tokenId, {"from": user})
 
@@ -555,8 +572,8 @@ def test_transfer_rent(
 
     rentable.deposit(testNFT, tokenId, {"from": user})
 
-    maxTimeDuration = 1000  # blocks
-    pricePerBlock = 0.001 * (10**18)
+    maxTimeDuration = 1000  # seconds
+    pricePerSecond = 0.001 * (10**18)
 
     rentable.createOrUpdateRentalConditions(
         testNFT,
@@ -564,7 +581,7 @@ def test_transfer_rent(
         paymentToken,
         paymentTokenId,
         maxTimeDuration,
-        pricePerBlock,
+        pricePerSecond,
         address0,
         {"from": user},
     )
@@ -588,7 +605,7 @@ def test_transfer_rent(
     assert evt["tokenId"] == tokenId
     assert evt["paymentTokenAddress"] == paymentToken
     assert evt["paymentTokenId"] == paymentTokenId
-    assert evt["expiresAt"] == tx.block_number + rentalDuration
+    assert evt["expiresAt"] == tx.timestamp + rentalDuration
 
     user2 = accounts[2]
 
@@ -624,8 +641,8 @@ def test_transfer_ownership_during_rent(
 
     rentable.deposit(testNFT, tokenId, {"from": user})
 
-    maxTimeDuration = 1000  # blocks
-    pricePerBlock = 0.001 * (10**18)
+    maxTimeDuration = 1000  # seconds
+    pricePerSecond = 0.001 * (10**18)
 
     rentable.createOrUpdateRentalConditions(
         testNFT,
@@ -633,7 +650,7 @@ def test_transfer_ownership_during_rent(
         paymentToken,
         paymentTokenId,
         maxTimeDuration,
-        pricePerBlock,
+        pricePerSecond,
         address0,
         {"from": user},
     )
@@ -657,7 +674,7 @@ def test_transfer_ownership_during_rent(
     assert evt["tokenId"] == tokenId
     assert evt["paymentTokenAddress"] == paymentToken
     assert evt["paymentTokenId"] == paymentTokenId
-    assert evt["expiresAt"] == tx.block_number + rentalDuration
+    assert evt["expiresAt"] == tx.timestamp + rentalDuration
 
     user2 = accounts[2]
 

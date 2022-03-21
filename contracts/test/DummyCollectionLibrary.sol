@@ -13,7 +13,7 @@ contract DummyCollectionLibrary is ICollectionLibrary {
     bytes32 public constant USER = "user";
     bytes32 public constant MAX_TIME_DURATION = "maxTimeDuration";
     bytes32 public constant DURATION = "duration";
-    bytes32 public constant PRICE_PER_BLOCK = "pricePerBlock";
+    bytes32 public constant PRICE_PER_SECOND = "pricePerSecond";
     bytes32 public constant FROM = "from";
     bytes32 public constant TO = "to";
     bytes32 public constant RENT_ID = "rentId";
@@ -41,7 +41,7 @@ contract DummyCollectionLibrary is ICollectionLibrary {
         uint256 tokenId,
         address user,
         uint256 maxTimeDuration,
-        uint256 pricePerBlock
+        uint256 pricePerSecond
     ) external {
         EternalStorage(_eternalStorage).setAddressValue(
             TOKEN_ADDRESS,
@@ -54,8 +54,8 @@ contract DummyCollectionLibrary is ICollectionLibrary {
             maxTimeDuration
         );
         EternalStorage(_eternalStorage).setUIntValue(
-            PRICE_PER_BLOCK,
-            pricePerBlock
+            PRICE_PER_SECOND,
+            pricePerSecond
         );
     }
 

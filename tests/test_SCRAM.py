@@ -33,7 +33,7 @@ def test_SCRAM(
     rentable.deposit(testNFT, tokenId + 1, {"from": user})
 
     maxTimeDuration = 1000  # 7 days
-    pricePerBlock = 0.001 * (10**18)
+    pricePerSecond = 0.001 * (10**18)
 
     rentable.createOrUpdateRentalConditions(
         testNFT,
@@ -41,7 +41,7 @@ def test_SCRAM(
         paymentToken,
         paymentTokenId,
         maxTimeDuration,
-        pricePerBlock,
+        pricePerSecond,
         address0,
         {"from": user},
     )
@@ -52,12 +52,12 @@ def test_SCRAM(
         paymentToken,
         paymentTokenId,
         maxTimeDuration,
-        pricePerBlock,
+        pricePerSecond,
         address0,
         {"from": user},
     )
 
-    rentalDuration = 70  # blocks
+    rentalDuration = 70  # seconds
     value = "0.07 ether"
 
     depositAndApprove(
@@ -82,7 +82,7 @@ def test_SCRAM(
             paymentToken,
             paymentTokenId,
             maxTimeDuration,
-            pricePerBlock,
+            pricePerSecond,
             address0,
             {"from": user},
         )
@@ -97,7 +97,7 @@ def test_SCRAM(
             paymentToken,
             paymentTokenId,
             maxTimeDuration,
-            pricePerBlock,
+            pricePerSecond,
             address0,
             {"from": user},
         )

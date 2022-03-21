@@ -51,7 +51,9 @@ contract WRentable is ERC721ReadOnlyProxy {
         override
         returns (address)
     {
-        if (IRentable(_rentable).expiresAt(_wrapped, tokenId) > block.number) {
+        if (
+            IRentable(_rentable).expiresAt(_wrapped, tokenId) > block.timestamp
+        ) {
             return super.ownerOf(tokenId);
         } else {
             return address(0);

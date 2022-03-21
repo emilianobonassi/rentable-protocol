@@ -28,7 +28,7 @@ def test_rent_after_expire(
     rentable.deposit(testNFT, tokenId, {"from": user})
 
     maxTimeDuration = 1000  # 7 days
-    pricePerBlock = 0.01 * (10**18)
+    pricePerSecond = 0.01 * (10**18)
 
     rentable.createOrUpdateRentalConditions(
         testNFT,
@@ -36,13 +36,13 @@ def test_rent_after_expire(
         paymentToken,
         paymentTokenId,
         maxTimeDuration,
-        pricePerBlock,
+        pricePerSecond,
         address0,
         {"from": user},
     )
 
     # Test rent
-    rentalDuration = 10  # blocks
+    rentalDuration = 10  # seconds
     value = "0.1 ether"
 
     depositAndApprove(
@@ -51,14 +51,14 @@ def test_rent_after_expire(
 
     rentable.rent(testNFT, tokenId, rentalDuration, {"from": renter, "value": value})
 
-    chain.mine(5)
+    chain.mine(1, None, 5)
 
     rentable.expireRentals([testNFT], [tokenId])
 
     # Check still exists after nullpotent expireRentals
     assert wrentable.exists(tokenId) == True
 
-    chain.mine(6)
+    chain.mine(1, None, 6)
 
     rentable.expireRentals([testNFT], [tokenId])
 
@@ -66,7 +66,7 @@ def test_rent_after_expire(
     assert wrentable.exists(tokenId) == False
 
     # Test rent
-    rentalDuration = 10  # blocks
+    rentalDuration = 10  # seconds
     value = "0.1 ether"
 
     depositAndApprove(

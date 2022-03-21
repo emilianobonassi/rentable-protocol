@@ -13,18 +13,18 @@ from brownie import (
 
 
 def deposit1tx(
-    rentable, nft, depositor, tokenId, maxTimeDuration, pricePerBlock, paymentToken
+    rentable, nft, depositor, tokenId, maxTimeDuration, pricePerSecond, paymentToken
 ):
-    maxTimeDuration = 1000  # blocks
-    pricePerBlock = int(0.001 * (10**18))
+    maxTimeDuration = 1000  # seconds
+    pricePerSecond = int(0.001 * (10**18))
 
     data = eth_abi.encode_abi(
         [
             "address",  # paymentTokenAddress
             "uint256",  # maxTimeDuration
-            "uint256",  # pricePerBlock
+            "uint256",  # pricePerSecond
         ],
-        (paymentToken, maxTimeDuration, pricePerBlock),
+        (paymentToken, maxTimeDuration, pricePerSecond),
     ).hex()
 
     return nft.safeTransferFrom(depositor, rentable, tokenId, data, {"from": depositor})
@@ -92,7 +92,7 @@ def main():
             "tokenId": 8454,
             "user": depositorA,
             "maxTimeDuration": 500,
-            "pricePerBlock": 1 * 1e15,
+            "pricePerSecond": 1 * 1e15,
             "paymentToken": "0x0000000000000000000000000000000000000000",
         },
         {
@@ -100,7 +100,7 @@ def main():
             "tokenId": 9671,
             "user": depositorA,
             "maxTimeDuration": 1000,
-            "pricePerBlock": 2 * 1e15,
+            "pricePerSecond": 2 * 1e15,
             "paymentToken": "0x0000000000000000000000000000000000000000",
         },
         {
@@ -108,7 +108,7 @@ def main():
             "tokenId": 8419,
             "user": depositorA,
             "maxTimeDuration": 800,
-            "pricePerBlock": 3 * 1e15,
+            "pricePerSecond": 3 * 1e15,
             "paymentToken": "0x0000000000000000000000000000000000000000",
         },
         {
@@ -116,7 +116,7 @@ def main():
             "tokenId": 9314,
             "user": depositorA,
             "maxTimeDuration": 700,
-            "pricePerBlock": 5 * 1e15,
+            "pricePerSecond": 5 * 1e15,
             "paymentToken": "0x0000000000000000000000000000000000000000",
         },
         {
@@ -124,7 +124,7 @@ def main():
             "tokenId": 9779,
             "user": depositorA,
             "maxTimeDuration": 1500,
-            "pricePerBlock": 4 * 1e15,
+            "pricePerSecond": 4 * 1e15,
             "paymentToken": "0x0000000000000000000000000000000000000000",
         },
         {
@@ -132,7 +132,7 @@ def main():
             "tokenId": 92414,
             "user": depositorB,
             "maxTimeDuration": 1300,
-            "pricePerBlock": 1 * 1e15,
+            "pricePerSecond": 1 * 1e15,
             "paymentToken": "0x0000000000000000000000000000000000000000",
         },
         {
@@ -140,7 +140,7 @@ def main():
             "tokenId": 68621,
             "user": depositorB,
             "maxTimeDuration": 1300,
-            "pricePerBlock": 1 * 1e15,
+            "pricePerSecond": 1 * 1e15,
             "paymentToken": "0x0000000000000000000000000000000000000000",
         },
         {
@@ -148,7 +148,7 @@ def main():
             "tokenId": 42985,
             "user": depositorB,
             "maxTimeDuration": 1300,
-            "pricePerBlock": 1 * 1e15,
+            "pricePerSecond": 1 * 1e15,
             "paymentToken": "0x0000000000000000000000000000000000000000",
         },
         {
@@ -156,7 +156,7 @@ def main():
             "tokenId": 99011,
             "user": depositorB,
             "maxTimeDuration": 1300,
-            "pricePerBlock": 1 * 1e15,
+            "pricePerSecond": 1 * 1e15,
             "paymentToken": "0x0000000000000000000000000000000000000000",
         },
         {
@@ -164,7 +164,7 @@ def main():
             "tokenId": 104915,
             "user": depositorB,
             "maxTimeDuration": 1300,
-            "pricePerBlock": 1 * 1e15,
+            "pricePerSecond": 1 * 1e15,
             "paymentToken": "0x0000000000000000000000000000000000000000",
         },
     ]
@@ -176,7 +176,7 @@ def main():
             d["user"],
             d["tokenId"],
             d["maxTimeDuration"],
-            d["pricePerBlock"],
+            d["pricePerSecond"],
             d["paymentToken"],
         )
 
@@ -211,6 +211,6 @@ def main():
    WRentable(Land): {wrentableLand.address}
          YRentable: {yrentable.address}
           Rentable: {n.address}
-  Deployment block: {n.tx.block_number}
+  Deployment block: {n.tx.timestamp}
     """
     )

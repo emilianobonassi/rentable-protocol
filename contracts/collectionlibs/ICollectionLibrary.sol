@@ -14,7 +14,7 @@ interface ICollectionLibrary {
         uint256 tokenId,
         address user,
         uint256 maxTimeDuration,
-        uint256 pricePerBlock
+        uint256 pricePerSecond
     ) external;
 
     function postCreateRent(

@@ -27,7 +27,7 @@ contract Rentable is
 
     struct RentalConditions {
         uint256 maxTimeDuration;
-        uint256 pricePerBlock;
+        uint256 pricePerSecond;
         uint256 paymentTokenId;
         address paymentTokenAddress;
         address privateRenter;
@@ -64,7 +64,7 @@ contract Rentable is
         address paymentTokenAddress,
         uint256 paymentTokenId,
         uint256 maxTimeDuration,
-        uint256 pricePerBlock,
+        uint256 pricePerSecond,
         address privateRenter
     );
     event Withdraw(address indexed tokenAddress, uint256 indexed tokenId);
@@ -203,7 +203,7 @@ contract Rentable is
         address paymentTokenAddress,
         uint256 paymentTokenId,
         uint256 maxTimeDuration,
-        uint256 pricePerBlock,
+        uint256 pricePerSecond,
         address privateRenter
     ) internal returns (uint256 oRentableId) {
         oRentableId = _deposit(tokenAddress, tokenId, to, skipTransfer);
@@ -214,7 +214,7 @@ contract Rentable is
             paymentTokenAddress,
             paymentTokenId,
             maxTimeDuration,
-            pricePerBlock,
+            pricePerSecond,
             privateRenter
         );
     }
@@ -235,7 +235,7 @@ contract Rentable is
         address paymentTokenAddress,
         uint256 paymentTokenId,
         uint256 maxTimeDuration,
-        uint256 pricePerBlock,
+        uint256 pricePerSecond,
         address privateRenter
     )
         external
@@ -253,7 +253,7 @@ contract Rentable is
                 paymentTokenAddress,
                 paymentTokenId,
                 maxTimeDuration,
-                pricePerBlock,
+                pricePerSecond,
                 privateRenter
             );
     }
@@ -309,7 +309,7 @@ contract Rentable is
         address paymentTokenAddress,
         uint256 paymentTokenId,
         uint256 maxTimeDuration,
-        uint256 pricePerBlock,
+        uint256 pricePerSecond,
         address privateRenter
     ) internal {
         require(
@@ -319,7 +319,7 @@ contract Rentable is
 
         _rentalConditions[tokenAddress][tokenId] = RentalConditions({
             maxTimeDuration: maxTimeDuration,
-            pricePerBlock: pricePerBlock,
+            pricePerSecond: pricePerSecond,
             paymentTokenAddress: paymentTokenAddress,
             paymentTokenId: paymentTokenId,
             privateRenter: privateRenter
@@ -330,7 +330,7 @@ contract Rentable is
             tokenId,
             msg.sender,
             maxTimeDuration,
-            pricePerBlock
+            pricePerSecond
         );
 
         emit UpdateRentalConditions(
@@ -339,7 +339,7 @@ contract Rentable is
             paymentTokenAddress,
             paymentTokenId,
             maxTimeDuration,
-            pricePerBlock,
+            pricePerSecond,
             privateRenter
         );
     }
@@ -354,7 +354,7 @@ contract Rentable is
             skipExistCheck ||
             WRentable(_wrentables[tokenAddress]).exists(tokenId)
         ) {
-            if (block.number >= (_etas[tokenAddress][tokenId])) {
+            if (block.timestamp >= (_etas[tokenAddress][tokenId])) {
                 address currentRentee = oTokenOwner == address(0)
                     ? ORentable(_orentables[tokenAddress]).ownerOf(tokenId)
                     : oTokenOwner;
@@ -382,7 +382,7 @@ contract Rentable is
         address paymentTokenAddress,
         uint256 paymentTokenId,
         uint256 maxTimeDuration,
-        uint256 pricePerBlock,
+        uint256 pricePerSecond,
         address privateRenter
     )
         external
@@ -396,7 +396,7 @@ contract Rentable is
             paymentTokenAddress,
             paymentTokenId,
             maxTimeDuration,
-            pricePerBlock,
+            pricePerSecond,
             privateRenter
         );
     }
@@ -442,14 +442,14 @@ contract Rentable is
             "Rental reserved for another user"
         );
 
-        uint256 paymentQty = rcs.pricePerBlock * duration;
+        uint256 paymentQty = rcs.pricePerSecond * duration;
 
         // Fee calc
         uint256 feesForFeeCollector = fixedFee +
             (((paymentQty - fixedFee) * fee) / BASE_FEE);
         uint256 feesForRentee = paymentQty - feesForFeeCollector;
 
-        uint256 eta = block.number + duration;
+        uint256 eta = block.timestamp + duration;
         _etas[tokenAddress][tokenId] = eta;
 
         WRentable(_wrentables[tokenAddress]).mint(msg.sender, tokenId);
@@ -611,7 +611,7 @@ contract Rentable is
                 rc.paymentTokenAddress,
                 rc.paymentTokenId,
                 rc.maxTimeDuration,
-                rc.pricePerBlock,
+                rc.pricePerSecond,
                 rc.privateRenter
             );
         }

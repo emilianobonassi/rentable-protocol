@@ -40,7 +40,7 @@ contract RentableHooks {
         uint256 tokenId,
         address user,
         uint256 maxTimeDuration,
-        uint256 pricePerBlock
+        uint256 pricePerSecond
     ) internal {
         address lib = _libraries[tokenAddress];
         if (lib != address(0)) {
@@ -52,7 +52,7 @@ contract RentableHooks {
                         tokenId,
                         user,
                         maxTimeDuration,
-                        pricePerBlock
+                        pricePerSecond
                     )
                 ),
                 ""

@@ -11,19 +11,19 @@ def deposit1tx(
     depositor,
     tokenId,
     maxTimeDuration,
-    pricePerBlock,
+    pricePerSecond,
     paymentToken,
     paymentTokenId,
 ):
     data = eth_abi.encode_abi(
         [
             "uint256",  # maxTimeDuration
-            "uint256",  # pricePerBlock
+            "uint256",  # pricePerSecond
             "uint256",  # paymentTokenId
             "address",  # paymentTokenAddress
             "address",  # privateRental
         ],
-        (maxTimeDuration, pricePerBlock, paymentTokenId, paymentToken, address0),
+        (maxTimeDuration, pricePerSecond, paymentTokenId, paymentToken, address0),
     ).hex()
 
     return nft.safeTransferFrom(depositor, rentable, tokenId, data, {"from": depositor})
@@ -34,7 +34,7 @@ def test_flow(rentable, interface, testLand, accounts, chain, deployer, paymentT
     wLand = interface.IERC721(rentable.getWRentable(testLand))
 
     # Land owned by originalOwner and with originalOperator as operator
-    # List for maxRentBlocks and pricePerBlock payed in currencyToken
+    # List for maxSeconds and pricePerSecond payed in currencyToken
     # Onwer transfer to newOwner
     # Renter rent for half of the time
     # Transfer to newRenter
@@ -56,8 +56,8 @@ def test_flow(rentable, interface, testLand, accounts, chain, deployer, paymentT
     assert testLand.updateOperator(tokenId) == originalOperator
 
     # List
-    maxRentBlocks = 10
-    pricePerBlock = int(0.1 * (10**18))
+    maxSeconds = 10
+    pricePerSecond = int(0.1 * (10**18))
     currencyToken = address0
 
     deposit1tx(
@@ -65,8 +65,8 @@ def test_flow(rentable, interface, testLand, accounts, chain, deployer, paymentT
         testLand,
         originalOwner,
         tokenId,
-        maxRentBlocks,
-        pricePerBlock,
+        maxSeconds,
+        pricePerSecond,
         currencyToken,
         paymentTokenId,
     )
@@ -80,7 +80,7 @@ def test_flow(rentable, interface, testLand, accounts, chain, deployer, paymentT
 
     # Rent
     tx = rentable.rent(
-        testLand, tokenId, maxRentBlocks / 2, {"from": renter, "value": "1 ether"}
+        testLand, tokenId, maxSeconds / 2, {"from": renter, "value": "1 ether"}
     )
 
     assert testLand.updateOperator(tokenId) == renter
@@ -99,7 +99,7 @@ def test_flow(rentable, interface, testLand, accounts, chain, deployer, paymentT
 
     # Timemachine
 
-    chain.mine(maxRentBlocks + 1)
+    chain.mine(1, None, maxSeconds + 1)
 
     # Expire
     rentable.expireRental(testLand, tokenId, {"from": deployer})
