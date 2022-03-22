@@ -8,11 +8,10 @@
   "scripts": {
     "network:testnet": "ganache-cli",
     "network:mainnet-fork": "hardhat node",
-    "deploy": "brownie run deploy",
+    "deploy:testnet": "brownie run deploy_testnet",
     "mintNFT": "brownie run mintNFT",
     "console": "brownie console",
-    "test": "brownie test --network development",
-    "fixture:realScenario": "brownie run realScenario",
+    "test": "forge test --gas-report",
     "format:check:sol": "prettier --check '**/*.*(sol|json)'",
     "format:check:py": "black --check --include '(tests|scripts)' .",
     "format:check": "yarn format:check:sol && yarn format:check:py",

@@ -205,6 +205,7 @@ contract Rentable is
         _deposit(tokenAddress, tokenId, to, skipTransfer);
 
         _createOrUpdateRentalConditions(
+            to,
             tokenAddress,
             tokenId,
             paymentTokenAddress,
@@ -305,6 +306,7 @@ contract Rentable is
     }
 
     function _createOrUpdateRentalConditions(
+        address user,
         address tokenAddress,
         uint256 tokenId,
         address paymentTokenAddress,
@@ -326,13 +328,7 @@ contract Rentable is
             privateRenter: privateRenter
         });
 
-        _postList(
-            tokenAddress,
-            tokenId,
-            msg.sender,
-            maxTimeDuration,
-            pricePerSecond
-        );
+        _postList(tokenAddress, tokenId, user, maxTimeDuration, pricePerSecond);
 
         emit UpdateRentalConditions(
             tokenAddress,
@@ -394,6 +390,7 @@ contract Rentable is
         onlyAllowlisted
     {
         _createOrUpdateRentalConditions(
+            msg.sender,
             tokenAddress,
             tokenId,
             paymentTokenAddress,

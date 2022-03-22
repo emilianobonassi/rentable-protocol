@@ -8,7 +8,7 @@ contract DummyERC1155 is ERC1155 {
     uint256 public constant TOKEN1 = 0;
     uint256 public constant TOKEN2 = 1;
 
-    constructor() public ERC1155("https://game.example/api/item/{id}.json") {
+    constructor() ERC1155("https://game.example/api/item/{id}.json") {
         _mint(msg.sender, TOKEN1, 10, "");
         _mint(msg.sender, TOKEN2, 10, "");
     }

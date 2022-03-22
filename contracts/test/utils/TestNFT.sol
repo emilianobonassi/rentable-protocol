@@ -3,14 +3,9 @@
 pragma solidity ^0.8.13;
 
 import "@openzeppelin/contracts/token/ERC721/ERC721.sol";
-import "@openzeppelin/contracts/token/ERC721/IERC721.sol";
-import "@openzeppelin/contracts/utils/Counters.sol";
 import "@openzeppelin/contracts/token/ERC721/extensions/ERC721URIStorage.sol";
 
 contract TestNFT is ERC721URIStorage {
-    using Counters for Counters.Counter;
-    Counters.Counter internal _tokenIds;
-
     constructor() ERC721("TestNFT", "TNFT") {}
 
     function mint(address to, uint256 tokenId) external {
