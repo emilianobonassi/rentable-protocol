@@ -9,7 +9,8 @@ import {DecentralandCollectionLibrary} from "../collectionlibs/decentraland/Dece
 import {ICollectionLibrary} from "../collectionlibs/ICollectionLibrary.sol";
 import {IRentable} from "../IRentable.sol";
 
-import {ORentable} from "../ORentable.sol";
+import {OLandRegistry} from "../collectionlibs/decentraland/OLandRegistry.sol";
+import {ILandRegistry} from "../collectionlibs/decentraland/ILandRegistry.sol";
 import {WRentable} from "../WRentable.sol";
 
 contract RentableDecentraland is SharedSetup {
@@ -23,19 +24,19 @@ contract RentableDecentraland is SharedSetup {
 
         testLand = new TestLand();
 
-        decentralandCollectionLibrary = new DecentralandCollectionLibrary();
-        rentable.setLibrary(
-            address(testLand),
-            address(decentralandCollectionLibrary)
-        );
-
-        orentable = new ORentable(address(testLand));
+        orentable = new OLandRegistry(address(testLand));
         orentable.setRentable(address(rentable));
         rentable.setORentable(address(testLand), address(orentable));
 
         wrentable = new WRentable(address(testLand));
         wrentable.setRentable(address(rentable));
         rentable.setWRentable(address(testLand), address(wrentable));
+
+        decentralandCollectionLibrary = new DecentralandCollectionLibrary();
+        rentable.setLibrary(
+            address(testLand),
+            address(decentralandCollectionLibrary)
+        );
 
         cheats.stopPrank();
     }
@@ -55,8 +56,16 @@ contract RentableDecentraland is SharedSetup {
         address renter = cheats.addr(12);
         address newRenter = cheats.addr(13);
         address newOwner = cheats.addr(14);
+        address offRentableOperator = cheats.addr(15);
 
         cheats.startPrank(originalOwner);
+
+        assert(
+            ILandRegistry(address(orentable)).updateManager(
+                address(rentable),
+                address(orentable)
+            )
+        );
 
         testLand.mint(originalOwner, tokenId);
         assertEq(testLand.ownerOf(tokenId), originalOwner);
@@ -83,10 +92,33 @@ contract RentableDecentraland is SharedSetup {
         );
 
         assertEq(testLand.updateOperator(tokenId), originalOwner);
+        cheats.warp(1); //timestamp is 0 otw
+        ILandRegistry(address(orentable)).setUpdateOperator(
+            tokenId,
+            offRentableOperator
+        );
+        assertEq(
+            ILandRegistry(address(orentable)).updateOperator(tokenId),
+            offRentableOperator
+        );
+
+        cheats.startPrank(newOwner);
+        cheats.expectRevert(bytes("User not allowed"));
+        ILandRegistry(address(orentable)).setUpdateOperator(
+            tokenId,
+            offRentableOperator
+        );
+        cheats.startPrank(originalOwner);
 
         //Transfer ownership not rented should change operator
         orentable.safeTransferFrom(originalOwner, newOwner, tokenId);
         assertEq(testLand.updateOperator(tokenId), newOwner);
+
+        cheats.expectRevert(bytes("User not allowed"));
+        ILandRegistry(address(orentable)).setUpdateOperator(
+            tokenId,
+            offRentableOperator
+        );
 
         //Rent
         cheats.stopPrank();
@@ -106,11 +138,29 @@ contract RentableDecentraland is SharedSetup {
         cheats.stopPrank();
         cheats.startPrank(newOwner);
 
+        // owner can't change operator during rental
+        cheats.expectRevert(bytes("Operation not allowed during rental"));
+        ILandRegistry(address(orentable)).setUpdateOperator(
+            tokenId,
+            offRentableOperator
+        );
+
         // Transfer ownership rented - must not change operator
         orentable.safeTransferFrom(newOwner, originalOwner, tokenId);
         assertEq(testLand.updateOperator(tokenId), newRenter);
 
         cheats.warp(maxTimeDuration / 2 + 1);
+
+        // update must be possible after lease expired even if not explicitly
+        cheats.startPrank(originalOwner);
+        ILandRegistry(address(orentable)).setUpdateOperator(
+            tokenId,
+            offRentableOperator
+        );
+        assertEq(
+            ILandRegistry(address(orentable)).updateOperator(tokenId),
+            offRentableOperator
+        );
 
         rentable.expireRental(address(testLand), tokenId);
 

@@ -81,7 +81,13 @@ contract Rentable is
         address payable _emergencyImplementation
     ) Security4(_governance, _operator, _emergencyImplementation) {}
 
-    function getORentable(address wrapped_) external view returns (address) {
+    function getORentable(address wrapped_)
+        external
+        view
+        virtual
+        override
+        returns (address)
+    {
         return address(_orentables[wrapped_]);
     }
 

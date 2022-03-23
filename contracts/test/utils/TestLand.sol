@@ -9,10 +9,30 @@ import "../../collectionlibs/decentraland/ILandRegistry.sol";
 contract TestLand is ERC721, ILandRegistry {
     mapping(uint256 => address) _updateOperator;
 
+    mapping(address => mapping(address => bool)) _updateManager;
+
     constructor() ERC721("LAND", "LAND") {}
 
     function updateOperator(uint256 assetId) external view returns (address) {
         return _updateOperator[assetId];
+    }
+
+    function updateManager(address owner, address operator)
+        external
+        view
+        virtual
+        override
+        returns (bool)
+    {
+        return _updateManager[owner][operator];
+    }
+
+    function setUpdateManager(
+        address owner,
+        address operator,
+        bool approved
+    ) external {
+        _updateManager[owner][operator] = approved;
     }
 
     function setUpdateOperator(uint256 assetId, address operator) external {

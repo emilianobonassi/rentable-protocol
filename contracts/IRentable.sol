@@ -126,4 +126,6 @@ interface IRentable {
         address[] calldata tokenAddresses,
         uint256[] calldata tokenIds
     ) external;
+
+    function getORentable(address wrapped_) external view returns (address);
 }

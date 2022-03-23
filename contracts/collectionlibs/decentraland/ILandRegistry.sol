@@ -9,4 +9,15 @@ interface ILandRegistry {
         returns (address operator);
 
     function setUpdateOperator(uint256 assetId, address operator) external;
+
+    function setUpdateManager(
+        address owner,
+        address operator,
+        bool approved
+    ) external;
+
+    function updateManager(address owner, address operator)
+        external
+        view
+        returns (bool);
 }
