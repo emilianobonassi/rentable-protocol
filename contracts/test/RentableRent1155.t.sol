@@ -75,7 +75,7 @@ contract RentableRent1155 is SharedSetup1155 {
             pricePerBlock,
             address(0)
         );
-
+        cheats.stopPrank();
         cheats.startPrank(renter);
         uint256 rentalDuration = 70;
         uint256 value = 0.07 ether * rentAmount;
@@ -187,7 +187,7 @@ contract RentableRent1155 is SharedSetup1155 {
             pricePerBlock,
             privateRenter
         );
-
+        cheats.stopPrank();
         cheats.startPrank(renter);
         uint256 rentalDuration = 70;
         uint256 value = 0.07 ether * rentAmount;
@@ -223,7 +223,7 @@ contract RentableRent1155 is SharedSetup1155 {
             rentalDuration,
             rentAmount
         );
-
+        cheats.stopPrank();
         cheats.startPrank(privateRenter);
         renter = privateRenter;
         preAssertRental(user, renter, 1, 1);
@@ -315,6 +315,7 @@ contract RentableRent1155 is SharedSetup1155 {
             address(0)
         );
 
+        cheats.stopPrank();
         cheats.startPrank(renter);
         uint256 rentalDuration = 70;
         uint256 value = 0.07 ether * rentAmount;
@@ -363,6 +364,7 @@ contract RentableRent1155 is SharedSetup1155 {
             address(0)
         );
 
+        cheats.stopPrank();
         cheats.startPrank(renter);
         uint256 rentalDuration = 70;
         uint256 value = 0.07 ether * (rentAmount + 1);
@@ -469,7 +471,7 @@ contract RentableRent1155 is SharedSetup1155 {
             pricePerBlock,
             address(0)
         );
-
+        cheats.stopPrank();
         cheats.startPrank(renter);
         uint256 rentalDuration = 70;
         uint256 value = 0.07 ether * (2 * rentAmount);
@@ -514,7 +516,7 @@ contract RentableRent1155 is SharedSetup1155 {
             pricePerBlock,
             address(0)
         );
-
+        cheats.stopPrank();
         cheats.startPrank(renter);
         uint256 rentalDuration = 70;
         uint256 value = 0.07 ether * (2 * rentAmount);
@@ -529,7 +531,7 @@ contract RentableRent1155 is SharedSetup1155 {
 
         cheats.expectEmit(true, true, true, true);
         emit RentEnds(address(wrentable), 1);
-
+        cheats.stopPrank();
         cheats.startPrank(user);
         rentable.withdraw(address(testNFT), oTokenId, 5);
     }
@@ -559,6 +561,7 @@ contract RentableRent1155 is SharedSetup1155 {
             address(0)
         );
 
+        cheats.stopPrank();
         cheats.startPrank(renter);
         uint256 rentalDuration = 70;
         uint256 value = 0.07 ether * (rentAmount);

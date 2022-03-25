@@ -272,6 +272,7 @@ contract RentableDeposit1155 is SharedSetup1155 {
 
         mintAndDeposit1155(tokenIdA, mintAmountA, depositAmountA, 0);
 
+        cheats.stopPrank();
         cheats.startPrank(anotherUser);
         testNFT.mint(anotherUser, tokenIdB, mintAmountB);
         testNFT.setApprovalForAll(address(rentable), true);
@@ -307,6 +308,7 @@ contract RentableDeposit1155 is SharedSetup1155 {
             oTokenId
         );
 
+        cheats.stopPrank();
         cheats.startPrank(cheats.addr(25));
         cheats.expectRevert(bytes("The token must be yours"));
         rentable.withdraw(address(testNFT), oTokenId, withdrawAmount);
@@ -429,6 +431,7 @@ contract RentableDeposit1155 is SharedSetup1155 {
 
         orentable.safeTransferFrom(user, receiver, oTokenId);
 
+        cheats.stopPrank();
         cheats.startPrank(receiver);
         testNFT.mint(receiver, tokenId, mintAmount);
         testNFT.setApprovalForAll(address(rentable), true);
@@ -463,7 +466,7 @@ contract RentableDeposit1155 is SharedSetup1155 {
         );
 
         orentable.safeTransferFrom(user, receiver, oTokenId);
-
+        cheats.stopPrank();
         cheats.startPrank(receiver);
 
         preAssertsTestWithdraw(receiver, tokenId, depositAmount, oTokenId);

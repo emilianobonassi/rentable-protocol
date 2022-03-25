@@ -219,6 +219,7 @@ contract RentableManageRentalConditions1155 is SharedSetup1155 {
 
         rentable.deposit(address(testNFT), tokenId, depositAmount, 0);
 
+        cheats.stopPrank();
         cheats.startPrank(cheats.addr(24));
         cheats.expectRevert(bytes("The token must be yours"));
         rentable.createOrUpdateRentalConditions(
