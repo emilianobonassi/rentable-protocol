@@ -585,7 +585,13 @@ contract Rentable1155 is
         uint256 oTokenId,
         uint256 duration,
         uint256 amount
-    ) external payable nonReentrant whenPausedthenProxy {
+    )
+        external
+        payable
+        nonReentrant
+        whenPausedthenProxy
+        returns (uint256 rentId)
+    {
         require(amount > 0, "Cannot rent 0");
 
         ORentable1155 oRentable = _getExistingORentable1155(tokenAddress);
@@ -622,14 +628,14 @@ contract Rentable1155 is
             "Rental reserved for another user"
         );
 
-        uint256 paymentQty = rentalCondition.pricePerBlock * duration;
+        uint256 paymentQty = rentalCondition.pricePerBlock * duration * amount;
 
         // Fee calc
         uint256 feesForFeeCollector = fixedFee +
             (((paymentQty - fixedFee) * fee) / BASE_FEE);
         uint256 feesForRentee = paymentQty - feesForFeeCollector;
 
-        uint256 rentId = ++wTokenIdCounter[address(wRentable)];
+        rentId = ++wTokenIdCounter[address(wRentable)];
 
         _rentals[address(wRentable)][rentId] = Rental({
             eta: block.number + duration,
@@ -689,6 +695,8 @@ contract Rentable1155 is
         }
 
         emit Rent(rentee, msg.sender, tokenAddress, oTokenId, rentId);
+
+        return rentId;
     }
 
     function onERC1155Received(

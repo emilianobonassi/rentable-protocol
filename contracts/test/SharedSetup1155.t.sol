@@ -37,6 +37,8 @@ interface CheatCodes {
     function warp(uint256) external;
 
     function deal(address who, uint256 newBalance) external;
+
+    function roll(uint256) external;
 }
 
 abstract contract SharedSetup1155 is DSTest {
@@ -168,7 +170,7 @@ abstract contract SharedSetup1155 is DSTest {
         uint256 value,
         address paymentToken,
         uint256 paymentTokenId
-    ) public {
+    ) public virtual {
         cheats.deal(_user, value);
         if (paymentToken == address(weth)) {
             weth.deposit{value: value}();
