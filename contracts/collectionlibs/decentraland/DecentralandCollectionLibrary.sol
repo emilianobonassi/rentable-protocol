@@ -4,7 +4,6 @@ pragma solidity ^0.8.13;
 
 import "../ICollectionLibrary.sol";
 import "./ILandRegistry.sol";
-import "../../IRentable.sol";
 
 contract DecentralandCollectionLibrary is ICollectionLibrary {
     function postDeposit(
