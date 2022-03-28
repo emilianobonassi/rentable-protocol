@@ -127,5 +127,10 @@ interface IRentable {
         uint256[] calldata tokenIds
     ) external;
 
-    function getORentable(address wrapped_) external view returns (address);
+    function proxyCall(
+        address to,
+        uint256 value,
+        bytes4 selector,
+        bytes memory data
+    ) external payable returns (bytes memory);
 }

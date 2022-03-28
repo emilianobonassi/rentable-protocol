@@ -7,17 +7,6 @@ import "./ILandRegistry.sol";
 import "../../IRentable.sol";
 
 contract DecentralandCollectionLibrary is ICollectionLibrary {
-    function postSetLibrary(address tokenAddress) external {
-        address rentableAddress = address(this);
-        IRentable rentable = IRentable(rentableAddress);
-        address orentable = rentable.getORentable(tokenAddress);
-        ILandRegistry(tokenAddress).setUpdateManager(
-            rentableAddress,
-            orentable,
-            true
-        );
-    }
-
     function postDeposit(
         address tokenAddress,
         uint256 tokenId,

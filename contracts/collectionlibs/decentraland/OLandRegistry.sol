@@ -18,6 +18,11 @@ contract OLandRegistry is ORentable {
             "Operation not allowed during rental"
         );
 
-        ILandRegistry(_wrapped).setUpdateOperator(tokenId, operator);
+        IRentable(_rentable).proxyCall(
+            _wrapped,
+            0,
+            ILandRegistry(_wrapped).setUpdateOperator.selector,
+            abi.encode(tokenId, operator)
+        );
     }
 }

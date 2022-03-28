@@ -3,8 +3,6 @@
 pragma solidity ^0.8.13;
 
 interface ICollectionLibrary {
-    function postSetLibrary(address tokenAddress) external;
-
     function postDeposit(
         address tokenAddress,
         uint256 tokenId,

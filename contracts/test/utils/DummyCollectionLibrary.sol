@@ -5,8 +5,6 @@ pragma solidity ^0.8.13;
 import "../../collectionlibs/ICollectionLibrary.sol";
 
 contract DummyCollectionLibrary is ICollectionLibrary {
-    function postSetLibrary(address tokenAddress) external {}
-
     function postDeposit(
         address tokenAddress,
         uint256 tokenId,

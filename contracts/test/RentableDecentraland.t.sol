@@ -38,6 +38,12 @@ contract RentableDecentraland is SharedSetup {
             address(decentralandCollectionLibrary)
         );
 
+        rentable.enableProxyCall(
+            address(orentable),
+            ILandRegistry.setUpdateOperator.selector,
+            true
+        );
+
         cheats.stopPrank();
     }
 
@@ -59,13 +65,6 @@ contract RentableDecentraland is SharedSetup {
         address offRentableOperator = cheats.addr(15);
 
         cheats.startPrank(originalOwner);
-
-        assert(
-            ILandRegistry(address(orentable)).updateManager(
-                address(rentable),
-                address(orentable)
-            )
-        );
 
         testLand.mint(originalOwner, tokenId);
         assertEq(testLand.ownerOf(tokenId), originalOwner);
@@ -93,6 +92,7 @@ contract RentableDecentraland is SharedSetup {
 
         assertEq(testLand.updateOperator(tokenId), originalOwner);
         cheats.warp(1); //timestamp is 0 otw
+        //owner must be able to change operator when rentals are not in place
         ILandRegistry(address(orentable)).setUpdateOperator(
             tokenId,
             offRentableOperator
@@ -102,23 +102,36 @@ contract RentableDecentraland is SharedSetup {
             offRentableOperator
         );
 
+        //non-owners cannot change rentals
+        cheats.stopPrank();
         cheats.startPrank(newOwner);
         cheats.expectRevert(bytes("User not allowed"));
         ILandRegistry(address(orentable)).setUpdateOperator(
             tokenId,
             offRentableOperator
         );
+        cheats.stopPrank();
         cheats.startPrank(originalOwner);
 
         //Transfer ownership not rented should change operator
         orentable.safeTransferFrom(originalOwner, newOwner, tokenId);
         assertEq(testLand.updateOperator(tokenId), newOwner);
 
+        //After changing ownership the original owner must not be allowed to change operator
         cheats.expectRevert(bytes("User not allowed"));
         ILandRegistry(address(orentable)).setUpdateOperator(
             tokenId,
             offRentableOperator
         );
+
+        // new owner must be able to change operator when rentals are not in place
+        cheats.stopPrank();
+        cheats.startPrank(newOwner);
+        ILandRegistry(address(orentable)).setUpdateOperator(
+            tokenId,
+            offRentableOperator
+        );
+        assertEq(testLand.updateOperator(tokenId), offRentableOperator);
 
         //Rent
         cheats.stopPrank();
@@ -152,6 +165,7 @@ contract RentableDecentraland is SharedSetup {
         cheats.warp(maxTimeDuration / 2 + 1);
 
         // update must be possible after lease expired even if not explicitly
+        cheats.stopPrank();
         cheats.startPrank(originalOwner);
         ILandRegistry(address(orentable)).setUpdateOperator(
             tokenId,

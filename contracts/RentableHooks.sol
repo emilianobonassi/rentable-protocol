@@ -16,14 +16,6 @@ contract RentableHooks {
 
     function setLibrary(address wrapped_, address library_) external {
         _libraries[wrapped_] = library_;
-
-        library_.functionDelegateCall(
-            abi.encodeCall(
-                ICollectionLibrary(library_).postSetLibrary,
-                (wrapped_)
-            ),
-            ""
-        );
     }
 
     function _postDeposit(
