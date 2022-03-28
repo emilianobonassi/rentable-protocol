@@ -55,10 +55,12 @@ contract RentableWrapper is DSTest {
         wrapper.setMinter(minter);
         assertEq(wrapper.getMinter(), minter);
 
+        cheats.stopPrank();
         cheats.startPrank(minter);
         uint256 tokenId = 50;
         wrapper.mint(user, tokenId);
 
+        cheats.stopPrank();
         cheats.startPrank(user);
 
         cheats.expectRevert(bytes("Only minter"));
@@ -67,6 +69,7 @@ contract RentableWrapper is DSTest {
         cheats.expectRevert(bytes("Only minter"));
         wrapper.burn(tokenId);
 
+        cheats.stopPrank();
         cheats.startPrank(minter);
         wrapper.burn(tokenId);
         cheats.expectRevert("ERC721: owner query for nonexistent token");

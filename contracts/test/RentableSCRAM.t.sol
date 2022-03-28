@@ -59,6 +59,7 @@ contract RentableSCRAM is SharedSetup {
 
         depositAndApprove(renter, value, address(0), 0);
 
+        cheats.stopPrank();
         cheats.startPrank(renter);
         rentable.rent{value: value}(address(testNFT), tokenId, rentalDuration);
         cheats.stopPrank();

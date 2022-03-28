@@ -39,6 +39,8 @@ contract Rentable is
 
     mapping(address => uint8) public paymentTokenAllowlist;
 
+    mapping(address => mapping(bytes4 => bool)) internal proxyAllowList;
+
     uint8 private constant NOT_ALLOWED_TOKEN = 0;
     uint8 private constant ERC20_TOKEN = 1;
     uint8 private constant ERC1155_TOKEN = 2;
@@ -81,7 +83,12 @@ contract Rentable is
         address payable _emergencyImplementation
     ) Security4(_governance, _operator, _emergencyImplementation) {}
 
-    function getORentable(address wrapped_) external view returns (address) {
+    function getORentable(address wrapped_)
+        external
+        view
+        virtual
+        returns (address)
+    {
         return address(_orentables[wrapped_]);
     }
 
@@ -137,6 +144,23 @@ contract Rentable is
         onlyGovernance
     {
         paymentTokenAllowlist[paymentTokenAddress] = NOT_ALLOWED_TOKEN;
+    }
+
+    function enableProxyCall(
+        address caller,
+        bytes4 selector,
+        bool enabled
+    ) external onlyGovernance {
+        proxyAllowList[caller][selector] = enabled;
+    }
+
+    function isEnabledProxyCall(address caller, bytes4 selector)
+        external
+        view
+        onlyGovernance
+        returns (bool)
+    {
+        return proxyAllowList[caller][selector];
     }
 
     function _getExistingORentable(address tokenAddress)
@@ -621,5 +645,30 @@ contract Rentable is
         }
 
         return this.onERC721Received.selector;
+    }
+
+    function proxyCall(
+        address to,
+        uint256 value,
+        bytes4 selector,
+        bytes memory data
+    ) external payable returns (bytes memory) {
+        require(
+            msg.sender == address(_orentables[to]) ||
+                msg.sender == _wrentables[to],
+            "Only w/o tokens are authorized"
+        );
+
+        require(
+            proxyAllowList[msg.sender][selector],
+            "Proxy call unauthorized"
+        );
+
+        return
+            to.functionCallWithValue(
+                abi.encodePacked(selector, data),
+                value,
+                ""
+            );
     }
 }
