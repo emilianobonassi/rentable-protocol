@@ -12,9 +12,9 @@ import "@openzeppelin/contracts/access/Ownable.sol";
 import "@openzeppelin/contracts/security/ReentrancyGuard.sol";
 import {BaseSecurityInitializable} from "./utils/BaseSecurityInitializable.sol";
 import "./IERC721ReadOnlyProxy.sol";
+import {ICollectionLibrary} from "./collectionlibs/ICollectionLibrary.sol";
 import {IRentable} from "./IRentable.sol";
 import "./WRentable.sol";
-import "./RentableHooks.sol";
 import "./IORentableHooks.sol";
 import "./IWRentableHooks.sol";
 import {RentableStorageV1} from "./RentableStorageV1.sol";
@@ -26,8 +26,7 @@ contract Rentable is
     IERC721Receiver,
     BaseSecurityInitializable,
     ReentrancyGuard,
-    RentableStorageV1,
-    RentableHooks
+    RentableStorageV1
 {
     using Address for address;
     using SafeERC20 for IERC20;
@@ -619,5 +618,92 @@ contract Rentable is
                 value,
                 ""
             );
+    }
+
+    function getLibrary(address wrapped_) external view returns (address) {
+        return _libraries[wrapped_];
+    }
+
+    function setLibrary(address wrapped_, address library_) external {
+        _libraries[wrapped_] = library_;
+    }
+
+    function _postDeposit(
+        address tokenAddress,
+        uint256 tokenId,
+        address user
+    ) internal {
+        address lib = _libraries[tokenAddress];
+        if (lib != address(0)) {
+            lib.functionDelegateCall(
+                abi.encodeCall(
+                    ICollectionLibrary(lib).postDeposit,
+                    (tokenAddress, tokenId, user)
+                ),
+                ""
+            );
+        }
+    }
+
+    function _postList(
+        address tokenAddress,
+        uint256 tokenId,
+        address user,
+        uint256 maxTimeDuration,
+        uint256 pricePerSecond
+    ) internal {
+        address lib = _libraries[tokenAddress];
+        if (lib != address(0)) {
+            lib.functionDelegateCall(
+                abi.encodeCall(
+                    ICollectionLibrary(lib).postList,
+                    (
+                        tokenAddress,
+                        tokenId,
+                        user,
+                        maxTimeDuration,
+                        pricePerSecond
+                    )
+                ),
+                ""
+            );
+        }
+    }
+
+    function _postCreateRent(
+        address tokenAddress,
+        uint256 tokenId,
+        uint256 duration,
+        address from,
+        address to
+    ) internal {
+        address lib = _libraries[tokenAddress];
+        if (lib != address(0)) {
+            lib.functionDelegateCall(
+                abi.encodeCall(
+                    ICollectionLibrary(lib).postCreateRent,
+                    (tokenAddress, tokenId, duration, from, to)
+                ),
+                ""
+            );
+        }
+    }
+
+    function _postexpireRental(
+        address tokenAddress,
+        uint256 tokenId,
+        address from,
+        address to
+    ) internal {
+        address lib = _libraries[tokenAddress];
+        if (lib != address(0)) {
+            lib.functionDelegateCall(
+                abi.encodeCall(
+                    ICollectionLibrary(lib).postexpireRental,
+                    (tokenAddress, tokenId, from, to)
+                ),
+                ""
+            );
+        }
     }
 }

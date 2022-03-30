@@ -27,4 +27,6 @@ contract RentableStorageV1 {
     uint256 public fixedFee;
 
     address payable public feeCollector;
+
+    mapping(address => address) internal _libraries;
 }
