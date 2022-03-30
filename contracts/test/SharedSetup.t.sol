@@ -17,6 +17,12 @@ import {EmergencyImplementation} from "../EmergencyImplementation.sol";
 
 import {DummyCollectionLibrary} from "./utils/DummyCollectionLibrary.sol";
 
+import {RentableTypes} from "./../RentableTypes.sol";
+import {IRentableEvents} from "./../IRentableEvents.sol";
+
+import {ImmutableAdminTransparentUpgradeableProxy} from "../utils/ImmutableAdminTransparentUpgradeableProxy.sol";
+import {ImmutableProxyAdmin} from "../utils/ImmutableProxyAdmin.sol";
+
 interface CheatCodes {
     function prank(address) external;
 
@@ -42,33 +48,7 @@ interface CheatCodes {
     function deal(address who, uint256 newBalance) external;
 }
 
-abstract contract SharedSetup is DSTest {
-    event Deposit(
-        address indexed who,
-        address indexed tokenAddress,
-        uint256 indexed tokenId
-    );
-    event UpdateRentalConditions(
-        address indexed tokenAddress,
-        uint256 indexed tokenId,
-        address paymentTokenAddress,
-        uint256 paymentTokenId,
-        uint256 maxTimeDuration,
-        uint256 pricePerSecond,
-        address privateRenter
-    );
-    event Withdraw(address indexed tokenAddress, uint256 indexed tokenId);
-    event Rent(
-        address from,
-        address indexed to,
-        address indexed tokenAddress,
-        uint256 indexed tokenId,
-        address paymentTokenAddress,
-        uint256 paymentTokenId,
-        uint256 expiresAt
-    );
-    event RentEnds(address indexed tokenAddress, uint256 indexed tokenId);
-
+abstract contract SharedSetup is DSTest, IRentableEvents {
     CheatCodes cheats = CheatCodes(HEVM_ADDRESS);
 
     address user;
@@ -84,6 +64,9 @@ abstract contract SharedSetup is DSTest {
 
     TestNFT testNFT;
     DummyERC1155 dummy1155;
+
+    Rentable rentableLogic;
+    ImmutableProxyAdmin proxyAdmin;
 
     Rentable rentable;
     ORentable orentable;
@@ -106,10 +89,20 @@ abstract contract SharedSetup is DSTest {
 
         dummy1155 = new DummyERC1155();
 
-        rentable = new Rentable(
-            governance,
-            operator,
-            payable(address(emergencyImplementation))
+        rentableLogic = new Rentable(address(0), address(0));
+        proxyAdmin = new ImmutableProxyAdmin();
+        rentable = Rentable(
+            address(
+                new ImmutableAdminTransparentUpgradeableProxy(
+                    address(rentableLogic),
+                    address(proxyAdmin),
+                    abi.encodeWithSelector(
+                        Rentable.initialize.selector,
+                        governance,
+                        operator
+                    )
+                )
+            )
         );
 
         orentable = new ORentable(address(testNFT));

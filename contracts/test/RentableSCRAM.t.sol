@@ -74,23 +74,23 @@ contract RentableSCRAM is SharedSetup {
 
         assert(rentable.paused());
 
-        cheats.expectRevert(bytes("Emergency in place"));
+        cheats.expectRevert(bytes("Pausable: paused"));
         rentable.withdraw(address(testNFT), tokenId);
 
-        cheats.expectRevert(bytes("Emergency in place"));
+        cheats.expectRevert(bytes("Pausable: paused"));
         rentable.expireRental(address(testNFT), 1);
 
-        cheats.expectRevert(bytes("Emergency in place"));
+        cheats.expectRevert(bytes("Pausable: paused"));
         orentable.transferFrom(user, operator, tokenId);
 
         cheats.stopPrank();
         cheats.startPrank(renter);
-        cheats.expectRevert(bytes("Emergency in place"));
+        cheats.expectRevert(bytes("Pausable: paused"));
         wrentable.transferFrom(renter, user, tokenId);
         cheats.stopPrank();
 
         cheats.startPrank(user);
-        cheats.expectRevert(bytes("Emergency in place"));
+        cheats.expectRevert(bytes("Pausable: paused"));
         testNFT.safeTransferFrom(user, address(rentable), tokenId + 2);
         cheats.stopPrank();
         /*

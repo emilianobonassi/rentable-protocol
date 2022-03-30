@@ -5,6 +5,7 @@ import {SharedSetup, CheatCodes} from "./SharedSetup.t.sol";
 
 import {ICollectionLibrary} from "../collectionlibs/ICollectionLibrary.sol";
 import {IRentable} from "../IRentable.sol";
+import {RentableTypes} from "./../RentableTypes.sol";
 
 contract RentableRent is SharedSetup {
     address paymentTokenAddress = address(0);
@@ -54,7 +55,7 @@ contract RentableRent is SharedSetup {
                     address(rentable),
                     tokenId,
                     abi.encode(
-                        IRentable.RentalConditions({
+                        RentableTypes.RentalConditions({
                             maxTimeDuration: maxTimeDuration,
                             pricePerSecond: pricePerSecond,
                             paymentTokenId: paymentTokenId,
@@ -200,7 +201,7 @@ contract RentableRent is SharedSetup {
                     address(rentable),
                     tokenId,
                     abi.encode(
-                        IRentable.RentalConditions({
+                        RentableTypes.RentalConditions({
                             maxTimeDuration: maxTimeDuration,
                             pricePerSecond: pricePerSecond,
                             paymentTokenId: paymentTokenId,
@@ -363,7 +364,7 @@ contract RentableRent is SharedSetup {
                     address(rentable),
                     tokenId,
                     abi.encode(
-                        IRentable.RentalConditions({
+                        RentableTypes.RentalConditions({
                             maxTimeDuration: maxTimeDuration,
                             pricePerSecond: pricePerSecond,
                             paymentTokenId: paymentTokenId,
@@ -437,7 +438,7 @@ contract RentableRent is SharedSetup {
                     address(rentable),
                     tokenId,
                     abi.encode(
-                        IRentable.RentalConditions({
+                        RentableTypes.RentalConditions({
                             maxTimeDuration: maxTimeDuration,
                             pricePerSecond: pricePerSecond,
                             paymentTokenId: paymentTokenId,
@@ -514,7 +515,7 @@ contract RentableRent is SharedSetup {
                     address(rentable),
                     tokenId,
                     abi.encode(
-                        IRentable.RentalConditions({
+                        RentableTypes.RentalConditions({
                             maxTimeDuration: maxTimeDuration,
                             pricePerSecond: pricePerSecond,
                             paymentTokenId: paymentTokenId,
@@ -591,7 +592,7 @@ contract RentableRent is SharedSetup {
                     address(rentable),
                     tokenId,
                     abi.encode(
-                        IRentable.RentalConditions({
+                        RentableTypes.RentalConditions({
                             maxTimeDuration: maxTimeDuration,
                             pricePerSecond: pricePerSecond,
                             paymentTokenId: paymentTokenId,

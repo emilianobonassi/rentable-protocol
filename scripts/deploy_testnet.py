@@ -6,7 +6,8 @@ from brownie import (
     ORentable,
     WRentable,
     TestNFT,
-    EmergencyImplementation,
+    ImmutableProxyAdmin,
+    ImmutableAdminTransparentUpgradeableProxy,
     ProxyFactoryInitializable,
     history,
 )
@@ -28,11 +29,23 @@ def main():
     orentable = ORentable.deploy(testNFT, {"from": dev})
     wrentable = WRentable.deploy(testNFT, {"from": dev})
 
-    emergencyImplementation = EmergencyImplementation.deploy({"from": dev})
+    proxyAdmin = ImmutableProxyAdmin.deploy({"from": dev})
+    rLogic = Rentable.deploy(governance, operator, {"from": dev})
+    rLogic.SCRAM()
 
-    r = Rentable.deploy(dev, operator, emergencyImplementation, {"from": dev})
+    proxy = ImmutableAdminTransparentUpgradeableProxy.deploy(
+        rLogic,
+        proxyAdmin,
+        rLogic.initialize.encode_input(governance, operator),
+        {"from": dev},
+    )
 
-    r.enableAllowlist()
+    r = proxy.address
+    ImmutableAdminTransparentUpgradeableProxy.remove(proxy)
+
+    r = Rentable.at(r, dev)
+
+    assert proxyAdmin.getProxyImplementation(r) == rLogic.address
 
     r.enablePaymentToken(eth)
     r.setFeeCollector(feeCollector)
@@ -59,6 +72,8 @@ def main():
              ORentable: {orentable.address}
              WRentable: {wrentable.address}
               Rentable: {r.address}
+         RentableLogic: {rLogic.address}
+            ProxyAdmin: {proxyAdmin.address}
               TotalGas: {totalGasUsed}
     """
     )

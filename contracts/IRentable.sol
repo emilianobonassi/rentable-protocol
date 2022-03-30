@@ -2,15 +2,10 @@
 
 pragma solidity ^0.8.13;
 
-interface IRentable {
-    struct RentalConditions {
-        uint256 maxTimeDuration;
-        uint256 pricePerSecond;
-        uint256 paymentTokenId;
-        address paymentTokenAddress;
-        address privateRenter;
-    }
+import {RentableTypes} from "./RentableTypes.sol";
+import {IRentableEvents} from "./IRentableEvents.sol";
 
+interface IRentable is IRentableEvents {
     /* FLOWS
 
         A. To deposit an NFT w/o listing:
@@ -99,7 +94,7 @@ interface IRentable {
     function rentalConditions(address tokenAddress, uint256 tokenId)
         external
         view
-        returns (RentalConditions memory);
+        returns (RentableTypes.RentalConditions memory);
 
     function rent(
         address tokenAddress,

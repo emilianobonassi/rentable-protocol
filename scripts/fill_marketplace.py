@@ -45,11 +45,11 @@ def listOnMarket(
 
 def main():
     dev = accounts.load("rentable-deployer")
-    testNFT = TestNFT.at("0x4aB8a4e7B2fAbbDcaA8398A3829718DeAC831196")
-    rentable = "0xFec9DfE525ec5a2214AD5a223AA6E484953E2D70"
+    testNFT = TestNFT.at("0x21405fC58344E7E3C085364fFDFa894a2D0b0bDB")
+    rentable = "0xfd36fA5FB1629529Ef0C9751a8C7aBE645c42074"
 
-    startId = 2
-    endId = 243
+    startId = 1
+    endId = 10
 
     day = 24 * 60 * 60
     maxTimeDurationLow = 3 * day

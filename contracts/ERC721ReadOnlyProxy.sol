@@ -4,8 +4,13 @@ pragma solidity ^0.8.13;
 
 import "@openzeppelin-upgradable/contracts/access/OwnableUpgradeable.sol";
 import "@openzeppelin-upgradable/contracts/token/ERC721/ERC721Upgradeable.sol";
+import "./IERC721ReadOnlyProxy.sol";
 
-contract ERC721ReadOnlyProxy is OwnableUpgradeable, ERC721Upgradeable {
+contract ERC721ReadOnlyProxy is
+    IERC721ReadOnlyProxy,
+    OwnableUpgradeable,
+    ERC721Upgradeable
+{
     address internal _wrapped;
 
     address internal _minter;
@@ -36,7 +41,7 @@ contract ERC721ReadOnlyProxy is OwnableUpgradeable, ERC721Upgradeable {
         _wrapped = wrapped;
     }
 
-    function getWrapped() external view returns (address) {
+    function getWrapped() external view virtual override returns (address) {
         return _wrapped;
     }
 
@@ -53,19 +58,24 @@ contract ERC721ReadOnlyProxy is OwnableUpgradeable, ERC721Upgradeable {
         return IERC721MetadataUpgradeable(_wrapped).tokenURI(tokenId);
     }
 
-    function getMinter() external view returns (address) {
+    function getMinter() external view virtual override returns (address) {
         return _minter;
     }
 
-    function setMinter(address minter_) external onlyOwner {
+    function setMinter(address minter_) external virtual override onlyOwner {
         _minter = minter_;
     }
 
-    function mint(address to, uint256 tokenId) external onlyMinter {
+    function mint(address to, uint256 tokenId)
+        external
+        virtual
+        override
+        onlyMinter
+    {
         _mint(to, tokenId);
     }
 
-    function burn(uint256 tokenId) external virtual onlyMinter {
+    function burn(uint256 tokenId) external virtual override onlyMinter {
         _burn(tokenId);
     }
 
