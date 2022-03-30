@@ -83,11 +83,7 @@ abstract contract SharedSetup is DSTest, IRentableEvents {
 
         dummy1155 = new DummyERC1155();
 
-        rentable = new Rentable(
-            governance,
-            operator,
-            payable(address(emergencyImplementation))
-        );
+        rentable = new Rentable(governance, operator);
 
         orentable = new ORentable(address(testNFT));
         orentable.setRentable(address(rentable));
