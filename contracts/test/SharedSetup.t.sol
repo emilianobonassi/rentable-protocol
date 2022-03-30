@@ -20,6 +20,9 @@ import {DummyCollectionLibrary} from "./utils/DummyCollectionLibrary.sol";
 import {RentableTypes} from "./../RentableTypes.sol";
 import {IRentableEvents} from "./../IRentableEvents.sol";
 
+import {ImmutableAdminTransparentUpgradeableProxy} from "../utils/ImmutableAdminTransparentUpgradeableProxy.sol";
+import {ImmutableProxyAdmin} from "../utils/ImmutableProxyAdmin.sol";
+
 interface CheatCodes {
     function prank(address) external;
 
@@ -62,6 +65,9 @@ abstract contract SharedSetup is DSTest, IRentableEvents {
     TestNFT testNFT;
     DummyERC1155 dummy1155;
 
+    Rentable rentableLogic;
+    ImmutableProxyAdmin proxyAdmin;
+
     Rentable rentable;
     ORentable orentable;
     WRentable wrentable;
@@ -83,7 +89,21 @@ abstract contract SharedSetup is DSTest, IRentableEvents {
 
         dummy1155 = new DummyERC1155();
 
-        rentable = new Rentable(governance, operator);
+        rentableLogic = new Rentable(address(0), address(0));
+        proxyAdmin = new ImmutableProxyAdmin();
+        rentable = Rentable(
+            address(
+                new ImmutableAdminTransparentUpgradeableProxy(
+                    address(rentableLogic),
+                    address(proxyAdmin),
+                    abi.encodeWithSelector(
+                        Rentable.initialize.selector,
+                        governance,
+                        operator
+                    )
+                )
+            )
+        );
 
         orentable = new ORentable(address(testNFT));
         orentable.setRentable(address(rentable));
