@@ -17,6 +17,9 @@ import {EmergencyImplementation} from "../EmergencyImplementation.sol";
 
 import {DummyCollectionLibrary} from "./utils/DummyCollectionLibrary.sol";
 
+import {RentableTypes} from "./../RentableTypes.sol";
+import {IRentableEvents} from "./../IRentableEvents.sol";
+
 interface CheatCodes {
     function prank(address) external;
 
@@ -42,33 +45,7 @@ interface CheatCodes {
     function deal(address who, uint256 newBalance) external;
 }
 
-abstract contract SharedSetup is DSTest {
-    event Deposit(
-        address indexed who,
-        address indexed tokenAddress,
-        uint256 indexed tokenId
-    );
-    event UpdateRentalConditions(
-        address indexed tokenAddress,
-        uint256 indexed tokenId,
-        address paymentTokenAddress,
-        uint256 paymentTokenId,
-        uint256 maxTimeDuration,
-        uint256 pricePerSecond,
-        address privateRenter
-    );
-    event Withdraw(address indexed tokenAddress, uint256 indexed tokenId);
-    event Rent(
-        address from,
-        address indexed to,
-        address indexed tokenAddress,
-        uint256 indexed tokenId,
-        address paymentTokenAddress,
-        uint256 paymentTokenId,
-        uint256 expiresAt
-    );
-    event RentEnds(address indexed tokenAddress, uint256 indexed tokenId);
-
+abstract contract SharedSetup is DSTest, IRentableEvents {
     CheatCodes cheats = CheatCodes(HEVM_ADDRESS);
 
     address user;

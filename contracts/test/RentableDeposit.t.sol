@@ -6,6 +6,8 @@ import {SharedSetup, CheatCodes} from "./SharedSetup.t.sol";
 import {ICollectionLibrary} from "../collectionlibs/ICollectionLibrary.sol";
 import {IRentable} from "../IRentable.sol";
 
+import {RentableTypes} from "./../RentableTypes.sol";
+
 contract RentableTest is SharedSetup {
     function preAssertsTestDeposit(uint256 tokenId) internal {
         // Test event emitted
@@ -64,7 +66,7 @@ contract RentableTest is SharedSetup {
         uint256 pricePerSecond,
         address privateRenter
     ) internal {
-        IRentable.RentalConditions memory rcs = rentable.rentalConditions(
+        RentableTypes.RentalConditions memory rcs = rentable.rentalConditions(
             address(testNFT),
             tokenId
         );
@@ -143,7 +145,7 @@ contract RentableTest is SharedSetup {
                         address(rentable),
                         tokenId,
                         abi.encode(
-                            IRentable.RentalConditions({
+                            RentableTypes.RentalConditions({
                                 maxTimeDuration: maxTimeDuration,
                                 pricePerSecond: pricePerSecond,
                                 paymentTokenId: paymentTokenId,

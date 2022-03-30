@@ -11,71 +11,26 @@ import "@openzeppelin/contracts/utils/Address.sol";
 import "@openzeppelin/contracts/access/Ownable.sol";
 import "@openzeppelin/contracts/security/ReentrancyGuard.sol";
 import "@emilianobonassi-security/contracts/Security4.sol";
-import "./ORentable.sol";
+import "./IERC721ReadOnlyProxy.sol";
+import {IRentable} from "./IRentable.sol";
 import "./WRentable.sol";
 import "./RentableHooks.sol";
 import "./IORentableHooks.sol";
 import "./IWRentableHooks.sol";
+import {RentableStorageV1} from "./RentableStorageV1.sol";
 
 contract Rentable is
     IRentable,
     IORentableHooks,
     IWRentableHooks,
-    Security4,
     IERC721Receiver,
-    RentableHooks,
-    ReentrancyGuard
+    Security4,
+    ReentrancyGuard,
+    RentableStorageV1,
+    RentableHooks
 {
     using Address for address;
     using SafeERC20 for IERC20;
-
-    mapping(address => mapping(uint256 => RentalConditions))
-        internal _rentalConditions;
-
-    mapping(address => mapping(uint256 => uint256)) internal _etas;
-
-    mapping(address => address) internal _wrentables;
-    mapping(address => ORentable) internal _orentables;
-
-    mapping(address => uint8) public paymentTokenAllowlist;
-
-    mapping(address => mapping(bytes4 => bool)) internal proxyAllowList;
-
-    uint8 private constant NOT_ALLOWED_TOKEN = 0;
-    uint8 private constant ERC20_TOKEN = 1;
-    uint8 private constant ERC1155_TOKEN = 2;
-
-    uint16 public constant BASE_FEE = 10000;
-    uint16 public fee;
-    uint256 public fixedFee;
-
-    address payable public feeCollector;
-
-    event Deposit(
-        address indexed who,
-        address indexed tokenAddress,
-        uint256 indexed tokenId
-    );
-    event UpdateRentalConditions(
-        address indexed tokenAddress,
-        uint256 indexed tokenId,
-        address paymentTokenAddress,
-        uint256 paymentTokenId,
-        uint256 maxTimeDuration,
-        uint256 pricePerSecond,
-        address privateRenter
-    );
-    event Withdraw(address indexed tokenAddress, uint256 indexed tokenId);
-    event Rent(
-        address from,
-        address indexed to,
-        address indexed tokenAddress,
-        uint256 indexed tokenId,
-        address paymentTokenAddress,
-        uint256 paymentTokenId,
-        uint256 expiresAt
-    );
-    event RentEnds(address indexed tokenAddress, uint256 indexed tokenId);
 
     constructor(
         address _governance,
@@ -96,7 +51,7 @@ contract Rentable is
         external
         onlyGovernance
     {
-        _orentables[wrapped_] = ORentable(oRentable_);
+        _orentables[wrapped_] = IERC721ReadOnlyProxy(oRentable_);
     }
 
     function getWRentable(address wrapped_) external view returns (address) {
@@ -167,7 +122,7 @@ contract Rentable is
         internal
         view
         virtual
-        returns (ORentable oRentable)
+        returns (IERC721ReadOnlyProxy oRentable)
     {
         oRentable = _orentables[tokenAddress];
         require(
@@ -180,7 +135,7 @@ contract Rentable is
         address tokenAddress,
         uint256 tokenId,
         address user
-    ) internal virtual returns (ORentable oRentable) {
+    ) internal virtual returns (IERC721ReadOnlyProxy oRentable) {
         oRentable = _getExistingORentable(tokenAddress);
 
         require(oRentable.ownerOf(tokenId) == user, "The token must be yours");
@@ -197,7 +152,7 @@ contract Rentable is
         address to,
         bool skipTransfer
     ) internal {
-        ORentable oRentable = _getExistingORentable(tokenAddress);
+        IERC721ReadOnlyProxy oRentable = _getExistingORentable(tokenAddress);
 
         if (!skipTransfer) {
             IERC721(tokenAddress).transferFrom(to, address(this), tokenId);
@@ -289,7 +244,7 @@ contract Rentable is
         onlyAllowlisted
     {
         address user = msg.sender;
-        ORentable oRentable = _getExistingORentableCheckOwnership(
+        IERC721ReadOnlyProxy oRentable = _getExistingORentableCheckOwnership(
             tokenAddress,
             tokenId,
             user
@@ -314,7 +269,7 @@ contract Rentable is
         view
         virtual
         override
-        returns (RentalConditions memory)
+        returns (RentableTypes.RentalConditions memory)
     {
         return _rentalConditions[tokenAddress][tokenId];
     }
@@ -344,13 +299,14 @@ contract Rentable is
             "Not supported payment token"
         );
 
-        _rentalConditions[tokenAddress][tokenId] = RentalConditions({
-            maxTimeDuration: maxTimeDuration,
-            pricePerSecond: pricePerSecond,
-            paymentTokenAddress: paymentTokenAddress,
-            paymentTokenId: paymentTokenId,
-            privateRenter: privateRenter
-        });
+        _rentalConditions[tokenAddress][tokenId] = RentableTypes
+            .RentalConditions({
+                maxTimeDuration: maxTimeDuration,
+                pricePerSecond: pricePerSecond,
+                paymentTokenAddress: paymentTokenAddress,
+                paymentTokenId: paymentTokenId,
+                privateRenter: privateRenter
+            });
 
         _postList(tokenAddress, tokenId, user, maxTimeDuration, pricePerSecond);
 
@@ -377,7 +333,9 @@ contract Rentable is
         ) {
             if (block.timestamp >= (_etas[tokenAddress][tokenId])) {
                 address currentRentee = oTokenOwner == address(0)
-                    ? ORentable(_orentables[tokenAddress]).ownerOf(tokenId)
+                    ? IERC721ReadOnlyProxy(_orentables[tokenAddress]).ownerOf(
+                        tokenId
+                    )
                     : oTokenOwner;
                 address currentRenter = WRentable(_wrentables[tokenAddress])
                     .ownerOf(tokenId);
@@ -447,10 +405,12 @@ contract Rentable is
         uint256 tokenId,
         uint256 duration
     ) external payable virtual override nonReentrant whenPausedthenProxy {
-        ORentable oRentable = _getExistingORentable(tokenAddress);
+        IERC721ReadOnlyProxy oRentable = _getExistingORentable(tokenAddress);
         address payable rentee = payable(oRentable.ownerOf(tokenId));
 
-        RentalConditions memory rcs = _rentalConditions[tokenAddress][tokenId];
+        RentableTypes.RentalConditions memory rcs = _rentalConditions[
+            tokenAddress
+        ][tokenId];
         require(rcs.maxTimeDuration > 0, "Not available");
 
         require(
@@ -629,7 +589,10 @@ contract Rentable is
         if (data.length == 0) {
             _deposit(msg.sender, tokenId, from, true);
         } else {
-            RentalConditions memory rc = abi.decode(data, (RentalConditions));
+            RentableTypes.RentalConditions memory rc = abi.decode(
+                data,
+                (RentableTypes.RentalConditions)
+            );
 
             _depositAndList(
                 msg.sender,

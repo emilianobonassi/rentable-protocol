@@ -13,6 +13,8 @@ import {OLandRegistry} from "../collectionlibs/decentraland/OLandRegistry.sol";
 import {ILandRegistry} from "../collectionlibs/decentraland/ILandRegistry.sol";
 import {WRentable} from "../WRentable.sol";
 
+import {RentableTypes} from "./../RentableTypes.sol";
+
 contract RentableDecentraland is SharedSetup {
     TestLand testLand;
     DecentralandCollectionLibrary decentralandCollectionLibrary;
@@ -80,7 +82,7 @@ contract RentableDecentraland is SharedSetup {
             address(rentable),
             tokenId,
             abi.encode(
-                IRentable.RentalConditions({
+                RentableTypes.RentalConditions({
                     maxTimeDuration: maxTimeDuration,
                     pricePerSecond: pricePerSecond,
                     paymentTokenId: 0,

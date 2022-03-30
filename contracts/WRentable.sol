@@ -40,7 +40,7 @@ contract WRentable is ERC721ReadOnlyProxy {
         public
         view
         virtual
-        override
+        override(ERC721Upgradeable, IERC721Upgradeable)
         returns (address)
     {
         if (
