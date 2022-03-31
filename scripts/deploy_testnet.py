@@ -1,4 +1,5 @@
 import click
+from pathlib import Path
 
 from brownie import (
     accounts,
@@ -8,9 +9,12 @@ from brownie import (
     TestNFT,
     ImmutableProxyAdmin,
     ImmutableAdminTransparentUpgradeableProxy,
-    ProxyFactoryInitializable,
+    ImmutableAdminUpgradeableBeaconProxy,
     history,
+    project,
 )
+
+UpgradeableBeacon = project.load("./lib/openzeppelin-contracts").UpgradeableBeacon
 
 
 def main():
@@ -42,11 +46,36 @@ def main():
 
     assert proxyAdmin.getProxyImplementation(r) == rLogic.address
 
-    proxyFactoryInitializable = ProxyFactoryInitializable.deploy({"from": dev})
+    orentableLogic = ORentable.deploy(testNFT, eth, eth, {"from": dev})
+    obeacon = UpgradeableBeacon.deploy(orentableLogic, {"from": dev})
+    oproxy = ImmutableAdminUpgradeableBeaconProxy.deploy(
+        obeacon,
+        proxyAdmin,
+        orentableLogic.initialize.encode_input(testNFT, governance, r),
+        {"from": dev},
+    )
 
-    orentable = ORentable.deploy(testNFT, governance, r, {"from": dev})
-    r.setORentable(testNFT, oßrentable)
-    wrentable = WRentable.deploy(testNFT, governance, r, {"from": dev})
+    o = oproxy.address
+    ImmutableAdminUpgradeableBeaconProxy.remove(oproxy)  # otw direct cast not work
+
+    orentable = ORentable.at(o, dev)
+
+    r.setORentable(testNFT, orentable)
+
+    wrentableLogic = WRentable.deploy(testNFT, eth, eth, {"from": dev})
+    wbeacon = UpgradeableBeacon.deploy(wrentableLogic, {"from": dev})
+    wproxy = ImmutableAdminUpgradeableBeaconProxy.deploy(
+        wbeacon,
+        proxyAdmin,
+        wrentableLogic.initialize.encode_input(testNFT, governance, r),
+        {"from": dev},
+    )
+
+    w = wproxy.address
+    ImmutableAdminUpgradeableBeaconProxy.remove(wproxy)  # otw direct cast not work
+
+    wrentable = WRentable.at(w, dev)
+
     r.setWRentable(testNFT, wrentable)
 
     r.enablePaymentToken(eth)
@@ -63,9 +92,10 @@ def main():
             Governance: {governance}
               Operator: {operator}
           FeeCollector: {feeCollector}
-          ProxyFactory: {proxyFactoryInitializable.address}
                TestNFT: {testNFT.address}
+               OBeacon: {obeacon.address}
              ORentable: {orentable.address}
+               WBeacon: {wbeacon.address}
              WRentable: {wrentable.address}
               Rentable: {r.address}
          RentableLogic: {rLogic.address}
