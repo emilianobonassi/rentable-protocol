@@ -20,15 +20,11 @@ contract ERC721ReadOnlyProxy is
         _;
     }
 
-    constructor(address wrapped, string memory prefix) {
-        _init(wrapped, prefix, _msgSender());
-    }
-
-    function _init(
+    function __ERC721ReadOnlyProxy_init(
         address wrapped,
         string memory prefix,
         address owner
-    ) internal initializer {
+    ) internal onlyInitializing {
         __ERC721_init(
             string(abi.encodePacked(prefix, ERC721Upgradeable(wrapped).name())),
             string(

@@ -17,8 +17,11 @@ contract RentableProxyCall is SharedSetup {
         super.setUp();
 
         cheats.startPrank(governance);
-        oTestNFT = new OTestNFT(address(testNFT));
-        oTestNFT.setRentable(address(rentable));
+        oTestNFT = new OTestNFT(
+            address(testNFT),
+            governance,
+            address(rentable)
+        );
         cheats.stopPrank();
     }
 

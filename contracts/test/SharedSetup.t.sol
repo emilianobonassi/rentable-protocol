@@ -105,12 +105,18 @@ abstract contract SharedSetup is DSTest, IRentableEvents {
             )
         );
 
-        orentable = new ORentable(address(testNFT));
-        orentable.setRentable(address(rentable));
+        orentable = new ORentable(
+            address(testNFT),
+            governance,
+            address(rentable)
+        );
         rentable.setORentable(address(testNFT), address(orentable));
 
-        wrentable = new WRentable(address(testNFT));
-        wrentable.setRentable(address(rentable));
+        wrentable = new WRentable(
+            address(testNFT),
+            governance,
+            address(rentable)
+        );
         rentable.setWRentable(address(testNFT), address(wrentable));
 
         rentable.enablePaymentToken(address(0));

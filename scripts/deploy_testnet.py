@@ -24,11 +24,6 @@ def main():
     testNFT = TestNFT.deploy({"from": dev})
     eth = "0x0000000000000000000000000000000000000000"
 
-    proxyFactoryInitializable = ProxyFactoryInitializable.deploy({"from": dev})
-
-    orentable = ORentable.deploy(testNFT, {"from": dev})
-    wrentable = WRentable.deploy(testNFT, {"from": dev})
-
     proxyAdmin = ImmutableProxyAdmin.deploy({"from": dev})
     rLogic = Rentable.deploy(governance, operator, {"from": dev})
     rLogic.SCRAM()
@@ -47,14 +42,15 @@ def main():
 
     assert proxyAdmin.getProxyImplementation(r) == rLogic.address
 
+    proxyFactoryInitializable = ProxyFactoryInitializable.deploy({"from": dev})
+
+    orentable = ORentable.deploy(testNFT, governance, r, {"from": dev})
+    r.setORentable(testNFT, oßrentable)
+    wrentable = WRentable.deploy(testNFT, governance, r, {"from": dev})
+    r.setWRentable(testNFT, wrentable)
+
     r.enablePaymentToken(eth)
     r.setFeeCollector(feeCollector)
-
-    orentable.setRentable(r)
-    r.setORentable(testNFT, orentable)
-
-    wrentable.setRentable(r)
-    r.setWRentable(testNFT, wrentable)
 
     totalGasUsed = 0
     for tx in history:
