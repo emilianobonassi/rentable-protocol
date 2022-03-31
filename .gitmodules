@@ -8,9 +8,6 @@
 [submodule "lib/solmate"]
 	path = lib/solmate
 	url = https://github.com/Rari-Capital/solmate
-[submodule "lib/security-toolkit"]
-	path = lib/security-toolkit
-	url = https://github.com/emilianobonassi/security-toolkit
 [submodule "lib/ds-test"]
 	path = lib/ds-test
 	url = https://github.com/dapphub/ds-test
