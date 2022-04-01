@@ -2,27 +2,18 @@
 
 pragma solidity ^0.8.13;
 
-import "./ERC721ReadOnlyProxy.sol";
+import {BaseTokenInitializable} from "./BaseTokenInitializable.sol";
 import "./IORentableHooks.sol";
 
-contract ORentable is ERC721ReadOnlyProxy {
-    address internal _rentable;
+contract ORentable is BaseTokenInitializable {
+    constructor(
+        address wrapped,
+        address owner,
+        address rentable
+    ) BaseTokenInitializable(wrapped, owner, rentable) {}
 
-    string constant PREFIX = "o";
-
-    constructor(address wrapped_) ERC721ReadOnlyProxy(wrapped_, PREFIX) {}
-
-    function init(address wrapped, address owner) external virtual {
-        _init(wrapped, PREFIX, owner);
-    }
-
-    function setRentable(address rentable_) external onlyOwner {
-        _rentable = rentable_;
-        _minter = rentable_;
-    }
-
-    function getRentable() external view returns (address) {
-        return _rentable;
+    function _getPrefix() internal virtual override returns (string memory) {
+        return "o";
     }
 
     function _transfer(

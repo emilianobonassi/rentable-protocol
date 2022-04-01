@@ -7,7 +7,11 @@ import "../../IRentable.sol";
 import "@openzeppelin/contracts/token/ERC721/extensions/ERC721URIStorage.sol";
 
 contract OTestNFT is ORentable {
-    constructor(address wrapped_) ORentable(wrapped_) {}
+    constructor(
+        address wrapped_,
+        address owner,
+        address rentable
+    ) ORentable(wrapped_, owner, rentable) {}
 
     function proxiedBalanceOf(address owner) external {
         IRentable(_rentable).proxyCall(

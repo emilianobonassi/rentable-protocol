@@ -9,6 +9,8 @@ import {DummyERC1155} from "./utils/DummyERC1155.sol";
 
 import {ICollectionLibrary} from "../collectionlibs/ICollectionLibrary.sol";
 import {IRentable} from "../IRentable.sol";
+import {BaseTokenInitializable} from "../BaseTokenInitializable.sol";
+
 import {Rentable} from "../Rentable.sol";
 import {ORentable} from "../ORentable.sol";
 import {WRentable} from "../WRentable.sol";
@@ -21,7 +23,11 @@ import {RentableTypes} from "./../RentableTypes.sol";
 import {IRentableEvents} from "./../IRentableEvents.sol";
 
 import {ImmutableAdminTransparentUpgradeableProxy} from "../utils/ImmutableAdminTransparentUpgradeableProxy.sol";
+import {ImmutableAdminUpgradeableBeaconProxy} from "../utils/ImmutableAdminUpgradeableBeaconProxy.sol";
+
 import {ImmutableProxyAdmin} from "../utils/ImmutableProxyAdmin.sol";
+
+import {UpgradeableBeacon} from "@openzeppelin/contracts/proxy/beacon/UpgradeableBeacon.sol";
 
 interface CheatCodes {
     function prank(address) external;
@@ -72,6 +78,11 @@ abstract contract SharedSetup is DSTest, IRentableEvents {
     ORentable orentable;
     WRentable wrentable;
 
+    UpgradeableBeacon obeacon;
+    ORentable orentableLogic;
+    UpgradeableBeacon wbeacon;
+    WRentable wrentableLogic;
+
     function setUp() public virtual {
         governance = cheats.addr(1);
         operator = cheats.addr(2);
@@ -105,12 +116,54 @@ abstract contract SharedSetup is DSTest, IRentableEvents {
             )
         );
 
-        orentable = new ORentable(address(testNFT));
-        orentable.setRentable(address(rentable));
+        orentableLogic = new ORentable(
+            address(testNFT),
+            address(0),
+            address(0)
+        );
+
+        obeacon = new UpgradeableBeacon(address(orentableLogic));
+
+        orentable = ORentable(
+            address(
+                new ImmutableAdminUpgradeableBeaconProxy(
+                    address(obeacon),
+                    address(proxyAdmin),
+                    abi.encodeWithSelector(
+                        BaseTokenInitializable.initialize.selector,
+                        address(testNFT),
+                        governance,
+                        address(rentable)
+                    )
+                )
+            )
+        );
+
         rentable.setORentable(address(testNFT), address(orentable));
 
-        wrentable = new WRentable(address(testNFT));
-        wrentable.setRentable(address(rentable));
+        wrentableLogic = new WRentable(
+            address(testNFT),
+            address(0),
+            address(0)
+        );
+
+        wbeacon = new UpgradeableBeacon(address(wrentableLogic));
+
+        wrentable = WRentable(
+            address(
+                new ImmutableAdminUpgradeableBeaconProxy(
+                    address(wbeacon),
+                    address(proxyAdmin),
+                    abi.encodeWithSelector(
+                        BaseTokenInitializable.initialize.selector,
+                        address(testNFT),
+                        governance,
+                        address(rentable)
+                    )
+                )
+            )
+        );
+
         rentable.setWRentable(address(testNFT), address(wrentable));
 
         rentable.enablePaymentToken(address(0));

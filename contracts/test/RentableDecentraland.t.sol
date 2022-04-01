@@ -26,12 +26,18 @@ contract RentableDecentraland is SharedSetup {
 
         testLand = new TestLand();
 
-        orentable = new OLandRegistry(address(testLand));
-        orentable.setRentable(address(rentable));
+        orentable = new OLandRegistry(
+            address(testLand),
+            governance,
+            address(rentable)
+        );
         rentable.setORentable(address(testLand), address(orentable));
 
-        wrentable = new WRentable(address(testLand));
-        wrentable.setRentable(address(rentable));
+        wrentable = new WRentable(
+            address(testLand),
+            governance,
+            address(rentable)
+        );
         rentable.setWRentable(address(testLand), address(wrentable));
 
         decentralandCollectionLibrary = new DecentralandCollectionLibrary();

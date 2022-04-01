@@ -7,7 +7,11 @@ import "../../IRentable.sol";
 import "./ILandRegistry.sol";
 
 contract OLandRegistry is ORentable {
-    constructor(address wrapped_) ORentable(wrapped_) {}
+    constructor(
+        address wrapped_,
+        address owner,
+        address rentable
+    ) ORentable(wrapped_, owner, rentable) {}
 
     function setUpdateOperator(uint256 tokenId, address operator) external {
         require(ownerOf(tokenId) == msg.sender, "User not allowed");

@@ -12,14 +12,14 @@ def chunks(lst, n):
 
 def main():
     dev = accounts.load("rentable-deployer")
-    testNFT = TestNFT.at("0x21405fC58344E7E3C085364fFDFa894a2D0b0bDB")
+    testNFT = TestNFT.at("0x34Da09AB3BA60F8e03145D240e8C7113Db8C0268")
 
     file = open("./fixtures/nfts-to-be-minted.txt")
     uris = file.read().splitlines()
     file.close()
 
     print(len(uris))
-    chunkSize = 100
+    chunkSize = 120
 
     cks = chunks(uris, chunkSize)
 

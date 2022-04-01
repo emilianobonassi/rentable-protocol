@@ -35,10 +35,10 @@ contract RentableWrapper is DSTest {
         testNFT.mint(deployer, 123);
 
         string memory prefix = "z";
-        ERC721ReadOnlyProxy wrapper = new ERC721ReadOnlyProxy(
-            address(testNFT),
-            prefix
-        );
+        ERC721ReadOnlyProxyInitializable wrapper = new ERC721ReadOnlyProxyInitializable(
+                address(testNFT),
+                prefix
+            );
 
         assertEq(
             wrapper.symbol(),
@@ -92,7 +92,7 @@ contract RentableWrapper is DSTest {
 
         string memory proxyPrefix = "j";
         bytes memory data = abi.encodeWithSelector(
-            ERC721ReadOnlyProxyInitializable.init.selector,
+            ERC721ReadOnlyProxyInitializable.initialize.selector,
             address(t2),
             proxyPrefix,
             owner
@@ -127,7 +127,7 @@ contract RentableWrapper is DSTest {
 
         string memory proxyPrefix = "j";
         bytes memory data = abi.encodeWithSelector(
-            ERC721ReadOnlyProxyInitializable.init.selector,
+            ERC721ReadOnlyProxyInitializable.initialize.selector,
             address(t2),
             proxyPrefix,
             owner
@@ -138,11 +138,11 @@ contract RentableWrapper is DSTest {
         cheats.expectRevert(
             bytes("Initializable: contract is already initialized")
         );
-        wrapper.init(address(t2), "k", owner);
+        wrapper.initialize(address(t2), "k", owner);
 
         cheats.expectRevert(
             bytes("Initializable: contract is already initialized")
         );
-        wrapper.init(address(t1), "l", deployer);
+        wrapper.initialize(address(t1), "l", deployer);
     }
 }
