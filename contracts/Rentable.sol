@@ -624,7 +624,10 @@ contract Rentable is
         return _libraries[wrapped_];
     }
 
-    function setLibrary(address wrapped_, address library_) external {
+    function setLibrary(address wrapped_, address library_)
+        external
+        onlyGovernance
+    {
         _libraries[wrapped_] = library_;
     }
 
