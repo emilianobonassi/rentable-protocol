@@ -36,9 +36,10 @@ Rentable: 0xB1d46a10CD78776E61B1475bf73886Ff48aA6922
                WBeacon: 0x2B6710921Ae87f3678426A07614E9Ea71664A755
              WRentable: 0x5C5B4241980591654E89C6291b06B3596A23C120
               Rentable: 0xb98108005848Ff5CAE9fDFCd5095ef89ab44136a
-         RentableLogic: 0xFf34fA87FAAd4F38134f5937FE1b280487221B11
+         RentableLogic: 0x35FE6E1a5eb0aDaDabbb7A57736da2D03fB14A91
             ProxyAdmin: 0x2079EE51c1cEedA15552050320a71e2BfBeAfE88
               TotalGas: 12084016
+
 ## Requirements
 
 To run the project you need:
