@@ -2,7 +2,7 @@
 
 pragma solidity ^0.8.13;
 
-import "./IERC721ReadOnlyProxy.sol";
+import {IERC721ReadOnlyProxy} from "./interfaces/IERC721ReadOnlyProxy.sol";
 import {RentableTypes} from "./RentableTypes.sol";
 
 contract RentableStorageV1 {

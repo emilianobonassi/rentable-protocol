@@ -2,9 +2,9 @@
 
 pragma solidity ^0.8.13;
 
-import "@openzeppelin/contracts/token/ERC721/ERC721.sol";
+import {ERC721} from "@openzeppelin/contracts/token/ERC721/ERC721.sol";
 
-import "../../collectionlibs/decentraland/ILandRegistry.sol";
+import {ILandRegistry} from "../../collections/decentraland/ILandRegistry.sol";
 
 contract TestLand is ERC721, ILandRegistry {
     mapping(uint256 => address) _updateOperator;

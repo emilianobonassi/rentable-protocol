@@ -4,12 +4,10 @@ pragma solidity ^0.8.0;
 import {DSTest} from "ds-test/test.sol";
 import {CheatCodes} from "./SharedSetup.t.sol";
 
-import {DecentralandCollectionLibrary} from "../collectionlibs/decentraland/DecentralandCollectionLibrary.sol";
-
-import {TestImplLogicV1} from "./utils/TestImplLogicV1.sol";
-import {TestImplLogicV2} from "./utils/TestImplLogicV2.sol";
-import {ImmutableAdminTransparentUpgradeableProxy} from "../utils/ImmutableAdminTransparentUpgradeableProxy.sol";
-import {ImmutableProxyAdmin} from "../utils/ImmutableProxyAdmin.sol";
+import {TestImplLogicV1} from "./mocks/TestImplLogicV1.sol";
+import {TestImplLogicV2} from "./mocks/TestImplLogicV2.sol";
+import {ImmutableAdminTransparentUpgradeableProxy} from "../upgradability/ImmutableAdminTransparentUpgradeableProxy.sol";
+import {ImmutableProxyAdmin} from "../upgradability/ImmutableProxyAdmin.sol";
 
 contract ImmutableAdminTransparentUpgradeableProxyTest is DSTest {
     CheatCodes cheats = CheatCodes(HEVM_ADDRESS);

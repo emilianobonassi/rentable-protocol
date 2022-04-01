@@ -1,14 +1,14 @@
 // SPDX-License-Identifier: AGPL-3.0-only
 pragma solidity ^0.8.0;
 
-import {OTestNFT} from "./utils/OTestNFT.sol";
-import {TestNFT} from "./utils/TestNFT.sol";
+import {OTestNFT} from "./mocks/OTestNFT.sol";
+import {TestNFT} from "./mocks/TestNFT.sol";
 
 import {SharedSetup, CheatCodes} from "./SharedSetup.t.sol";
 
-import {IRentable} from "../IRentable.sol";
+import {IRentable} from "../interfaces/IRentable.sol";
 
-import {WRentable} from "../WRentable.sol";
+import {WRentable} from "../tokenization/WRentable.sol";
 
 contract RentableProxyCall is SharedSetup {
     OTestNFT oTestNFT;

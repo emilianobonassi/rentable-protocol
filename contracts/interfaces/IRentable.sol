@@ -2,8 +2,8 @@
 
 pragma solidity ^0.8.13;
 
-import {RentableTypes} from "./RentableTypes.sol";
 import {IRentableEvents} from "./IRentableEvents.sol";
+import {RentableTypes} from "../RentableTypes.sol";
 
 interface IRentable is IRentableEvents {
     /* FLOWS

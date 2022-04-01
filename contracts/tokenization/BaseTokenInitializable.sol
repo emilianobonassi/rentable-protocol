@@ -2,9 +2,9 @@
 
 pragma solidity ^0.8.13;
 
-import "@openzeppelin-upgradable/contracts/access/OwnableUpgradeable.sol";
-import "@openzeppelin-upgradable/contracts/token/ERC721/ERC721Upgradeable.sol";
-import "./ERC721ReadOnlyProxy.sol";
+import {OwnableUpgradeable} from "@openzeppelin-upgradable/contracts/access/OwnableUpgradeable.sol";
+import {ERC721Upgradeable} from "@openzeppelin-upgradable/contracts/token/ERC721/ERC721Upgradeable.sol";
+import {ERC721ReadOnlyProxy} from "./ERC721ReadOnlyProxy.sol";
 
 abstract contract BaseTokenInitializable is ERC721ReadOnlyProxy {
     address internal _rentable;

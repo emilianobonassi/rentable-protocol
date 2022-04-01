@@ -3,14 +3,16 @@ pragma solidity ^0.8.0;
 
 import {DSTest} from "ds-test/test.sol";
 
-import {TestNFT} from "./utils/TestNFT.sol";
+import {TestNFT} from "./mocks/TestNFT.sol";
 
 import {CheatCodes} from "./SharedSetup.t.sol";
 
-import {ERC721ReadOnlyProxy} from "../ERC721ReadOnlyProxy.sol";
-import {ERC721ReadOnlyProxyInitializable} from "../ERC721ReadOnlyProxyInitializable.sol";
+import {ERC721ReadOnlyProxy} from "../tokenization/ERC721ReadOnlyProxy.sol";
+import {ERC721ReadOnlyProxyInitializable} from "../tokenization/ERC721ReadOnlyProxyInitializable.sol";
 
-import {ProxyFactoryInitializable} from "../utils/ProxyFactoryInitializable.sol";
+import {ImmutableAdminUpgradeableBeaconProxy} from "../upgradability/ImmutableAdminUpgradeableBeaconProxy.sol";
+import {ImmutableProxyAdmin} from "../upgradability/ImmutableProxyAdmin.sol";
+import {UpgradeableBeacon} from "@openzeppelin/contracts/proxy/beacon/UpgradeableBeacon.sol";
 
 contract RentableWrapper is DSTest {
     CheatCodes cheats = CheatCodes(HEVM_ADDRESS);
@@ -79,7 +81,6 @@ contract RentableWrapper is DSTest {
     }
 
     function testWrapperProxyInit() public {
-        ProxyFactoryInitializable pfi = new ProxyFactoryInitializable();
         TestNFT t1 = new TestNFT();
         TestNFT t2 = new TestNFT();
 
@@ -91,16 +92,25 @@ contract RentableWrapper is DSTest {
             );
 
         string memory proxyPrefix = "j";
-        bytes memory data = abi.encodeWithSelector(
-            ERC721ReadOnlyProxyInitializable.initialize.selector,
-            address(t2),
-            proxyPrefix,
-            owner
+
+        ImmutableProxyAdmin proxyAdmin = new ImmutableProxyAdmin();
+
+        UpgradeableBeacon beacon = new UpgradeableBeacon(address(wrapper));
+
+        ERC721ReadOnlyProxy proxyInstance = ERC721ReadOnlyProxy(
+            address(
+                new ImmutableAdminUpgradeableBeaconProxy(
+                    address(beacon),
+                    address(proxyAdmin),
+                    abi.encodeWithSelector(
+                        ERC721ReadOnlyProxyInitializable.initialize.selector,
+                        address(t2),
+                        proxyPrefix,
+                        owner
+                    )
+                )
+            )
         );
-
-        (address proxy, ) = pfi.deployMinimal(address(wrapper), data);
-
-        ERC721ReadOnlyProxy proxyInstance = ERC721ReadOnlyProxy(proxy);
 
         assertEq(
             proxyInstance.symbol(),
@@ -114,7 +124,6 @@ contract RentableWrapper is DSTest {
     }
 
     function testWrapperProxyDoubleInit() public {
-        ProxyFactoryInitializable pfi = new ProxyFactoryInitializable();
         TestNFT t1 = new TestNFT();
         TestNFT t2 = new TestNFT();
 
@@ -126,14 +135,25 @@ contract RentableWrapper is DSTest {
             );
 
         string memory proxyPrefix = "j";
-        bytes memory data = abi.encodeWithSelector(
-            ERC721ReadOnlyProxyInitializable.initialize.selector,
-            address(t2),
-            proxyPrefix,
-            owner
-        );
 
-        pfi.deployMinimal(address(wrapper), data);
+        ImmutableProxyAdmin proxyAdmin = new ImmutableProxyAdmin();
+
+        UpgradeableBeacon beacon = new UpgradeableBeacon(address(wrapper));
+
+        wrapper = ERC721ReadOnlyProxyInitializable(
+            address(
+                new ImmutableAdminUpgradeableBeaconProxy(
+                    address(beacon),
+                    address(proxyAdmin),
+                    abi.encodeWithSelector(
+                        ERC721ReadOnlyProxyInitializable.initialize.selector,
+                        address(t2),
+                        proxyPrefix,
+                        owner
+                    )
+                )
+            )
+        );
 
         cheats.expectRevert(
             bytes("Initializable: contract is already initialized")

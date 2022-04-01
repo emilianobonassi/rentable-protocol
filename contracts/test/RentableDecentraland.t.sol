@@ -1,17 +1,17 @@
 // SPDX-License-Identifier: AGPL-3.0-only
 pragma solidity ^0.8.0;
 
-import {TestLand} from "./utils/TestLand.sol";
+import {TestLand} from "./mocks/TestLand.sol";
 
 import {SharedSetup, CheatCodes} from "./SharedSetup.t.sol";
 
-import {DecentralandCollectionLibrary} from "../collectionlibs/decentraland/DecentralandCollectionLibrary.sol";
-import {ICollectionLibrary} from "../collectionlibs/ICollectionLibrary.sol";
-import {IRentable} from "../IRentable.sol";
+import {DecentralandCollectionLibrary} from "../collections/decentraland/DecentralandCollectionLibrary.sol";
+import {ICollectionLibrary} from "../collections/ICollectionLibrary.sol";
+import {IRentable} from "../interfaces/IRentable.sol";
 
-import {OLandRegistry} from "../collectionlibs/decentraland/OLandRegistry.sol";
-import {ILandRegistry} from "../collectionlibs/decentraland/ILandRegistry.sol";
-import {WRentable} from "../WRentable.sol";
+import {OLandRegistry} from "../collections/decentraland/OLandRegistry.sol";
+import {ILandRegistry} from "../collections/decentraland/ILandRegistry.sol";
+import {WRentable} from "../tokenization/WRentable.sol";
 
 import {RentableTypes} from "./../RentableTypes.sol";
 

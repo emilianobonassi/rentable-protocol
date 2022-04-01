@@ -2,7 +2,7 @@
 
 pragma solidity ^0.8.13;
 
-import "../../collectionlibs/ICollectionLibrary.sol";
+import {ICollectionLibrary} from "../../collections/ICollectionLibrary.sol";
 
 contract DummyCollectionLibrary is ICollectionLibrary {
     function postDeposit(

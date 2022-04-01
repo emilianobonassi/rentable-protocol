@@ -2,9 +2,9 @@
 
 pragma solidity ^0.8.13;
 
-import "@openzeppelin-upgradable/contracts/access/OwnableUpgradeable.sol";
-import "@openzeppelin-upgradable/contracts/token/ERC721/ERC721Upgradeable.sol";
-import "./IERC721ReadOnlyProxy.sol";
+import {OwnableUpgradeable} from "@openzeppelin-upgradable/contracts/access/OwnableUpgradeable.sol";
+import {ERC721Upgradeable, IERC721MetadataUpgradeable} from "@openzeppelin-upgradable/contracts/token/ERC721/ERC721Upgradeable.sol";
+import {IERC721ReadOnlyProxy} from "../interfaces/IERC721ReadOnlyProxy.sol";
 
 contract ERC721ReadOnlyProxy is
     IERC721ReadOnlyProxy,

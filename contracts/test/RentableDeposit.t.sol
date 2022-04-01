@@ -3,8 +3,8 @@ pragma solidity ^0.8.0;
 
 import {SharedSetup, CheatCodes} from "./SharedSetup.t.sol";
 
-import {ICollectionLibrary} from "../collectionlibs/ICollectionLibrary.sol";
-import {IRentable} from "../IRentable.sol";
+import {ICollectionLibrary} from "../collections/ICollectionLibrary.sol";
+import {IRentable} from "../interfaces/IRentable.sol";
 
 import {RentableTypes} from "./../RentableTypes.sol";
 

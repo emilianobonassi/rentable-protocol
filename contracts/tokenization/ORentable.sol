@@ -3,7 +3,7 @@
 pragma solidity ^0.8.13;
 
 import {BaseTokenInitializable} from "./BaseTokenInitializable.sol";
-import "./IORentableHooks.sol";
+import {IORentableHooks} from "../interfaces/IORentableHooks.sol";
 
 contract ORentable is BaseTokenInitializable {
     constructor(

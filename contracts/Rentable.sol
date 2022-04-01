@@ -2,21 +2,27 @@
 
 pragma solidity ^0.8.13;
 
-import "@openzeppelin/contracts/token/ERC721/IERC721.sol";
-import "@openzeppelin/contracts/token/ERC721/IERC721Receiver.sol";
-import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
-import "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
-import "@openzeppelin/contracts/token/ERC1155/IERC1155.sol";
-import "@openzeppelin/contracts/utils/Address.sol";
-import "@openzeppelin/contracts/access/Ownable.sol";
-import "@openzeppelin/contracts/security/ReentrancyGuard.sol";
-import {BaseSecurityInitializable} from "./utils/BaseSecurityInitializable.sol";
-import "./IERC721ReadOnlyProxy.sol";
-import {ICollectionLibrary} from "./collectionlibs/ICollectionLibrary.sol";
-import {IRentable} from "./IRentable.sol";
-import "./WRentable.sol";
-import "./IORentableHooks.sol";
-import "./IWRentableHooks.sol";
+import {IERC721} from "@openzeppelin/contracts/token/ERC721/IERC721.sol";
+import {IERC721Receiver} from "@openzeppelin/contracts/token/ERC721/IERC721Receiver.sol";
+import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
+import {SafeERC20} from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
+import {IERC1155} from "@openzeppelin/contracts/token/ERC1155/IERC1155.sol";
+
+import {Address} from "@openzeppelin/contracts/utils/Address.sol";
+import {Ownable} from "@openzeppelin/contracts/access/Ownable.sol";
+import {ReentrancyGuard} from "@openzeppelin/contracts/security/ReentrancyGuard.sol";
+
+import {IERC721ReadOnlyProxy} from "./interfaces/IERC721ReadOnlyProxy.sol";
+import {ICollectionLibrary} from "./collections/ICollectionLibrary.sol";
+import {IRentable} from "./interfaces/IRentable.sol";
+import {IORentableHooks} from "./interfaces/IORentableHooks.sol";
+import {IWRentableHooks} from "./interfaces/IWRentableHooks.sol";
+
+import {RentableTypes} from "./RentableTypes.sol";
+
+import {WRentable} from "./tokenization/WRentable.sol";
+
+import {BaseSecurityInitializable} from "./upgradability/BaseSecurityInitializable.sol";
 import {RentableStorageV1} from "./RentableStorageV1.sol";
 
 contract Rentable is

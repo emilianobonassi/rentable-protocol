@@ -2,11 +2,11 @@
 
 pragma solidity ^0.8.13;
 
-import {BaseTokenInitializable} from "./BaseTokenInitializable.sol";
 import {ERC721Upgradeable} from "@openzeppelin-upgradable/contracts/token/ERC721/ERC721Upgradeable.sol";
 import {IERC721Upgradeable} from "@openzeppelin-upgradable/contracts/token/ERC721/IERC721Upgradeable.sol";
-import "./IRentable.sol";
-import "./IWRentableHooks.sol";
+import {IRentable} from "../interfaces/IRentable.sol";
+import {IWRentableHooks} from "../interfaces/IWRentableHooks.sol";
+import {BaseTokenInitializable} from "./BaseTokenInitializable.sol";
 
 contract WRentable is BaseTokenInitializable {
     constructor(

@@ -2,8 +2,8 @@
 
 pragma solidity ^0.8.13;
 
-import "../ICollectionLibrary.sol";
-import "./ILandRegistry.sol";
+import {ICollectionLibrary} from "../ICollectionLibrary.sol";
+import {ILandRegistry} from "./ILandRegistry.sol";
 
 contract DecentralandCollectionLibrary is ICollectionLibrary {
     function postDeposit(

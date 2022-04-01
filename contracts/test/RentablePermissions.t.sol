@@ -1,18 +1,18 @@
 // SPDX-License-Identifier: AGPL-3.0-only
 pragma solidity ^0.8.0;
 
-import {TestLand} from "./utils/TestLand.sol";
+import {TestLand} from "./mocks/TestLand.sol";
 
 import {SharedSetup, CheatCodes} from "./SharedSetup.t.sol";
 
 import "@openzeppelin/contracts/token/ERC721/IERC721.sol";
 
-import {DecentralandCollectionLibrary} from "../collectionlibs/decentraland/DecentralandCollectionLibrary.sol";
-import {ICollectionLibrary} from "../collectionlibs/ICollectionLibrary.sol";
-import {IRentable} from "../IRentable.sol";
+import {DecentralandCollectionLibrary} from "../collections/decentraland/DecentralandCollectionLibrary.sol";
+import {ICollectionLibrary} from "../collections/ICollectionLibrary.sol";
+import {IRentable} from "../interfaces/IRentable.sol";
 
-import {ORentable} from "../ORentable.sol";
-import {WRentable} from "../WRentable.sol";
+import {ORentable} from "../tokenization/ORentable.sol";
+import {WRentable} from "../tokenization/WRentable.sol";
 
 contract RentablePermissions is SharedSetup {
     function testSetLibraryOnlyGovernance() public {

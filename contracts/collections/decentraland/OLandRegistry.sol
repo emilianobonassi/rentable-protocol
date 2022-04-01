@@ -2,9 +2,9 @@
 
 pragma solidity ^0.8.13;
 
-import "../../ORentable.sol";
-import "../../IRentable.sol";
-import "./ILandRegistry.sol";
+import {IRentable} from "../../interfaces/IRentable.sol";
+import {ILandRegistry} from "./ILandRegistry.sol";
+import {ORentable} from "../../tokenization/ORentable.sol";
 
 contract OLandRegistry is ORentable {
     constructor(

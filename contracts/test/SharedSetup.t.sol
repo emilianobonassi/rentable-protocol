@@ -3,29 +3,27 @@ pragma solidity ^0.8.0;
 
 import {DSTest} from "ds-test/test.sol";
 
-import {TestNFT} from "./utils/TestNFT.sol";
+import {TestNFT} from "./mocks/TestNFT.sol";
 import {WETH} from "solmate/tokens/WETH.sol";
-import {DummyERC1155} from "./utils/DummyERC1155.sol";
+import {DummyERC1155} from "./mocks/DummyERC1155.sol";
 
-import {ICollectionLibrary} from "../collectionlibs/ICollectionLibrary.sol";
-import {IRentable} from "../IRentable.sol";
-import {BaseTokenInitializable} from "../BaseTokenInitializable.sol";
+import {ICollectionLibrary} from "../collections/ICollectionLibrary.sol";
+import {IRentable} from "../interfaces/IRentable.sol";
+import {BaseTokenInitializable} from "../tokenization/BaseTokenInitializable.sol";
 
 import {Rentable} from "../Rentable.sol";
-import {ORentable} from "../ORentable.sol";
-import {WRentable} from "../WRentable.sol";
+import {ORentable} from "../tokenization/ORentable.sol";
+import {WRentable} from "../tokenization/WRentable.sol";
 
-import {EmergencyImplementation} from "../EmergencyImplementation.sol";
-
-import {DummyCollectionLibrary} from "./utils/DummyCollectionLibrary.sol";
+import {DummyCollectionLibrary} from "./mocks/DummyCollectionLibrary.sol";
 
 import {RentableTypes} from "./../RentableTypes.sol";
-import {IRentableEvents} from "./../IRentableEvents.sol";
+import {IRentableEvents} from "./../interfaces/IRentableEvents.sol";
 
-import {ImmutableAdminTransparentUpgradeableProxy} from "../utils/ImmutableAdminTransparentUpgradeableProxy.sol";
-import {ImmutableAdminUpgradeableBeaconProxy} from "../utils/ImmutableAdminUpgradeableBeaconProxy.sol";
+import {ImmutableAdminTransparentUpgradeableProxy} from "../upgradability/ImmutableAdminTransparentUpgradeableProxy.sol";
+import {ImmutableAdminUpgradeableBeaconProxy} from "../upgradability/ImmutableAdminUpgradeableBeaconProxy.sol";
 
-import {ImmutableProxyAdmin} from "../utils/ImmutableProxyAdmin.sol";
+import {ImmutableProxyAdmin} from "../upgradability/ImmutableProxyAdmin.sol";
 
 import {UpgradeableBeacon} from "@openzeppelin/contracts/proxy/beacon/UpgradeableBeacon.sol";
 
@@ -65,7 +63,6 @@ abstract contract SharedSetup is DSTest, IRentableEvents {
 
     WETH weth;
 
-    EmergencyImplementation emergencyImplementation;
     DummyCollectionLibrary dummyLib;
 
     TestNFT testNFT;
@@ -96,7 +93,6 @@ abstract contract SharedSetup is DSTest, IRentableEvents {
         weth = new WETH();
 
         testNFT = new TestNFT();
-        emergencyImplementation = new EmergencyImplementation();
 
         dummy1155 = new DummyERC1155();
 

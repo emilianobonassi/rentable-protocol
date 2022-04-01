@@ -2,9 +2,10 @@
 
 pragma solidity ^0.8.11;
 
-import "../../ORentable.sol";
-import "../../IRentable.sol";
-import "@openzeppelin/contracts/token/ERC721/extensions/ERC721URIStorage.sol";
+import {IRentable} from "../../interfaces/IRentable.sol";
+
+import {ORentable} from "../../tokenization/ORentable.sol";
+import {ERC721URIStorage} from "@openzeppelin/contracts/token/ERC721/extensions/ERC721URIStorage.sol";
 
 contract OTestNFT is ORentable {
     constructor(
