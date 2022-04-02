@@ -23,6 +23,9 @@ import {ICollectionLibrary} from "./collections/ICollectionLibrary.sol";
 import {RentableTypes} from "./RentableTypes.sol";
 import {WRentable} from "./tokenization/WRentable.sol";
 
+/// @title Rentable main contract
+/// @author Rentable Team <hello@rentable.world>
+/// @notice Main entry point to interact with Rentable protocol
 contract Rentable is
     IRentable,
     IORentableHooks,
@@ -39,11 +42,16 @@ contract Rentable is
 
     /* ========== MODIFIERS ========== */
 
+    /// @dev Prevents calling a function from anyone except the owner
+    /// @param tokenAddress wrapped token address
+    /// @param tokenId wrapped token id
     modifier onlyOTokenOwner(address tokenAddress, uint256 tokenId) {
         _getExistingORentableCheckOwnership(tokenAddress, tokenId, msg.sender);
         _;
     }
 
+    /// @dev Prevents calling a function from anyone except respective OToken
+    /// @param tokenAddress wrapped token address
     modifier onlyOToken(address tokenAddress) {
         require(
             msg.sender == address(_orentables[tokenAddress]),
@@ -52,6 +60,8 @@ contract Rentable is
         _;
     }
 
+    /// @dev Prevents calling a function from anyone except respective WToken
+    /// @param tokenAddress wrapped token address
     modifier onlyWToken(address tokenAddress) {
         require(
             msg.sender == _wrentables[tokenAddress],
@@ -60,6 +70,8 @@ contract Rentable is
         _;
     }
 
+    /// @dev Prevents calling a function from anyone except respective OToken or WToken
+    /// @param tokenAddress wrapped token address
     modifier onlyOTokenOrWToken(address tokenAddress) {
         require(
             msg.sender == address(_orentables[tokenAddress]) ||
