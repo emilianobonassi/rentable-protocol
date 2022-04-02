@@ -741,6 +741,7 @@ contract Rentable is
     )
         external
         payable
+        whenNotPaused
         onlyOTokenOrWToken(to)
         onlyAuthorizedSelector(msg.sender, selector)
         returns (bytes memory)
