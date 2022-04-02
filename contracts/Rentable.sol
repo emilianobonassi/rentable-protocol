@@ -83,16 +83,25 @@ contract Rentable is
 
     /* ========== CONSTRUCTOR ========== */
 
+    /// @dev Instatiate Rentable
+    /// @param _governance address for governance role
+    /// @param _operator address for operator role
     constructor(address _governance, address _operator) {
         _initialize(_governance, _operator);
     }
 
     /* ---------- INITIALIZER ---------- */
 
+    /// @dev Initialize Rentable (to be used with proxies)
+    /// @param _governance address for governance role
+    /// @param _operator address for operator role
     function initialize(address _governance, address _operator) external {
         _initialize(_governance, _operator);
     }
 
+    /// @dev For internal usage in the initializer external method
+    /// @param _governance address for governance role
+    /// @param _operator address for operator role
     function _initialize(address _governance, address _operator)
         internal
         initializer
@@ -102,35 +111,50 @@ contract Rentable is
 
     /* ========== SETTERS ========== */
 
-    function setLibrary(address wrapped_, address library_)
+    /// @dev Associate the event hooks library to the specific wrapped token
+    /// @param _tokenAddress wrapped token address
+    /// @param _library library address
+    function setLibrary(address _tokenAddress, address _library)
         external
         onlyGovernance
     {
-        _libraries[wrapped_] = library_;
+        _libraries[_tokenAddress] = _library;
     }
 
-    function setORentable(address wrapped_, address oRentable_)
+    /// @dev Associate the otoken to the specific wrapped token
+    /// @param _tokenAddress wrapped token address
+    /// @param _oRentable otoken address
+    function setORentable(address _tokenAddress, address _oRentable)
         external
         onlyGovernance
     {
-        _orentables[wrapped_] = IERC721ReadOnlyProxy(oRentable_);
+        _orentables[_tokenAddress] = IERC721ReadOnlyProxy(_oRentable);
     }
 
-    function setWRentable(address wrapped_, address rentable_)
+    /// @dev Associate the otoken to the specific wrapped token
+    /// @param _tokenAddress wrapped token address
+    /// @param _wRentable otoken address
+    function setWRentable(address _tokenAddress, address _wRentable)
         external
         onlyGovernance
     {
-        _wrentables[wrapped_] = rentable_;
+        _wrentables[_tokenAddress] = _wRentable;
     }
 
+    /// @dev Set fixed absolute fee
+    /// @param _fixedFee fixed fee in 1e18 units
     function setFixedFee(uint256 _fixedFee) external onlyGovernance {
         fixedFee = _fixedFee;
     }
 
+    /// @dev Set fee (percentage)
+    /// @param _fee fee in 1e4 units (e.g. 100% = 10000)
     function setFee(uint16 _fee) external onlyGovernance {
         fee = _fee;
     }
 
+    /// @dev Set fee collector address
+    /// @param _feeCollector fee collector address
     function setFeeCollector(address payable _feeCollector)
         external
         onlyGovernance
@@ -138,33 +162,43 @@ contract Rentable is
         feeCollector = _feeCollector;
     }
 
-    function enablePaymentToken(address paymentTokenAddress)
+    /// @dev Enable payment token (ERC20)
+    /// @param _paymentTokenAddress payment token address
+    function enablePaymentToken(address _paymentTokenAddress)
         external
         onlyGovernance
     {
-        paymentTokenAllowlist[paymentTokenAddress] = ERC20_TOKEN;
+        paymentTokenAllowlist[_paymentTokenAddress] = ERC20_TOKEN;
     }
 
-    function enable1155PaymentToken(address paymentTokenAddress)
+    /// @dev Enable payment token (ERC1155)
+    /// @param _paymentTokenAddress payment token address
+    function enable1155PaymentToken(address _paymentTokenAddress)
         external
         onlyGovernance
     {
-        paymentTokenAllowlist[paymentTokenAddress] = ERC1155_TOKEN;
+        paymentTokenAllowlist[_paymentTokenAddress] = ERC1155_TOKEN;
     }
 
-    function disablePaymentToken(address paymentTokenAddress)
+    /// @dev Disable payment token (ERC1155)
+    /// @param _paymentTokenAddress payment token address
+    function disablePaymentToken(address _paymentTokenAddress)
         external
         onlyGovernance
     {
-        paymentTokenAllowlist[paymentTokenAddress] = NOT_ALLOWED_TOKEN;
+        paymentTokenAllowlist[_paymentTokenAddress] = NOT_ALLOWED_TOKEN;
     }
 
+    /// @dev Toggle o/w token to call on-behalf a selector on the wrapped token
+    /// @param _caller o/w token address
+    /// @param _selector selector bytes on the target wrapped token
+    /// @param _enabled true to enable, false to disable
     function enableProxyCall(
-        address caller,
-        bytes4 selector,
-        bool enabled
+        address _caller,
+        bytes4 _selector,
+        bool _enabled
     ) external onlyGovernance {
-        proxyAllowList[caller][selector] = enabled;
+        proxyAllowList[_caller][_selector] = _enabled;
     }
 
     /* ========== VIEWS ========== */
