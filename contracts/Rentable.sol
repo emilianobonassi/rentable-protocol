@@ -44,6 +44,36 @@ contract Rentable is
         _;
     }
 
+    modifier onlyOToken(address tokenAddress) {
+        require(
+            msg.sender == address(_orentables[tokenAddress]),
+            "Only proper ORentables allowed"
+        );
+        _;
+    }
+
+    modifier onlyWToken(address tokenAddress) {
+        require(
+            msg.sender == _wrentables[tokenAddress],
+            "Only proper WRentables allowed"
+        );
+        _;
+    }
+
+    modifier onlyOTokenOrWToken(address tokenAddress) {
+        require(
+            msg.sender == address(_orentables[tokenAddress]) ||
+                msg.sender == _wrentables[tokenAddress],
+            "Only w/o tokens are authorized"
+        );
+        _;
+    }
+
+    modifier onlyAuthorizedSelector(address caller, bytes4 selector) {
+        require(proxyAllowList[caller][selector], "Proxy call unauthorized");
+        _;
+    }
+
     /* ========== CONSTRUCTOR ========== */
 
     constructor(address _governance, address _operator) {
@@ -663,42 +693,12 @@ contract Rentable is
 
     /* ---------- Public Permissioned ---------- */
 
-    function afterWTokenTransfer(
-        address tokenAddress,
-        address from,
-        address to,
-        uint256 tokenId
-    ) external virtual override whenNotPaused {
-        require(
-            msg.sender == _wrentables[tokenAddress],
-            "Only proper WRentables allowed"
-        );
-
-        _expireRental(address(0), tokenAddress, tokenId, true);
-
-        address lib = _libraries[tokenAddress];
-        if (lib != address(0)) {
-            lib.functionDelegateCall(
-                abi.encodeCall(
-                    ICollectionLibrary(lib).postWTokenTransfer,
-                    (tokenAddress, tokenId, from, to)
-                ),
-                ""
-            );
-        }
-    }
-
     function afterOTokenTransfer(
         address tokenAddress,
         address from,
         address to,
         uint256 tokenId
-    ) external virtual override whenNotPaused {
-        require(
-            msg.sender == address(_orentables[tokenAddress]),
-            "Only proper ORentables allowed"
-        );
-
+    ) external virtual override whenNotPaused onlyOToken(tokenAddress) {
         bool rented = _expireRental(from, tokenAddress, tokenId, false);
 
         address lib = _libraries[tokenAddress];
@@ -713,23 +713,38 @@ contract Rentable is
         }
     }
 
+    function afterWTokenTransfer(
+        address tokenAddress,
+        address from,
+        address to,
+        uint256 tokenId
+    ) external virtual override whenNotPaused onlyWToken(tokenAddress) {
+        _expireRental(address(0), tokenAddress, tokenId, true);
+
+        address lib = _libraries[tokenAddress];
+        if (lib != address(0)) {
+            lib.functionDelegateCall(
+                abi.encodeCall(
+                    ICollectionLibrary(lib).postWTokenTransfer,
+                    (tokenAddress, tokenId, from, to)
+                ),
+                ""
+            );
+        }
+    }
+
     function proxyCall(
         address to,
         uint256 value,
         bytes4 selector,
         bytes memory data
-    ) external payable returns (bytes memory) {
-        require(
-            msg.sender == address(_orentables[to]) ||
-                msg.sender == _wrentables[to],
-            "Only w/o tokens are authorized"
-        );
-
-        require(
-            proxyAllowList[msg.sender][selector],
-            "Proxy call unauthorized"
-        );
-
+    )
+        external
+        payable
+        onlyOTokenOrWToken(to)
+        onlyAuthorizedSelector(msg.sender, selector)
+        returns (bytes memory)
+    {
         return
             to.functionCallWithValue(
                 abi.encodePacked(selector, data),
