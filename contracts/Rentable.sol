@@ -450,8 +450,8 @@ contract Rentable is
         external
         virtual
         override
-        nonReentrant
         whenNotPaused
+        nonReentrant
     {
         _deposit(tokenAddress, tokenId, msg.sender, false);
     }
@@ -464,7 +464,7 @@ contract Rentable is
         uint256 maxTimeDuration,
         uint256 pricePerSecond,
         address privateRenter
-    ) external virtual override nonReentrant whenNotPaused {
+    ) external virtual override whenNotPaused nonReentrant {
         _depositAndList(
             tokenAddress,
             tokenId,
@@ -482,8 +482,8 @@ contract Rentable is
         external
         virtual
         override
-        nonReentrant
         whenNotPaused
+        nonReentrant
     {
         address user = msg.sender;
         IERC721ReadOnlyProxy oRentable = _getExistingORentableCheckOwnership(
@@ -518,8 +518,8 @@ contract Rentable is
         external
         virtual
         override
-        onlyOTokenOwner(tokenAddress, tokenId)
         whenNotPaused
+        onlyOTokenOwner(tokenAddress, tokenId)
     {
         _createOrUpdateRentalConditions(
             msg.sender,
@@ -537,8 +537,8 @@ contract Rentable is
         external
         virtual
         override
-        onlyOTokenOwner(tokenAddress, tokenId)
         whenNotPaused
+        onlyOTokenOwner(tokenAddress, tokenId)
     {
         _deleteRentalConditions(tokenAddress, tokenId);
     }
@@ -547,7 +547,7 @@ contract Rentable is
         address tokenAddress,
         uint256 tokenId,
         uint256 duration
-    ) external payable virtual override nonReentrant whenNotPaused {
+    ) external payable virtual override whenNotPaused nonReentrant {
         IERC721ReadOnlyProxy oRentable = _getExistingORentable(tokenAddress);
         address payable rentee = payable(oRentable.ownerOf(tokenId));
 
@@ -666,7 +666,7 @@ contract Rentable is
         address from,
         uint256 tokenId,
         bytes calldata data
-    ) public virtual override nonReentrant whenNotPaused returns (bytes4) {
+    ) public virtual override whenNotPaused nonReentrant returns (bytes4) {
         if (data.length == 0) {
             _deposit(msg.sender, tokenId, from, true);
         } else {
