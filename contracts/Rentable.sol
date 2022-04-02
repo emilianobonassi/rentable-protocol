@@ -69,11 +69,6 @@ contract Rentable is
         _;
     }
 
-    modifier onlyAuthorizedSelector(address caller, bytes4 selector) {
-        require(proxyAllowList[caller][selector], "Proxy call unauthorized");
-        _;
-    }
-
     /* ========== CONSTRUCTOR ========== */
 
     constructor(address _governance, address _operator) {
@@ -732,9 +727,13 @@ contract Rentable is
         payable
         whenNotPaused
         onlyOTokenOrWToken(to)
-        onlyAuthorizedSelector(msg.sender, selector)
         returns (bytes memory)
     {
+        require(
+            proxyAllowList[msg.sender][selector],
+            "Proxy call unauthorized"
+        );
+
         return
             to.functionCallWithValue(
                 abi.encodePacked(selector, data),
