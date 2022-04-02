@@ -508,6 +508,36 @@ contract Rentable is
         );
     }
 
+    function onERC721Received(
+        address,
+        address from,
+        uint256 tokenId,
+        bytes calldata data
+    ) public virtual override whenNotPaused nonReentrant returns (bytes4) {
+        if (data.length == 0) {
+            _deposit(msg.sender, tokenId, from, true);
+        } else {
+            RentableTypes.RentalConditions memory rc = abi.decode(
+                data,
+                (RentableTypes.RentalConditions)
+            );
+
+            _depositAndList(
+                msg.sender,
+                tokenId,
+                from,
+                true,
+                rc.paymentTokenAddress,
+                rc.paymentTokenId,
+                rc.maxTimeDuration,
+                rc.pricePerSecond,
+                rc.privateRenter
+            );
+        }
+
+        return this.onERC721Received.selector;
+    }
+
     function withdraw(address tokenAddress, uint256 tokenId)
         external
         virtual
@@ -689,36 +719,6 @@ contract Rentable is
         for (uint256 i = 0; i < tokenAddresses.length; i++) {
             _expireRental(address(0), tokenAddresses[i], tokenIds[i], false);
         }
-    }
-
-    function onERC721Received(
-        address,
-        address from,
-        uint256 tokenId,
-        bytes calldata data
-    ) public virtual override whenNotPaused nonReentrant returns (bytes4) {
-        if (data.length == 0) {
-            _deposit(msg.sender, tokenId, from, true);
-        } else {
-            RentableTypes.RentalConditions memory rc = abi.decode(
-                data,
-                (RentableTypes.RentalConditions)
-            );
-
-            _depositAndList(
-                msg.sender,
-                tokenId,
-                from,
-                true,
-                rc.paymentTokenAddress,
-                rc.paymentTokenId,
-                rc.maxTimeDuration,
-                rc.pricePerSecond,
-                rc.privateRenter
-            );
-        }
-
-        return this.onERC721Received.selector;
     }
 
     /* ---------- Public Permissioned ---------- */
