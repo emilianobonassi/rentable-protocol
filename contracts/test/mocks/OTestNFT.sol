@@ -2,10 +2,10 @@
 
 pragma solidity ^0.8.11;
 
-import {IRentable} from "../../interfaces/IRentable.sol";
+import {IORentableHooks} from "../../interfaces/IORentableHooks.sol";
 
 import {ORentable} from "../../tokenization/ORentable.sol";
-import {ERC721URIStorage} from "@openzeppelin/contracts/token/ERC721/extensions/ERC721URIStorage.sol";
+import {ERC721URIStorageUpgradeable} from "@openzeppelin-upgradable/contracts/token/ERC721/extensions/ERC721URIStorageUpgradeable.sol";
 
 contract OTestNFT is ORentable {
     constructor(
@@ -15,10 +15,10 @@ contract OTestNFT is ORentable {
     ) ORentable(wrapped_, owner, rentable) {}
 
     function proxiedBalanceOf(address owner) external {
-        IRentable(_rentable).proxyCall(
+        IORentableHooks(_rentable).proxyCall(
             _wrapped,
             0,
-            ERC721URIStorage(_wrapped).balanceOf.selector,
+            ERC721URIStorageUpgradeable(_wrapped).balanceOf.selector,
             abi.encode(owner)
         );
     }

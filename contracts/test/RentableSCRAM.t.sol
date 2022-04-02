@@ -5,11 +5,13 @@ import {TestLand} from "./mocks/TestLand.sol";
 
 import {SharedSetup, CheatCodes} from "./SharedSetup.t.sol";
 
-import "@openzeppelin/contracts/token/ERC721/IERC721.sol";
+import {IERC721Upgradeable} from "@openzeppelin-upgradable/contracts/token/ERC721/IERC721Upgradeable.sol";
 
 import {DecentralandCollectionLibrary} from "../collections/decentraland/DecentralandCollectionLibrary.sol";
 import {ICollectionLibrary} from "../collections/ICollectionLibrary.sol";
 import {IRentable} from "../interfaces/IRentable.sol";
+
+import {RentableTypes} from "./../RentableTypes.sol";
 
 import {ORentable} from "../tokenization/ORentable.sol";
 import {WRentable} from "../tokenization/WRentable.sol";
@@ -28,30 +30,27 @@ contract RentableSCRAM is SharedSetup {
         testNFT.approve(address(rentable), tokenId);
         testNFT.approve(address(rentable), tokenId + 1);
 
-        rentable.deposit(address(testNFT), tokenId);
-        rentable.deposit(address(testNFT), tokenId + 1);
+        testNFT.safeTransferFrom(user, address(rentable), tokenId);
+        testNFT.safeTransferFrom(user, address(rentable), tokenId + 1);
 
         uint256 maxTimeDuration = 1000;
         uint256 pricePerSecond = 0.001 ether;
 
-        rentable.createOrUpdateRentalConditions(
-            address(testNFT),
-            tokenId,
-            address(0),
-            0,
-            maxTimeDuration,
-            pricePerSecond,
-            address(0)
-        );
+        RentableTypes.RentalConditions memory rc = RentableTypes
+            .RentalConditions({
+                paymentTokenAddress: address(0),
+                paymentTokenId: 0,
+                maxTimeDuration: maxTimeDuration,
+                pricePerSecond: pricePerSecond,
+                privateRenter: address(0)
+            });
+
+        rentable.createOrUpdateRentalConditions(address(testNFT), tokenId, rc);
 
         rentable.createOrUpdateRentalConditions(
             address(testNFT),
             tokenId + 1,
-            address(0),
-            0,
-            maxTimeDuration,
-            pricePerSecond,
-            address(0)
+            rc
         );
 
         uint256 rentalDuration = 70;
@@ -105,7 +104,7 @@ contract RentableSCRAM is SharedSetup {
             address(testNFT),
             0,
             abi.encodeWithSelector(
-                IERC721.transferFrom.selector,
+                IERC721Upgradeable.transferFrom.selector,
                 address(rentable),
                 governance,
                 tokenId
@@ -118,7 +117,9 @@ contract RentableSCRAM is SharedSetup {
         assertEq(testNFT.ownerOf(tokenId), governance);
 
         cheats.startPrank(governance);
-        rentable.emergencyWithdrawERC721(address(testNFT), tokenId + 1, true);
+        uint256[] memory tokenIds = new uint256[](1);
+        tokenIds[0] = tokenId + 1;
+        rentable.emergencyBatchWithdrawERC721(address(testNFT), tokenIds, true);
         assertEq(testNFT.ownerOf(tokenId + 1), governance);
         cheats.stopPrank();
     }

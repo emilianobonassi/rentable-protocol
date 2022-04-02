@@ -3,47 +3,54 @@ pragma solidity ^0.8.13;
 
 // Inheritance
 import {IRentable} from "./interfaces/IRentable.sol";
+import {IRentableHooks} from "./interfaces/IRentableHooks.sol";
 import {IORentableHooks} from "./interfaces/IORentableHooks.sol";
 import {IWRentableHooks} from "./interfaces/IWRentableHooks.sol";
-import {IERC721Receiver} from "@openzeppelin/contracts/token/ERC721/IERC721Receiver.sol";
-import {BaseSecurityInitializable} from "./upgradability/BaseSecurityInitializable.sol";
+import {BaseSecurityInitializable} from "./security/BaseSecurityInitializable.sol";
 import {RentableStorageV1} from "./RentableStorageV1.sol";
-import {ReentrancyGuard} from "@openzeppelin/contracts/security/ReentrancyGuard.sol";
+import {ReentrancyGuardUpgradeable} from "@openzeppelin-upgradable/contracts/security/ReentrancyGuardUpgradeable.sol";
 
 // Libraries
-import {SafeERC20} from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
+import {SafeERC20Upgradeable} from "@openzeppelin-upgradable/contracts/token/ERC20/utils/SafeERC20Upgradeable.sol";
 import {Address} from "@openzeppelin/contracts/utils/Address.sol";
 
 // References
-import {IERC721} from "@openzeppelin/contracts/token/ERC721/IERC721.sol";
-import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
-import {IERC1155} from "@openzeppelin/contracts/token/ERC1155/IERC1155.sol";
+import {IERC721Upgradeable} from "@openzeppelin-upgradable/contracts/token/ERC721/IERC721Upgradeable.sol";
+import {IERC20Upgradeable} from "@openzeppelin-upgradable/contracts/token/ERC20/IERC20Upgradeable.sol";
+import {IERC1155Upgradeable} from "@openzeppelin-upgradable/contracts/token/ERC1155/IERC1155Upgradeable.sol";
 import {IERC721ReadOnlyProxy} from "./interfaces/IERC721ReadOnlyProxy.sol";
+import {IERC721ExistExtension} from "./interfaces/IERC721ExistExtension.sol";
 import {ICollectionLibrary} from "./collections/ICollectionLibrary.sol";
 import {RentableTypes} from "./RentableTypes.sol";
-import {WRentable} from "./tokenization/WRentable.sol";
 
+/// @title Rentable main contract
+/// @author Rentable Team <hello@rentable.world>
+/// @notice Main entry point to interact with Rentable protocol
 contract Rentable is
     IRentable,
     IORentableHooks,
     IWRentableHooks,
-    IERC721Receiver,
     BaseSecurityInitializable,
-    ReentrancyGuard,
+    ReentrancyGuardUpgradeable,
     RentableStorageV1
 {
     /* ========== LIBRARIES ========== */
 
     using Address for address;
-    using SafeERC20 for IERC20;
+    using SafeERC20Upgradeable for IERC20Upgradeable;
 
     /* ========== MODIFIERS ========== */
 
+    /// @dev Prevents calling a function from anyone except the owner
+    /// @param tokenAddress wrapped token address
+    /// @param tokenId wrapped token id
     modifier onlyOTokenOwner(address tokenAddress, uint256 tokenId) {
         _getExistingORentableCheckOwnership(tokenAddress, tokenId, msg.sender);
         _;
     }
 
+    /// @dev Prevents calling a function from anyone except respective OToken
+    /// @param tokenAddress wrapped token address
     modifier onlyOToken(address tokenAddress) {
         require(
             msg.sender == address(_orentables[tokenAddress]),
@@ -52,122 +59,160 @@ contract Rentable is
         _;
     }
 
+    /// @dev Prevents calling a function from anyone except respective WToken
+    /// @param tokenAddress wrapped token address
     modifier onlyWToken(address tokenAddress) {
         require(
-            msg.sender == _wrentables[tokenAddress],
+            msg.sender == address(_wrentables[tokenAddress]),
             "Only proper WRentables allowed"
         );
         _;
     }
 
+    /// @dev Prevents calling a function from anyone except respective OToken or WToken
+    /// @param tokenAddress wrapped token address
     modifier onlyOTokenOrWToken(address tokenAddress) {
         require(
             msg.sender == address(_orentables[tokenAddress]) ||
-                msg.sender == _wrentables[tokenAddress],
+                msg.sender == address(_wrentables[tokenAddress]),
             "Only w/o tokens are authorized"
         );
         _;
     }
 
-    modifier onlyAuthorizedSelector(address caller, bytes4 selector) {
-        require(proxyAllowList[caller][selector], "Proxy call unauthorized");
-        _;
+    /// @dev Prevents calling a library when not set for the respective wrapped token
+    /// @param tokenAddress wrapped token address
+    modifier skipIfLibraryNotSet(address tokenAddress) {
+        if (_libraries[tokenAddress] != address(0)) {
+            _;
+        }
     }
 
     /* ========== CONSTRUCTOR ========== */
 
+    /// @dev Instatiate Rentable
+    /// @param _governance address for governance role
+    /// @param _operator address for operator role
     constructor(address _governance, address _operator) {
         _initialize(_governance, _operator);
     }
 
     /* ---------- INITIALIZER ---------- */
 
+    /// @dev Initialize Rentable (to be used with proxies)
+    /// @param _governance address for governance role
+    /// @param _operator address for operator role
     function initialize(address _governance, address _operator) external {
         _initialize(_governance, _operator);
     }
 
+    /// @dev For internal usage in the initializer external method
+    /// @param _governance address for governance role
+    /// @param _operator address for operator role
     function _initialize(address _governance, address _operator)
         internal
         initializer
     {
         __BaseSecurityInitializable_init(_governance, _operator);
+        __ReentrancyGuard_init();
     }
 
     /* ========== SETTERS ========== */
 
-    function setLibrary(address wrapped_, address library_)
+    /// @dev Associate the event hooks library to the specific wrapped token
+    /// @param _tokenAddress wrapped token address
+    /// @param _library library address
+    function setLibrary(address _tokenAddress, address _library)
         external
         onlyGovernance
     {
-        _libraries[wrapped_] = library_;
+        _libraries[_tokenAddress] = _library;
     }
 
-    function setORentable(address wrapped_, address oRentable_)
+    /// @dev Associate the otoken to the specific wrapped token
+    /// @param _tokenAddress wrapped token address
+    /// @param _oRentable otoken address
+    function setORentable(address _tokenAddress, address _oRentable)
         external
         onlyGovernance
     {
-        _orentables[wrapped_] = IERC721ReadOnlyProxy(oRentable_);
+        _orentables[_tokenAddress] = IERC721ReadOnlyProxy(_oRentable);
     }
 
-    function setWRentable(address wrapped_, address rentable_)
+    /// @dev Associate the otoken to the specific wrapped token
+    /// @param _tokenAddress wrapped token address
+    /// @param _wRentable otoken address
+    function setWRentable(address _tokenAddress, address _wRentable)
         external
         onlyGovernance
     {
-        _wrentables[wrapped_] = rentable_;
+        _wrentables[_tokenAddress] = IERC721ReadOnlyProxy(_wRentable);
     }
 
-    function setFixedFee(uint256 _fixedFee) external onlyGovernance {
-        fixedFee = _fixedFee;
+    /// @dev Set fee (percentage)
+    /// @param fee fee in 1e4 units (e.g. 100% = 10000)
+    function setFee(uint16 fee) external onlyGovernance {
+        _fee = fee;
     }
 
-    function setFee(uint16 _fee) external onlyGovernance {
-        fee = _fee;
-    }
-
-    function setFeeCollector(address payable _feeCollector)
+    /// @dev Set fee collector address
+    /// @param feeCollector fee collector address
+    function setFeeCollector(address payable feeCollector)
         external
         onlyGovernance
     {
-        feeCollector = _feeCollector;
+        _feeCollector = feeCollector;
     }
 
-    function enablePaymentToken(address paymentTokenAddress)
+    /// @dev Enable payment token (ERC20)
+    /// @param _paymentTokenAddress payment token address
+    function enablePaymentToken(address _paymentTokenAddress)
         external
         onlyGovernance
     {
-        paymentTokenAllowlist[paymentTokenAddress] = ERC20_TOKEN;
+        _paymentTokenAllowlist[_paymentTokenAddress] = ERC20_TOKEN;
     }
 
-    function enable1155PaymentToken(address paymentTokenAddress)
+    /// @dev Enable payment token (ERC1155)
+    /// @param _paymentTokenAddress payment token address
+    function enable1155PaymentToken(address _paymentTokenAddress)
         external
         onlyGovernance
     {
-        paymentTokenAllowlist[paymentTokenAddress] = ERC1155_TOKEN;
+        _paymentTokenAllowlist[_paymentTokenAddress] = ERC1155_TOKEN;
     }
 
-    function disablePaymentToken(address paymentTokenAddress)
+    /// @dev Disable payment token (ERC1155)
+    /// @param _paymentTokenAddress payment token address
+    function disablePaymentToken(address _paymentTokenAddress)
         external
         onlyGovernance
     {
-        paymentTokenAllowlist[paymentTokenAddress] = NOT_ALLOWED_TOKEN;
+        _paymentTokenAllowlist[_paymentTokenAddress] = NOT_ALLOWED_TOKEN;
     }
 
+    /// @dev Toggle o/w token to call on-behalf a selector on the wrapped token
+    /// @param _caller o/w token address
+    /// @param _selector selector bytes on the target wrapped token
+    /// @param _enabled true to enable, false to disable
     function enableProxyCall(
-        address caller,
-        bytes4 selector,
-        bool enabled
+        address _caller,
+        bytes4 _selector,
+        bool _enabled
     ) external onlyGovernance {
-        proxyAllowList[caller][selector] = enabled;
+        _proxyAllowList[_caller][_selector] = _enabled;
     }
 
     /* ========== VIEWS ========== */
 
     /* ---------- Internal ---------- */
 
+    /// @dev Get and check (reverting) otoken exist for a specific token
+    /// @param tokenAddress wrapped token address
+    /// @return oRentable otoken instance
     function _getExistingORentable(address tokenAddress)
         internal
         view
-        virtual
         returns (IERC721ReadOnlyProxy oRentable)
     {
         oRentable = _orentables[tokenAddress];
@@ -177,11 +222,16 @@ contract Rentable is
         );
     }
 
+    /// @dev Get and check (reverting) otoken user ownership
+    /// @param tokenAddress wrapped token address
+    /// @param tokenId wrapped token id
+    /// @param user user to verify ownership
+    /// @return oRentable otoken instance
     function _getExistingORentableCheckOwnership(
         address tokenAddress,
         uint256 tokenId,
         address user
-    ) internal virtual returns (IERC721ReadOnlyProxy oRentable) {
+    ) internal view returns (IERC721ReadOnlyProxy oRentable) {
         oRentable = _getExistingORentable(tokenAddress);
 
         require(oRentable.ownerOf(tokenId) == user, "The token must be yours");
@@ -189,32 +239,71 @@ contract Rentable is
 
     /* ---------- Public ---------- */
 
-    function getLibrary(address wrapped_) external view returns (address) {
-        return _libraries[wrapped_];
+    /// @notice Get library address for the specific wrapped token
+    /// @param tokenAddress wrapped token address
+    /// @return library address
+    function getLibrary(address tokenAddress) external view returns (address) {
+        return _libraries[tokenAddress];
     }
 
-    function getORentable(address wrapped_)
+    /// @notice Get OToken address associated to the specific wrapped token
+    /// @param tokenAddress wrapped token address
+    /// @return OToken address
+    function getORentable(address tokenAddress)
         external
         view
-        virtual
         returns (address)
     {
-        return address(_orentables[wrapped_]);
+        return address(_orentables[tokenAddress]);
     }
 
-    function getWRentable(address wrapped_) external view returns (address) {
-        return address(_wrentables[wrapped_]);
+    /// @notice Get WToken address associated to the specific wrapped token
+    /// @param tokenAddress wrapped token address
+    /// @return WToken address
+    function getWRentable(address tokenAddress)
+        external
+        view
+        returns (address)
+    {
+        return address(_wrentables[tokenAddress]);
     }
 
+    /// @notice Show current protocol fee
+    /// @return protocol fee in 1e4 units, e.g. 100 = 1%
+    function getFee() external view returns (uint16) {
+        return _fee;
+    }
+
+    /// @notice Get protocol fee collector
+    /// @return protocol fee collector address
+    function getFeeCollector() external view returns (address payable) {
+        return _feeCollector;
+    }
+
+    /// @notice Show a token is enabled as payment token
+    /// @param paymentTokenAddress payment token address
+    /// @return status, see RentableStorageV1 for values
+    function getPaymentTokenAllowlist(address paymentTokenAddress)
+        external
+        view
+        returns (uint8)
+    {
+        return _paymentTokenAllowlist[paymentTokenAddress];
+    }
+
+    /// @notice Show O/W Token can invoke selector on respective wrapped token
+    /// @param caller O/W Token address
+    /// @param selector function selector to invoke
+    /// @return a bool representing enabled or not
     function isEnabledProxyCall(address caller, bytes4 selector)
         external
         view
-        onlyGovernance
         returns (bool)
     {
-        return proxyAllowList[caller][selector];
+        return _proxyAllowList[caller][selector];
     }
 
+    /// @inheritdoc IRentable
     function rentalConditions(address tokenAddress, uint256 tokenId)
         external
         view
@@ -225,6 +314,7 @@ contract Rentable is
         return _rentalConditions[tokenAddress][tokenId];
     }
 
+    /// @inheritdoc IRentable
     function expiresAt(address tokenAddress, uint256 tokenId)
         external
         view
@@ -232,29 +322,28 @@ contract Rentable is
         override
         returns (uint256)
     {
-        return _etas[tokenAddress][tokenId];
+        return _expiresAt[tokenAddress][tokenId];
     }
 
     /* ========== MUTATIVE FUNCTIONS ========== */
 
     /* ---------- Internal ---------- */
 
+    /// @dev Deposit only a wrapped token and mint respective OToken
+    /// @param tokenAddress wrapped token address
+    /// @param tokenId wrapped token id
+    /// @param to user to mint
     function _deposit(
         address tokenAddress,
         uint256 tokenId,
-        address to,
-        bool skipTransfer
+        address to
     ) internal {
         IERC721ReadOnlyProxy oRentable = _getExistingORentable(tokenAddress);
 
-        if (!skipTransfer) {
-            IERC721(tokenAddress).transferFrom(to, address(this), tokenId);
-        } else {
-            require(
-                IERC721(tokenAddress).ownerOf(tokenId) == address(this),
-                "Token not deposited"
-            );
-        }
+        require(
+            IERC721Upgradeable(tokenAddress).ownerOf(tokenId) == address(this),
+            "Token not deposited"
+        );
 
         oRentable.mint(to, tokenId);
 
@@ -263,99 +352,101 @@ contract Rentable is
         emit Deposit(to, tokenAddress, tokenId);
     }
 
+    /// @dev Deposit and list a wrapped token
+    /// @param tokenAddress wrapped token address
+    /// @param tokenId wrapped token id
+    /// @param to user to mint
+    /// @param rentalConditions_ rental conditions see RentableTypes.RentalConditions
     function _depositAndList(
         address tokenAddress,
         uint256 tokenId,
         address to,
-        bool skipTransfer,
-        address paymentTokenAddress,
-        uint256 paymentTokenId,
-        uint256 maxTimeDuration,
-        uint256 pricePerSecond,
-        address privateRenter
+        RentableTypes.RentalConditions memory rentalConditions_
     ) internal {
-        _deposit(tokenAddress, tokenId, to, skipTransfer);
+        _deposit(tokenAddress, tokenId, to);
 
         _createOrUpdateRentalConditions(
             to,
             tokenAddress,
             tokenId,
-            paymentTokenAddress,
-            paymentTokenId,
-            maxTimeDuration,
-            pricePerSecond,
-            privateRenter
+            rentalConditions_
         );
     }
 
+    /// @dev Set rental conditions for a wrapped token
+    /// @param user who is changing the conditions
+    /// @param tokenAddress wrapped token address
+    /// @param tokenId wrapped token id
+    /// @param rentalConditions_ rental conditions see RentableTypes.RentalConditions
     function _createOrUpdateRentalConditions(
         address user,
         address tokenAddress,
         uint256 tokenId,
-        address paymentTokenAddress,
-        uint256 paymentTokenId,
-        uint256 maxTimeDuration,
-        uint256 pricePerSecond,
-        address privateRenter
+        RentableTypes.RentalConditions memory rentalConditions_
     ) internal {
         require(
-            paymentTokenAllowlist[paymentTokenAddress] != NOT_ALLOWED_TOKEN,
+            _paymentTokenAllowlist[rentalConditions_.paymentTokenAddress] !=
+                NOT_ALLOWED_TOKEN,
             "Not supported payment token"
         );
 
-        _rentalConditions[tokenAddress][tokenId] = RentableTypes
-            .RentalConditions({
-                maxTimeDuration: maxTimeDuration,
-                pricePerSecond: pricePerSecond,
-                paymentTokenAddress: paymentTokenAddress,
-                paymentTokenId: paymentTokenId,
-                privateRenter: privateRenter
-            });
+        _rentalConditions[tokenAddress][tokenId] = rentalConditions_;
 
-        _postList(tokenAddress, tokenId, user, maxTimeDuration, pricePerSecond);
+        _postList(
+            tokenAddress,
+            tokenId,
+            user,
+            rentalConditions_.maxTimeDuration,
+            rentalConditions_.pricePerSecond
+        );
 
         emit UpdateRentalConditions(
             tokenAddress,
             tokenId,
-            paymentTokenAddress,
-            paymentTokenId,
-            maxTimeDuration,
-            pricePerSecond,
-            privateRenter
+            rentalConditions_.paymentTokenAddress,
+            rentalConditions_.paymentTokenId,
+            rentalConditions_.maxTimeDuration,
+            rentalConditions_.pricePerSecond,
+            rentalConditions_.privateRenter
         );
     }
 
+    /// @dev Cancel rental conditions for a wrapped token
+    /// @param tokenAddress wrapped token address
+    /// @param tokenId wrapped token id
     function _deleteRentalConditions(address tokenAddress, uint256 tokenId)
         internal
     {
+        // save gas instead of dropping all the structure
         (_rentalConditions[tokenAddress][tokenId]).maxTimeDuration = 0;
     }
 
+    /// @dev Expire explicitely rental and update data structures for a specific wrapped token
+    /// @param oTokenOwner (optional) otoken owner address
+    /// @param tokenAddress wrapped token address
+    /// @param tokenId wrapped token id
+    /// @param skipExistCheck assume or not wtoken id exists (gas optimization)
+    /// @return currentlyRented true if rental is not expired
     function _expireRental(
         address oTokenOwner,
         address tokenAddress,
         uint256 tokenId,
         bool skipExistCheck
-    ) internal virtual returns (bool currentlyRented) {
+    ) internal returns (bool currentlyRented) {
         if (
             skipExistCheck ||
-            WRentable(_wrentables[tokenAddress]).exists(tokenId)
+            IERC721ExistExtension(address(_wrentables[tokenAddress])).exists(
+                tokenId
+            )
         ) {
-            if (block.timestamp >= (_etas[tokenAddress][tokenId])) {
+            if (block.timestamp >= (_expiresAt[tokenAddress][tokenId])) {
                 address currentRentee = oTokenOwner == address(0)
                     ? IERC721ReadOnlyProxy(_orentables[tokenAddress]).ownerOf(
                         tokenId
                     )
                     : oTokenOwner;
-                address currentRenter = WRentable(_wrentables[tokenAddress])
-                    .ownerOf(tokenId);
-                WRentable(_wrentables[tokenAddress]).burn(tokenId);
-                _postExpireRental(
-                    tokenAddress,
-                    tokenId,
-                    currentRentee,
-                    currentRenter
-                );
+                _wrentables[tokenAddress].burn(tokenId);
+                _postExpireRental(tokenAddress, tokenId, currentRentee);
                 emit RentEnds(tokenAddress, tokenId);
             } else {
                 currentlyRented = true;
@@ -365,13 +456,10 @@ contract Rentable is
         return currentlyRented;
     }
 
-    modifier skipIfLibraryNotSet(address tokenAddress) {
-        address lib = _libraries[tokenAddress];
-        if (lib != address(0)) {
-            _;
-        }
-    }
-
+    /// @dev Execute custom logic after deposit via wrapped token library
+    /// @param tokenAddress wrapped token address
+    /// @param tokenId wrapped token id
+    /// @param user depositor
     function _postDeposit(
         address tokenAddress,
         uint256 tokenId,
@@ -386,6 +474,12 @@ contract Rentable is
         );
     }
 
+    /// @dev Execute custom logic after listing via wrapped token library
+    /// @param tokenAddress wrapped token address
+    /// @param tokenId wrapped token id
+    /// @param user lister
+    /// @param maxTimeDuration max duration allowed for the rental
+    /// @param pricePerSecond price per second in payment token units
     function _postList(
         address tokenAddress,
         uint256 tokenId,
@@ -402,6 +496,12 @@ contract Rentable is
         );
     }
 
+    /// @dev Execute custom logic after rent via wrapped token library
+    /// @param tokenAddress wrapped token address
+    /// @param tokenId wrapped token id
+    /// @param duration rental duration
+    /// @param from rentee
+    /// @param to renter
     function _postRent(
         address tokenAddress,
         uint256 tokenId,
@@ -418,16 +518,19 @@ contract Rentable is
         );
     }
 
+    /// @dev Execute custom logic after rent expires via wrapped token library
+    /// @param tokenAddress wrapped token address
+    /// @param tokenId wrapped token id
+    /// @param from rentee
     function _postExpireRental(
         address tokenAddress,
         uint256 tokenId,
-        address from,
-        address to
+        address from
     ) internal skipIfLibraryNotSet(tokenAddress) {
         _libraries[tokenAddress].functionDelegateCall(
             abi.encodeCall(
                 ICollectionLibrary.postExpireRental,
-                (tokenAddress, tokenId, from, to)
+                (tokenAddress, tokenId, from)
             ),
             ""
         );
@@ -435,38 +538,28 @@ contract Rentable is
 
     /* ---------- Public ---------- */
 
-    function deposit(address tokenAddress, uint256 tokenId)
-        external
-        virtual
-        override
-        whenNotPaused
-        nonReentrant
-    {
-        _deposit(tokenAddress, tokenId, msg.sender, false);
-    }
-
-    function depositAndList(
-        address tokenAddress,
+    /// @inheritdoc IRentable
+    function onERC721Received(
+        address,
+        address from,
         uint256 tokenId,
-        address paymentTokenAddress,
-        uint256 paymentTokenId,
-        uint256 maxTimeDuration,
-        uint256 pricePerSecond,
-        address privateRenter
-    ) external virtual override whenNotPaused nonReentrant {
-        _depositAndList(
-            tokenAddress,
-            tokenId,
-            msg.sender,
-            false,
-            paymentTokenAddress,
-            paymentTokenId,
-            maxTimeDuration,
-            pricePerSecond,
-            privateRenter
-        );
+        bytes calldata data
+    ) external virtual override whenNotPaused nonReentrant returns (bytes4) {
+        if (data.length == 0) {
+            _deposit(msg.sender, tokenId, from);
+        } else {
+            _depositAndList(
+                msg.sender,
+                tokenId,
+                from,
+                abi.decode(data, (RentableTypes.RentalConditions))
+            );
+        }
+
+        return this.onERC721Received.selector;
     }
 
+    /// @inheritdoc IRentable
     function withdraw(address tokenAddress, uint256 tokenId)
         external
         virtual
@@ -490,19 +583,20 @@ contract Rentable is
 
         oRentable.burn(tokenId);
 
-        IERC721(tokenAddress).safeTransferFrom(address(this), user, tokenId);
+        IERC721Upgradeable(tokenAddress).safeTransferFrom(
+            address(this),
+            user,
+            tokenId
+        );
 
         emit Withdraw(tokenAddress, tokenId);
     }
 
+    /// @inheritdoc IRentable
     function createOrUpdateRentalConditions(
         address tokenAddress,
         uint256 tokenId,
-        address paymentTokenAddress,
-        uint256 paymentTokenId,
-        uint256 maxTimeDuration,
-        uint256 pricePerSecond,
-        address privateRenter
+        RentableTypes.RentalConditions calldata rentalConditions_
     )
         external
         virtual
@@ -514,14 +608,11 @@ contract Rentable is
             msg.sender,
             tokenAddress,
             tokenId,
-            paymentTokenAddress,
-            paymentTokenId,
-            maxTimeDuration,
-            pricePerSecond,
-            privateRenter
+            rentalConditions_
         );
     }
 
+    /// @inheritdoc IRentable
     function deleteRentalConditions(address tokenAddress, uint256 tokenId)
         external
         virtual
@@ -532,11 +623,13 @@ contract Rentable is
         _deleteRentalConditions(tokenAddress, tokenId);
     }
 
+    /// @inheritdoc IRentable
     function rent(
         address tokenAddress,
         uint256 tokenId,
         uint256 duration
     ) external payable virtual override whenNotPaused nonReentrant {
+        // 1. check token is deposited and available for rental
         IERC721ReadOnlyProxy oRentable = _getExistingORentable(tokenAddress);
         address payable rentee = payable(oRentable.ownerOf(tokenId));
 
@@ -550,6 +643,7 @@ contract Rentable is
             "Current rent still pending"
         );
 
+        // 2. validate renter offer with rentee conditions
         require(
             duration <= rcs.maxTimeDuration,
             "Duration greater than conditions"
@@ -560,57 +654,58 @@ contract Rentable is
             "Rental reserved for another user"
         );
 
-        uint256 paymentQty = rcs.pricePerSecond * duration;
-
-        // Fee calc
-        uint256 feesForFeeCollector = fixedFee +
-            (((paymentQty - fixedFee) * fee) / BASE_FEE);
-        uint256 feesForRentee = paymentQty - feesForFeeCollector;
-
+        // 3. mint wtoken
         uint256 eta = block.timestamp + duration;
-        _etas[tokenAddress][tokenId] = eta;
+        _expiresAt[tokenAddress][tokenId] = eta;
+        _wrentables[tokenAddress].mint(msg.sender, tokenId);
 
-        WRentable(_wrentables[tokenAddress]).mint(msg.sender, tokenId);
+        // 4. fees distribution
+        // gross due amount
+        uint256 paymentQty = rcs.pricePerSecond * duration;
+        // protocol and rentee fees calc
+        uint256 feesForFeeCollector = (paymentQty * _fee) / BASE_FEE;
+        uint256 feesForRentee = paymentQty - feesForFeeCollector;
 
         if (rcs.paymentTokenAddress == address(0)) {
             require(msg.value >= paymentQty, "Not enough funds");
             if (feesForFeeCollector > 0) {
-                Address.sendValue(feeCollector, feesForFeeCollector);
+                Address.sendValue(_feeCollector, feesForFeeCollector);
             }
 
             Address.sendValue(rentee, feesForRentee);
 
+            // refund eventual remaining
             if (msg.value > paymentQty) {
                 Address.sendValue(payable(msg.sender), msg.value - paymentQty);
             }
         } else if (
-            paymentTokenAllowlist[rcs.paymentTokenAddress] == ERC20_TOKEN
+            _paymentTokenAllowlist[rcs.paymentTokenAddress] == ERC20_TOKEN
         ) {
             if (feesForFeeCollector > 0) {
-                IERC20(rcs.paymentTokenAddress).safeTransferFrom(
+                IERC20Upgradeable(rcs.paymentTokenAddress).safeTransferFrom(
                     msg.sender,
-                    feeCollector,
+                    _feeCollector,
                     feesForFeeCollector
                 );
             }
 
-            IERC20(rcs.paymentTokenAddress).safeTransferFrom(
+            IERC20Upgradeable(rcs.paymentTokenAddress).safeTransferFrom(
                 msg.sender,
                 rentee,
                 feesForRentee
             );
         } else {
             if (feesForFeeCollector > 0) {
-                IERC1155(rcs.paymentTokenAddress).safeTransferFrom(
+                IERC1155Upgradeable(rcs.paymentTokenAddress).safeTransferFrom(
                     msg.sender,
-                    feeCollector,
+                    _feeCollector,
                     rcs.paymentTokenId,
                     feesForFeeCollector,
                     ""
                 );
             }
 
-            IERC1155(rcs.paymentTokenAddress).safeTransferFrom(
+            IERC1155Upgradeable(rcs.paymentTokenAddress).safeTransferFrom(
                 msg.sender,
                 rentee,
                 rcs.paymentTokenId,
@@ -619,6 +714,7 @@ contract Rentable is
             );
         }
 
+        // 5. after rent custom logic
         _postRent(tokenAddress, tokenId, duration, rentee, msg.sender);
 
         emit Rent(
@@ -632,56 +728,31 @@ contract Rentable is
         );
     }
 
+    /// @notice Trigger on-chain rental expire for expired rentals
+    /// @param tokenAddress wrapped token address
+    /// @param tokenId wrapped token id
     function expireRental(address tokenAddress, uint256 tokenId)
         external
-        virtual
-        override
         whenNotPaused
     {
         _expireRental(address(0), tokenAddress, tokenId, false);
     }
 
+    /// @notice Batch expireRental
+    /// @param tokenAddresses array of wrapped token addresses
+    /// @param tokenIds array of wrapped token id
     function expireRentals(
         address[] calldata tokenAddresses,
         uint256[] calldata tokenIds
-    ) external virtual override whenNotPaused {
+    ) external whenNotPaused {
         for (uint256 i = 0; i < tokenAddresses.length; i++) {
             _expireRental(address(0), tokenAddresses[i], tokenIds[i], false);
         }
     }
 
-    function onERC721Received(
-        address,
-        address from,
-        uint256 tokenId,
-        bytes calldata data
-    ) public virtual override whenNotPaused nonReentrant returns (bytes4) {
-        if (data.length == 0) {
-            _deposit(msg.sender, tokenId, from, true);
-        } else {
-            RentableTypes.RentalConditions memory rc = abi.decode(
-                data,
-                (RentableTypes.RentalConditions)
-            );
-
-            _depositAndList(
-                msg.sender,
-                tokenId,
-                from,
-                true,
-                rc.paymentTokenAddress,
-                rc.paymentTokenId,
-                rc.maxTimeDuration,
-                rc.pricePerSecond,
-                rc.privateRenter
-            );
-        }
-
-        return this.onERC721Received.selector;
-    }
-
     /* ---------- Public Permissioned ---------- */
 
+    /// @inheritdoc IORentableHooks
     function afterOTokenTransfer(
         address tokenAddress,
         address from,
@@ -702,6 +773,7 @@ contract Rentable is
         }
     }
 
+    /// @inheritdoc IWRentableHooks
     function afterWTokenTransfer(
         address tokenAddress,
         address from,
@@ -722,6 +794,7 @@ contract Rentable is
         }
     }
 
+    /// @inheritdoc IRentableHooks
     function proxyCall(
         address to,
         uint256 value,
@@ -731,15 +804,15 @@ contract Rentable is
         external
         payable
         whenNotPaused
-        onlyOTokenOrWToken(to)
-        onlyAuthorizedSelector(msg.sender, selector)
+        onlyOTokenOrWToken(to) // this implicitly checks `to` is the associated wrapped token
         returns (bytes memory)
     {
+        require(
+            _proxyAllowList[msg.sender][selector],
+            "Proxy call unauthorized"
+        );
+
         return
-            to.functionCallWithValue(
-                abi.encodePacked(selector, data),
-                value,
-                ""
-            );
+            to.functionCallWithValue(bytes.concat(selector, data), value, "");
     }
 }
