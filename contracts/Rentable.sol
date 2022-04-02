@@ -1,29 +1,27 @@
 // SPDX-License-Identifier: MIT
-
 pragma solidity ^0.8.13;
 
-import {IERC721} from "@openzeppelin/contracts/token/ERC721/IERC721.sol";
-import {IERC721Receiver} from "@openzeppelin/contracts/token/ERC721/IERC721Receiver.sol";
-import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
-import {SafeERC20} from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
-import {IERC1155} from "@openzeppelin/contracts/token/ERC1155/IERC1155.sol";
-
-import {Address} from "@openzeppelin/contracts/utils/Address.sol";
-import {Ownable} from "@openzeppelin/contracts/access/Ownable.sol";
-import {ReentrancyGuard} from "@openzeppelin/contracts/security/ReentrancyGuard.sol";
-
-import {IERC721ReadOnlyProxy} from "./interfaces/IERC721ReadOnlyProxy.sol";
-import {ICollectionLibrary} from "./collections/ICollectionLibrary.sol";
+// Inheritance
 import {IRentable} from "./interfaces/IRentable.sol";
 import {IORentableHooks} from "./interfaces/IORentableHooks.sol";
 import {IWRentableHooks} from "./interfaces/IWRentableHooks.sol";
-
-import {RentableTypes} from "./RentableTypes.sol";
-
-import {WRentable} from "./tokenization/WRentable.sol";
-
+import {IERC721Receiver} from "@openzeppelin/contracts/token/ERC721/IERC721Receiver.sol";
 import {BaseSecurityInitializable} from "./upgradability/BaseSecurityInitializable.sol";
 import {RentableStorageV1} from "./RentableStorageV1.sol";
+import {ReentrancyGuard} from "@openzeppelin/contracts/security/ReentrancyGuard.sol";
+
+// Libraries
+import {SafeERC20} from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
+import {Address} from "@openzeppelin/contracts/utils/Address.sol";
+
+// References
+import {IERC721} from "@openzeppelin/contracts/token/ERC721/IERC721.sol";
+import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
+import {IERC1155} from "@openzeppelin/contracts/token/ERC1155/IERC1155.sol";
+import {IERC721ReadOnlyProxy} from "./interfaces/IERC721ReadOnlyProxy.sol";
+import {ICollectionLibrary} from "./collections/ICollectionLibrary.sol";
+import {RentableTypes} from "./RentableTypes.sol";
+import {WRentable} from "./tokenization/WRentable.sol";
 
 contract Rentable is
     IRentable,
@@ -34,12 +32,25 @@ contract Rentable is
     ReentrancyGuard,
     RentableStorageV1
 {
+    /* ========== LIBRARIES ========== */
+
     using Address for address;
     using SafeERC20 for IERC20;
+
+    /* ========== MODIFIERS ========== */
+
+    modifier onlyOTokenOwner(address tokenAddress, uint256 tokenId) {
+        _getExistingORentableCheckOwnership(tokenAddress, tokenId, msg.sender);
+        _;
+    }
+
+    /* ========== CONSTRUCTOR ========== */
 
     constructor(address _governance, address _operator) {
         _initialize(_governance, _operator);
     }
+
+    /* ---------- INITIALIZER ---------- */
 
     function initialize(address _governance, address _operator) external {
         _initialize(_governance, _operator);
@@ -52,13 +63,13 @@ contract Rentable is
         __BaseSecurityInitializable_init(_governance, _operator);
     }
 
-    function getORentable(address wrapped_)
+    /* ========== SETTERS ========== */
+
+    function setLibrary(address wrapped_, address library_)
         external
-        view
-        virtual
-        returns (address)
+        onlyGovernance
     {
-        return address(_orentables[wrapped_]);
+        _libraries[wrapped_] = library_;
     }
 
     function setORentable(address wrapped_, address oRentable_)
@@ -66,10 +77,6 @@ contract Rentable is
         onlyGovernance
     {
         _orentables[wrapped_] = IERC721ReadOnlyProxy(oRentable_);
-    }
-
-    function getWRentable(address wrapped_) external view returns (address) {
-        return address(_wrentables[wrapped_]);
     }
 
     function setWRentable(address wrapped_, address rentable_)
@@ -123,14 +130,9 @@ contract Rentable is
         proxyAllowList[caller][selector] = enabled;
     }
 
-    function isEnabledProxyCall(address caller, bytes4 selector)
-        external
-        view
-        onlyGovernance
-        returns (bool)
-    {
-        return proxyAllowList[caller][selector];
-    }
+    /* ========== VIEWS ========== */
+
+    /* ---------- Internal ---------- */
 
     function _getExistingORentable(address tokenAddress)
         internal
@@ -155,10 +157,57 @@ contract Rentable is
         require(oRentable.ownerOf(tokenId) == user, "The token must be yours");
     }
 
-    modifier onlyOTokenOwner(address tokenAddress, uint256 tokenId) {
-        _getExistingORentableCheckOwnership(tokenAddress, tokenId, msg.sender);
-        _;
+    /* ---------- Public ---------- */
+
+    function getLibrary(address wrapped_) external view returns (address) {
+        return _libraries[wrapped_];
     }
+
+    function getORentable(address wrapped_)
+        external
+        view
+        virtual
+        returns (address)
+    {
+        return address(_orentables[wrapped_]);
+    }
+
+    function getWRentable(address wrapped_) external view returns (address) {
+        return address(_wrentables[wrapped_]);
+    }
+
+    function isEnabledProxyCall(address caller, bytes4 selector)
+        external
+        view
+        onlyGovernance
+        returns (bool)
+    {
+        return proxyAllowList[caller][selector];
+    }
+
+    function rentalConditions(address tokenAddress, uint256 tokenId)
+        external
+        view
+        virtual
+        override
+        returns (RentableTypes.RentalConditions memory)
+    {
+        return _rentalConditions[tokenAddress][tokenId];
+    }
+
+    function expiresAt(address tokenAddress, uint256 tokenId)
+        external
+        view
+        virtual
+        override
+        returns (uint256)
+    {
+        return _etas[tokenAddress][tokenId];
+    }
+
+    /* ========== MUTATIVE FUNCTIONS ========== */
+
+    /* ---------- Internal ---------- */
 
     function _deposit(
         address tokenAddress,
@@ -208,6 +257,164 @@ contract Rentable is
             privateRenter
         );
     }
+
+    function _createOrUpdateRentalConditions(
+        address user,
+        address tokenAddress,
+        uint256 tokenId,
+        address paymentTokenAddress,
+        uint256 paymentTokenId,
+        uint256 maxTimeDuration,
+        uint256 pricePerSecond,
+        address privateRenter
+    ) internal {
+        require(
+            paymentTokenAllowlist[paymentTokenAddress] != NOT_ALLOWED_TOKEN,
+            "Not supported payment token"
+        );
+
+        _rentalConditions[tokenAddress][tokenId] = RentableTypes
+            .RentalConditions({
+                maxTimeDuration: maxTimeDuration,
+                pricePerSecond: pricePerSecond,
+                paymentTokenAddress: paymentTokenAddress,
+                paymentTokenId: paymentTokenId,
+                privateRenter: privateRenter
+            });
+
+        _postList(tokenAddress, tokenId, user, maxTimeDuration, pricePerSecond);
+
+        emit UpdateRentalConditions(
+            tokenAddress,
+            tokenId,
+            paymentTokenAddress,
+            paymentTokenId,
+            maxTimeDuration,
+            pricePerSecond,
+            privateRenter
+        );
+    }
+
+    function _deleteRentalConditions(address tokenAddress, uint256 tokenId)
+        internal
+    {
+        (_rentalConditions[tokenAddress][tokenId]).maxTimeDuration = 0;
+    }
+
+    function _expireRental(
+        address oTokenOwner,
+        address tokenAddress,
+        uint256 tokenId,
+        bool skipExistCheck
+    ) internal virtual returns (bool currentlyRented) {
+        if (
+            skipExistCheck ||
+            WRentable(_wrentables[tokenAddress]).exists(tokenId)
+        ) {
+            if (block.timestamp >= (_etas[tokenAddress][tokenId])) {
+                address currentRentee = oTokenOwner == address(0)
+                    ? IERC721ReadOnlyProxy(_orentables[tokenAddress]).ownerOf(
+                        tokenId
+                    )
+                    : oTokenOwner;
+                address currentRenter = WRentable(_wrentables[tokenAddress])
+                    .ownerOf(tokenId);
+                WRentable(_wrentables[tokenAddress]).burn(tokenId);
+                _postexpireRental(
+                    tokenAddress,
+                    tokenId,
+                    currentRentee,
+                    currentRenter
+                );
+                emit RentEnds(tokenAddress, tokenId);
+            } else {
+                currentlyRented = true;
+            }
+        }
+
+        return currentlyRented;
+    }
+
+    function _postDeposit(
+        address tokenAddress,
+        uint256 tokenId,
+        address user
+    ) internal {
+        address lib = _libraries[tokenAddress];
+        if (lib != address(0)) {
+            lib.functionDelegateCall(
+                abi.encodeCall(
+                    ICollectionLibrary(lib).postDeposit,
+                    (tokenAddress, tokenId, user)
+                ),
+                ""
+            );
+        }
+    }
+
+    function _postList(
+        address tokenAddress,
+        uint256 tokenId,
+        address user,
+        uint256 maxTimeDuration,
+        uint256 pricePerSecond
+    ) internal {
+        address lib = _libraries[tokenAddress];
+        if (lib != address(0)) {
+            lib.functionDelegateCall(
+                abi.encodeCall(
+                    ICollectionLibrary(lib).postList,
+                    (
+                        tokenAddress,
+                        tokenId,
+                        user,
+                        maxTimeDuration,
+                        pricePerSecond
+                    )
+                ),
+                ""
+            );
+        }
+    }
+
+    function _postCreateRent(
+        address tokenAddress,
+        uint256 tokenId,
+        uint256 duration,
+        address from,
+        address to
+    ) internal {
+        address lib = _libraries[tokenAddress];
+        if (lib != address(0)) {
+            lib.functionDelegateCall(
+                abi.encodeCall(
+                    ICollectionLibrary(lib).postCreateRent,
+                    (tokenAddress, tokenId, duration, from, to)
+                ),
+                ""
+            );
+        }
+    }
+
+    function _postexpireRental(
+        address tokenAddress,
+        uint256 tokenId,
+        address from,
+        address to
+    ) internal {
+        address lib = _libraries[tokenAddress];
+        if (lib != address(0)) {
+            lib.functionDelegateCall(
+                abi.encodeCall(
+                    ICollectionLibrary(lib).postexpireRental,
+                    (tokenAddress, tokenId, from, to)
+                ),
+                ""
+            );
+        }
+    }
+
+    /* ---------- Public ---------- */
 
     function deposit(address tokenAddress, uint256 tokenId)
         external
@@ -269,97 +476,6 @@ contract Rentable is
         emit Withdraw(tokenAddress, tokenId);
     }
 
-    function rentalConditions(address tokenAddress, uint256 tokenId)
-        external
-        view
-        virtual
-        override
-        returns (RentableTypes.RentalConditions memory)
-    {
-        return _rentalConditions[tokenAddress][tokenId];
-    }
-
-    function expiresAt(address tokenAddress, uint256 tokenId)
-        external
-        view
-        virtual
-        override
-        returns (uint256)
-    {
-        return _etas[tokenAddress][tokenId];
-    }
-
-    function _createOrUpdateRentalConditions(
-        address user,
-        address tokenAddress,
-        uint256 tokenId,
-        address paymentTokenAddress,
-        uint256 paymentTokenId,
-        uint256 maxTimeDuration,
-        uint256 pricePerSecond,
-        address privateRenter
-    ) internal {
-        require(
-            paymentTokenAllowlist[paymentTokenAddress] != NOT_ALLOWED_TOKEN,
-            "Not supported payment token"
-        );
-
-        _rentalConditions[tokenAddress][tokenId] = RentableTypes
-            .RentalConditions({
-                maxTimeDuration: maxTimeDuration,
-                pricePerSecond: pricePerSecond,
-                paymentTokenAddress: paymentTokenAddress,
-                paymentTokenId: paymentTokenId,
-                privateRenter: privateRenter
-            });
-
-        _postList(tokenAddress, tokenId, user, maxTimeDuration, pricePerSecond);
-
-        emit UpdateRentalConditions(
-            tokenAddress,
-            tokenId,
-            paymentTokenAddress,
-            paymentTokenId,
-            maxTimeDuration,
-            pricePerSecond,
-            privateRenter
-        );
-    }
-
-    function _expireRental(
-        address oTokenOwner,
-        address tokenAddress,
-        uint256 tokenId,
-        bool skipExistCheck
-    ) internal virtual returns (bool currentlyRented) {
-        if (
-            skipExistCheck ||
-            WRentable(_wrentables[tokenAddress]).exists(tokenId)
-        ) {
-            if (block.timestamp >= (_etas[tokenAddress][tokenId])) {
-                address currentRentee = oTokenOwner == address(0)
-                    ? IERC721ReadOnlyProxy(_orentables[tokenAddress]).ownerOf(
-                        tokenId
-                    )
-                    : oTokenOwner;
-                address currentRenter = WRentable(_wrentables[tokenAddress])
-                    .ownerOf(tokenId);
-                WRentable(_wrentables[tokenAddress]).burn(tokenId);
-                _postexpireRental(
-                    tokenAddress,
-                    tokenId,
-                    currentRentee,
-                    currentRenter
-                );
-                emit RentEnds(tokenAddress, tokenId);
-            } else {
-                currentlyRented = true;
-            }
-        }
-
-        return currentlyRented;
-    }
-
     function createOrUpdateRentalConditions(
         address tokenAddress,
         uint256 tokenId,
@@ -385,12 +501,6 @@ contract Rentable is
             pricePerSecond,
             privateRenter
         );
-    }
-
-    function _deleteRentalConditions(address tokenAddress, uint256 tokenId)
-        internal
-    {
-        (_rentalConditions[tokenAddress][tokenId]).maxTimeDuration = 0;
     }
 
     function deleteRentalConditions(address tokenAddress, uint256 tokenId)
@@ -521,6 +631,38 @@ contract Rentable is
         }
     }
 
+    function onERC721Received(
+        address,
+        address from,
+        uint256 tokenId,
+        bytes calldata data
+    ) public virtual override nonReentrant whenNotPaused returns (bytes4) {
+        if (data.length == 0) {
+            _deposit(msg.sender, tokenId, from, true);
+        } else {
+            RentableTypes.RentalConditions memory rc = abi.decode(
+                data,
+                (RentableTypes.RentalConditions)
+            );
+
+            _depositAndList(
+                msg.sender,
+                tokenId,
+                from,
+                true,
+                rc.paymentTokenAddress,
+                rc.paymentTokenId,
+                rc.maxTimeDuration,
+                rc.pricePerSecond,
+                rc.privateRenter
+            );
+        }
+
+        return this.onERC721Received.selector;
+    }
+
+    /* ---------- Public Permissioned ---------- */
+
     function afterWTokenTransfer(
         address tokenAddress,
         address from,
@@ -571,36 +713,6 @@ contract Rentable is
         }
     }
 
-    function onERC721Received(
-        address,
-        address from,
-        uint256 tokenId,
-        bytes calldata data
-    ) public virtual override nonReentrant whenNotPaused returns (bytes4) {
-        if (data.length == 0) {
-            _deposit(msg.sender, tokenId, from, true);
-        } else {
-            RentableTypes.RentalConditions memory rc = abi.decode(
-                data,
-                (RentableTypes.RentalConditions)
-            );
-
-            _depositAndList(
-                msg.sender,
-                tokenId,
-                from,
-                true,
-                rc.paymentTokenAddress,
-                rc.paymentTokenId,
-                rc.maxTimeDuration,
-                rc.pricePerSecond,
-                rc.privateRenter
-            );
-        }
-
-        return this.onERC721Received.selector;
-    }
-
     function proxyCall(
         address to,
         uint256 value,
@@ -624,95 +736,5 @@ contract Rentable is
                 value,
                 ""
             );
-    }
-
-    function getLibrary(address wrapped_) external view returns (address) {
-        return _libraries[wrapped_];
-    }
-
-    function setLibrary(address wrapped_, address library_)
-        external
-        onlyGovernance
-    {
-        _libraries[wrapped_] = library_;
-    }
-
-    function _postDeposit(
-        address tokenAddress,
-        uint256 tokenId,
-        address user
-    ) internal {
-        address lib = _libraries[tokenAddress];
-        if (lib != address(0)) {
-            lib.functionDelegateCall(
-                abi.encodeCall(
-                    ICollectionLibrary(lib).postDeposit,
-                    (tokenAddress, tokenId, user)
-                ),
-                ""
-            );
-        }
-    }
-
-    function _postList(
-        address tokenAddress,
-        uint256 tokenId,
-        address user,
-        uint256 maxTimeDuration,
-        uint256 pricePerSecond
-    ) internal {
-        address lib = _libraries[tokenAddress];
-        if (lib != address(0)) {
-            lib.functionDelegateCall(
-                abi.encodeCall(
-                    ICollectionLibrary(lib).postList,
-                    (
-                        tokenAddress,
-                        tokenId,
-                        user,
-                        maxTimeDuration,
-                        pricePerSecond
-                    )
-                ),
-                ""
-            );
-        }
-    }
-
-    function _postCreateRent(
-        address tokenAddress,
-        uint256 tokenId,
-        uint256 duration,
-        address from,
-        address to
-    ) internal {
-        address lib = _libraries[tokenAddress];
-        if (lib != address(0)) {
-            lib.functionDelegateCall(
-                abi.encodeCall(
-                    ICollectionLibrary(lib).postCreateRent,
-                    (tokenAddress, tokenId, duration, from, to)
-                ),
-                ""
-            );
-        }
-    }
-
-    function _postexpireRental(
-        address tokenAddress,
-        uint256 tokenId,
-        address from,
-        address to
-    ) internal {
-        address lib = _libraries[tokenAddress];
-        if (lib != address(0)) {
-            lib.functionDelegateCall(
-                abi.encodeCall(
-                    ICollectionLibrary(lib).postexpireRental,
-                    (tokenAddress, tokenId, from, to)
-                ),
-                ""
-            );
-        }
     }
 }
