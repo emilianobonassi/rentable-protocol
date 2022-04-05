@@ -310,6 +310,11 @@ contract Rentable is
 
     /* ---------- Internal ---------- */
 
+    /// @dev Deposit only a wrapped token and mint respective OToken
+    /// @param tokenAddress wrapped token address
+    /// @param tokenId wrapped token id
+    /// @param to user to mint
+    /// @param skipTransfer used when called directly on wrapped token safeTransferFrom
     function _deposit(
         address tokenAddress,
         uint256 tokenId,
@@ -334,6 +339,16 @@ contract Rentable is
         emit Deposit(to, tokenAddress, tokenId);
     }
 
+    /// @dev Deposit and list a wrapped token
+    /// @param tokenAddress wrapped token address
+    /// @param tokenId wrapped token id
+    /// @param to user to mint
+    /// @param skipTransfer used when called directly on wrapped token safeTransferFrom
+    /// @param paymentTokenAddress payment token address allowed for the rental
+    /// @param paymentTokenId payment token id allowed for the rental (0 for ETH and ERC20)
+    /// @param maxTimeDuration max duration allowed for the rental
+    /// @param pricePerSecond price per second in payment token units
+    /// @param privateRenter restrict rent only to this address
     function _depositAndList(
         address tokenAddress,
         uint256 tokenId,
@@ -359,6 +374,15 @@ contract Rentable is
         );
     }
 
+    /// @dev Set rental conditions for a wrapped token
+    /// @param user who is changing the conditions
+    /// @param tokenAddress wrapped token address
+    /// @param tokenId wrapped token id
+    /// @param paymentTokenAddress payment token address allowed for the rental
+    /// @param paymentTokenId payment token id allowed for the rental (0 for ETH and ERC20)
+    /// @param maxTimeDuration max duration allowed for the rental
+    /// @param pricePerSecond price per second in payment token units
+    /// @param privateRenter restrict rent only to this address
     function _createOrUpdateRentalConditions(
         address user,
         address tokenAddress,
@@ -396,18 +420,28 @@ contract Rentable is
         );
     }
 
+    /// @dev Cancel rental conditions for a wrapped token
+    /// @param tokenAddress wrapped token address
+    /// @param tokenId wrapped token id
     function _deleteRentalConditions(address tokenAddress, uint256 tokenId)
         internal
     {
+        // save gas instead of dropping all the structure
         (_rentalConditions[tokenAddress][tokenId]).maxTimeDuration = 0;
     }
 
+    /// @dev Expire explicitely rental and update data structures for a specific wrapped token
+    /// @param oTokenOwner (optional) otoken owner address
+    /// @param tokenAddress wrapped token address
+    /// @param tokenId wrapped token id
+    /// @param skipExistCheck assume or not wtoken id exists (gas optimization)
+    /// @return currentlyRented true if rental is not expired
     function _expireRental(
         address oTokenOwner,
         address tokenAddress,
         uint256 tokenId,
         bool skipExistCheck
-    ) internal virtual returns (bool currentlyRented) {
+    ) internal returns (bool currentlyRented) {
         if (
             skipExistCheck ||
             WRentable(_wrentables[tokenAddress]).exists(tokenId)
