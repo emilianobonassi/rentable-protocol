@@ -535,6 +535,10 @@ contract Rentable is
 
     /* ---------- Public ---------- */
 
+    /// @notice Entry point for deposits used by wrapped token safeTransferFrom
+    /// @param from depositor
+    /// @param tokenId wrapped token id
+    /// @param data (optional) abi encoded RentableTypes.RentalConditions rental conditions for listing
     function onERC721Received(
         address,
         address from,
@@ -544,10 +548,12 @@ contract Rentable is
         if (data.length == 0) {
             _deposit(msg.sender, tokenId, from);
         } else {
-            RentableTypes.RentalConditions memory rentalConditions_ = abi
-                .decode(data, (RentableTypes.RentalConditions));
-
-            _depositAndList(msg.sender, tokenId, from, rentalConditions_);
+            _depositAndList(
+                msg.sender,
+                tokenId,
+                from,
+                abi.decode(data, (RentableTypes.RentalConditions))
+            );
         }
 
         return this.onERC721Received.selector;
