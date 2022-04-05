@@ -559,6 +559,9 @@ contract Rentable is
         return this.onERC721Received.selector;
     }
 
+    /// @notice Withdraw and unwrap deposited token
+    /// @param tokenAddress wrapped token address
+    /// @param tokenId wrapped token id
     function withdraw(address tokenAddress, uint256 tokenId)
         external
         virtual
@@ -587,6 +590,10 @@ contract Rentable is
         emit Withdraw(tokenAddress, tokenId);
     }
 
+    /// @notice Manage rental conditions and listing
+    /// @param tokenAddress wrapped token address
+    /// @param tokenId wrapped token id
+    /// @param rentalConditions_ rental conditions see RentableTypes.RentalConditions
     function createOrUpdateRentalConditions(
         address tokenAddress,
         uint256 tokenId,
@@ -606,6 +613,9 @@ contract Rentable is
         );
     }
 
+    /// @notice De-list a wrapped token
+    /// @param tokenAddress wrapped token address
+    /// @param tokenId wrapped token id
     function deleteRentalConditions(address tokenAddress, uint256 tokenId)
         external
         virtual
@@ -616,11 +626,16 @@ contract Rentable is
         _deleteRentalConditions(tokenAddress, tokenId);
     }
 
+    /// @notice Rent a wrapped token
+    /// @param tokenAddress wrapped token address
+    /// @param tokenId wrapped token id
+    /// @param duration duration in seconds
     function rent(
         address tokenAddress,
         uint256 tokenId,
         uint256 duration
     ) external payable virtual override whenNotPaused nonReentrant {
+        // 1. check token is deposited and available for rental
         IERC721ReadOnlyProxy oRentable = _getExistingORentable(tokenAddress);
         address payable rentee = payable(oRentable.ownerOf(tokenId));
 
@@ -634,6 +649,7 @@ contract Rentable is
             "Current rent still pending"
         );
 
+        // 2. validate renter offer with rentee conditions
         require(
             duration <= rcs.maxTimeDuration,
             "Duration greater than conditions"
@@ -644,17 +660,18 @@ contract Rentable is
             "Rental reserved for another user"
         );
 
-        uint256 paymentQty = rcs.pricePerSecond * duration;
+        // 3. mint wtoken
+        uint256 eta = block.timestamp + duration;
+        _etas[tokenAddress][tokenId] = eta;
+        WRentable(_wrentables[tokenAddress]).mint(msg.sender, tokenId);
 
-        // Fee calc
+        // 4. fees distribution
+        // gross due amount
+        uint256 paymentQty = rcs.pricePerSecond * duration;
+        // protocol and rentee fees calc
         uint256 feesForFeeCollector = fixedFee +
             (((paymentQty - fixedFee) * fee) / BASE_FEE);
         uint256 feesForRentee = paymentQty - feesForFeeCollector;
-
-        uint256 eta = block.timestamp + duration;
-        _etas[tokenAddress][tokenId] = eta;
-
-        WRentable(_wrentables[tokenAddress]).mint(msg.sender, tokenId);
 
         if (rcs.paymentTokenAddress == address(0)) {
             require(msg.value >= paymentQty, "Not enough funds");
@@ -664,6 +681,7 @@ contract Rentable is
 
             Address.sendValue(rentee, feesForRentee);
 
+            // refund eventual remaining
             if (msg.value > paymentQty) {
                 Address.sendValue(payable(msg.sender), msg.value - paymentQty);
             }
@@ -703,6 +721,7 @@ contract Rentable is
             );
         }
 
+        // 5. after rent custom logic
         _postRent(tokenAddress, tokenId, duration, rentee, msg.sender);
 
         emit Rent(
@@ -716,6 +735,9 @@ contract Rentable is
         );
     }
 
+    /// @notice Trigger on-chain rental expire for expired rentals
+    /// @param tokenAddress wrapped token address
+    /// @param tokenId wrapped token id
     function expireRental(address tokenAddress, uint256 tokenId)
         external
         virtual
@@ -725,6 +747,9 @@ contract Rentable is
         _expireRental(address(0), tokenAddress, tokenId, false);
     }
 
+    /// @notice Batch expireRental
+    /// @param tokenAddresses array of wrapped token addresses
+    /// @param tokenIds array of wrapped token id
     function expireRentals(
         address[] calldata tokenAddresses,
         uint256[] calldata tokenIds
