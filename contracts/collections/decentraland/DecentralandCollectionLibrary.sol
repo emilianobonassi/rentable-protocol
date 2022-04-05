@@ -22,7 +22,7 @@ contract DecentralandCollectionLibrary is ICollectionLibrary {
         uint256
     ) public {}
 
-    function postCreateRent(
+    function postRent(
         address tokenAddress,
         uint256 tokenId,
         uint256,

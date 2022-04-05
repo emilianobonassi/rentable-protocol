@@ -407,7 +407,7 @@ contract Rentable is
         }
     }
 
-    function _postCreateRent(
+    function _postRent(
         address tokenAddress,
         uint256 tokenId,
         uint256 duration,
@@ -418,7 +418,7 @@ contract Rentable is
         if (lib != address(0)) {
             lib.functionDelegateCall(
                 abi.encodeCall(
-                    ICollectionLibrary(lib).postCreateRent,
+                    ICollectionLibrary(lib).postRent,
                     (tokenAddress, tokenId, duration, from, to)
                 ),
                 ""
@@ -630,7 +630,7 @@ contract Rentable is
             );
         }
 
-        _postCreateRent(tokenAddress, tokenId, duration, rentee, msg.sender);
+        _postRent(tokenAddress, tokenId, duration, rentee, msg.sender);
 
         emit Rent(
             rentee,

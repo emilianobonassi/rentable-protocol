@@ -19,7 +19,7 @@ contract DummyCollectionLibrary is ICollectionLibrary {
         uint256 pricePerSecond
     ) external {}
 
-    function postCreateRent(
+    function postRent(
         address tokenAddress,
         uint256 tokenId,
         uint256 duration,
