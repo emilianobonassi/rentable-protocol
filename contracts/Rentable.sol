@@ -365,21 +365,25 @@ contract Rentable is
         return currentlyRented;
     }
 
+    modifier skipIfLibraryNotSet(address tokenAddress) {
+        address lib = _libraries[tokenAddress];
+        if (lib != address(0)) {
+            _;
+        }
+    }
+
     function _postDeposit(
         address tokenAddress,
         uint256 tokenId,
         address user
-    ) internal {
-        address lib = _libraries[tokenAddress];
-        if (lib != address(0)) {
-            lib.functionDelegateCall(
-                abi.encodeCall(
-                    ICollectionLibrary(lib).postDeposit,
-                    (tokenAddress, tokenId, user)
-                ),
-                ""
-            );
-        }
+    ) internal skipIfLibraryNotSet(tokenAddress) {
+        _libraries[tokenAddress].functionDelegateCall(
+            abi.encodeCall(
+                ICollectionLibrary.postDeposit,
+                (tokenAddress, tokenId, user)
+            ),
+            ""
+        );
     }
 
     function _postList(
@@ -388,23 +392,14 @@ contract Rentable is
         address user,
         uint256 maxTimeDuration,
         uint256 pricePerSecond
-    ) internal {
-        address lib = _libraries[tokenAddress];
-        if (lib != address(0)) {
-            lib.functionDelegateCall(
-                abi.encodeCall(
-                    ICollectionLibrary(lib).postList,
-                    (
-                        tokenAddress,
-                        tokenId,
-                        user,
-                        maxTimeDuration,
-                        pricePerSecond
-                    )
-                ),
-                ""
-            );
-        }
+    ) internal skipIfLibraryNotSet(tokenAddress) {
+        _libraries[tokenAddress].functionDelegateCall(
+            abi.encodeCall(
+                ICollectionLibrary.postList,
+                (tokenAddress, tokenId, user, maxTimeDuration, pricePerSecond)
+            ),
+            ""
+        );
     }
 
     function _postRent(
@@ -413,17 +408,14 @@ contract Rentable is
         uint256 duration,
         address from,
         address to
-    ) internal {
-        address lib = _libraries[tokenAddress];
-        if (lib != address(0)) {
-            lib.functionDelegateCall(
-                abi.encodeCall(
-                    ICollectionLibrary(lib).postRent,
-                    (tokenAddress, tokenId, duration, from, to)
-                ),
-                ""
-            );
-        }
+    ) internal skipIfLibraryNotSet(tokenAddress) {
+        _libraries[tokenAddress].functionDelegateCall(
+            abi.encodeCall(
+                ICollectionLibrary.postRent,
+                (tokenAddress, tokenId, duration, from, to)
+            ),
+            ""
+        );
     }
 
     function _postExpireRental(
@@ -431,17 +423,14 @@ contract Rentable is
         uint256 tokenId,
         address from,
         address to
-    ) internal {
-        address lib = _libraries[tokenAddress];
-        if (lib != address(0)) {
-            lib.functionDelegateCall(
-                abi.encodeCall(
-                    ICollectionLibrary(lib).postExpireRental,
-                    (tokenAddress, tokenId, from, to)
-                ),
-                ""
-            );
-        }
+    ) internal skipIfLibraryNotSet(tokenAddress) {
+        _libraries[tokenAddress].functionDelegateCall(
+            abi.encodeCall(
+                ICollectionLibrary.postExpireRental,
+                (tokenAddress, tokenId, from, to)
+            ),
+            ""
+        );
     }
 
     /* ---------- Public ---------- */
