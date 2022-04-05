@@ -205,10 +205,12 @@ contract Rentable is
 
     /* ---------- Internal ---------- */
 
+    /// @dev Get and check (reverting) otoken exist for a specific token
+    /// @param tokenAddress wrapped token address
+    /// @return oRentable otoken instance
     function _getExistingORentable(address tokenAddress)
         internal
         view
-        virtual
         returns (IERC721ReadOnlyProxy oRentable)
     {
         oRentable = _orentables[tokenAddress];
@@ -218,11 +220,16 @@ contract Rentable is
         );
     }
 
+    /// @dev Get and check (reverting) otoken user ownership
+    /// @param tokenAddress wrapped token address
+    /// @param tokenId wrapped token id
+    /// @param user user to verify ownership
+    /// @return oRentable otoken instance
     function _getExistingORentableCheckOwnership(
         address tokenAddress,
         uint256 tokenId,
         address user
-    ) internal virtual returns (IERC721ReadOnlyProxy oRentable) {
+    ) internal view returns (IERC721ReadOnlyProxy oRentable) {
         oRentable = _getExistingORentable(tokenAddress);
 
         require(oRentable.ownerOf(tokenId) == user, "The token must be yours");
