@@ -563,38 +563,6 @@ contract Rentable is
 
     /* ---------- Public ---------- */
 
-    function deposit(address tokenAddress, uint256 tokenId)
-        external
-        virtual
-        override
-        whenNotPaused
-        nonReentrant
-    {
-        _deposit(tokenAddress, tokenId, msg.sender, false);
-    }
-
-    function depositAndList(
-        address tokenAddress,
-        uint256 tokenId,
-        address paymentTokenAddress,
-        uint256 paymentTokenId,
-        uint256 maxTimeDuration,
-        uint256 pricePerSecond,
-        address privateRenter
-    ) external virtual override whenNotPaused nonReentrant {
-        _depositAndList(
-            tokenAddress,
-            tokenId,
-            msg.sender,
-            false,
-            paymentTokenAddress,
-            paymentTokenId,
-            maxTimeDuration,
-            pricePerSecond,
-            privateRenter
-        );
-    }
-
     function onERC721Received(
         address,
         address from,

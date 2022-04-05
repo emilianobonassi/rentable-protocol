@@ -28,8 +28,8 @@ contract RentableSCRAM is SharedSetup {
         testNFT.approve(address(rentable), tokenId);
         testNFT.approve(address(rentable), tokenId + 1);
 
-        rentable.deposit(address(testNFT), tokenId);
-        rentable.deposit(address(testNFT), tokenId + 1);
+        testNFT.safeTransferFrom(user, address(rentable), tokenId);
+        testNFT.safeTransferFrom(user, address(rentable), tokenId + 1);
 
         uint256 maxTimeDuration = 1000;
         uint256 pricePerSecond = 0.001 ether;

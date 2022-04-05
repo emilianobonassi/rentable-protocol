@@ -15,9 +15,6 @@ interface IRentable is IRentableEvents {
         - Encode listing info (RentableConditions). 
         - Call safeTransferFrom(ownerAddress, rentableAddress, data) with data encoded before
         - This will automatically call depositAndList on Rentable without the need of approvals.
-        OR (not preferred)
-        - Call approve(rentableAddress, tokenId) on the NFT contract
-        - Call depositAndList
 
         On A - B flows, the depositor will safely receive an NFT (oToken) which represent the deposit
         Depositor, if smart contract, must implement IERC721Receiver
@@ -34,34 +31,6 @@ interface IRentable is IRentableEvents {
 
         When renter renter the asset, the owner receives the full amount payed by the renter
     */
-
-    /**  
-        @dev Deposits an NFT into the Rentable smart contract (without listing it), trasfers an oToken to the caller
-        @param tokenAddress The address of the NFT smart contract to deposit
-        @param tokenId The token id of the NFT smart contract to deposit
-    */
-    function deposit(address tokenAddress, uint256 tokenId) external;
-
-    /**  
-        @dev Deposits an NFT into the Rentable smart contract and list it with specified conditions. 
-             Trasfers an oToken to the caller (combines deposit and createOrUpdateRentalConditions)
-        @param tokenAddress The address of the NFT smart contract to deposit and list
-        @param tokenId The token id of the NFT smart contract to deposit and list
-        @param paymentTokenAddress The address of the token to use as currency for payments (use address(0) for ETH)
-        @param paymentTokenId The token id of the payment token (ERC1555 ONLY, use 0 otherwise)
-        @param maxTimeDuration The maximum duration of a single rental in seconds
-        @param pricePerSecond The price of rental per second in the specified currency
-        @param privateRenter The address of the user that reserved the rental (use address(0) for public rentals)
-    */
-    function depositAndList(
-        address tokenAddress,
-        uint256 tokenId,
-        address paymentTokenAddress,
-        uint256 paymentTokenId,
-        uint256 maxTimeDuration,
-        uint256 pricePerSecond,
-        address privateRenter
-    ) external;
 
     /**  
         @dev Withdraws the specified NFT if the caller owns the respective oToken

@@ -175,7 +175,6 @@ abstract contract SharedSetup is DSTest, IRentableEvents {
 
     function prepareTestDeposit(uint256 tokenId) internal {
         testNFT.mint(user, tokenId);
-        testNFT.approve(address(rentable), tokenId);
     }
 
     function depositAndApprove(
