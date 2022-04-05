@@ -35,8 +35,7 @@ contract DecentralandCollectionLibrary is ICollectionLibrary {
     function postExpireRental(
         address tokenAddress,
         uint256 tokenId,
-        address from,
-        address
+        address from
     ) external payable {
         ILandRegistry(tokenAddress).setUpdateOperator(tokenId, from);
     }

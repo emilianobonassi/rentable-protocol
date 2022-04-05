@@ -30,8 +30,7 @@ contract DummyCollectionLibrary is ICollectionLibrary {
     function postExpireRental(
         address tokenAddress,
         uint256 tokenId,
-        address from,
-        address to
+        address from
     ) external payable {}
 
     function postWTokenTransfer(

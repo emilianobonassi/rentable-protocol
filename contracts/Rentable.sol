@@ -428,15 +428,8 @@ contract Rentable is
                         tokenId
                     )
                     : oTokenOwner;
-                address currentRenter = WRentable(_wrentables[tokenAddress])
-                    .ownerOf(tokenId);
                 WRentable(_wrentables[tokenAddress]).burn(tokenId);
-                _postExpireRental(
-                    tokenAddress,
-                    tokenId,
-                    currentRentee,
-                    currentRenter
-                );
+                _postExpireRental(tokenAddress, tokenId, currentRentee);
                 emit RentEnds(tokenAddress, tokenId);
             } else {
                 currentlyRented = true;
@@ -512,17 +505,15 @@ contract Rentable is
     /// @param tokenAddress wrapped token address
     /// @param tokenId wrapped token id
     /// @param from rentee
-    /// @param to renter
     function _postExpireRental(
         address tokenAddress,
         uint256 tokenId,
-        address from,
-        address to
+        address from
     ) internal skipIfLibraryNotSet(tokenAddress) {
         _libraries[tokenAddress].functionDelegateCall(
             abi.encodeCall(
                 ICollectionLibrary.postExpireRental,
-                (tokenAddress, tokenId, from, to)
+                (tokenAddress, tokenId, from)
             ),
             ""
         );
