@@ -479,6 +479,10 @@ contract Rentable is
         return currentlyRented;
     }
 
+    /// @dev Execute custom logic after deposit via wrapped token library
+    /// @param tokenAddress wrapped token address
+    /// @param tokenId wrapped token id
+    /// @param user depositor
     function _postDeposit(
         address tokenAddress,
         uint256 tokenId,
@@ -493,6 +497,12 @@ contract Rentable is
         );
     }
 
+    /// @dev Execute custom logic after listing via wrapped token library
+    /// @param tokenAddress wrapped token address
+    /// @param tokenId wrapped token id
+    /// @param user lister
+    /// @param maxTimeDuration max duration allowed for the rental
+    /// @param pricePerSecond price per second in payment token units
     function _postList(
         address tokenAddress,
         uint256 tokenId,
@@ -509,6 +519,12 @@ contract Rentable is
         );
     }
 
+    /// @dev Execute custom logic after rent via wrapped token library
+    /// @param tokenAddress wrapped token address
+    /// @param tokenId wrapped token id
+    /// @param duration rental duration
+    /// @param from rentee
+    /// @param to renter
     function _postRent(
         address tokenAddress,
         uint256 tokenId,
@@ -525,6 +541,11 @@ contract Rentable is
         );
     }
 
+    /// @dev Execute custom logic after rent expires via wrapped token library
+    /// @param tokenAddress wrapped token address
+    /// @param tokenId wrapped token id
+    /// @param from rentee
+    /// @param to renter
     function _postExpireRental(
         address tokenAddress,
         uint256 tokenId,
