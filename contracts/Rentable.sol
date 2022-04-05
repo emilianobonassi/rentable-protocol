@@ -350,7 +350,7 @@ contract Rentable is
                 address currentRenter = WRentable(_wrentables[tokenAddress])
                     .ownerOf(tokenId);
                 WRentable(_wrentables[tokenAddress]).burn(tokenId);
-                _postexpireRental(
+                _postExpireRental(
                     tokenAddress,
                     tokenId,
                     currentRentee,
@@ -426,7 +426,7 @@ contract Rentable is
         }
     }
 
-    function _postexpireRental(
+    function _postExpireRental(
         address tokenAddress,
         uint256 tokenId,
         address from,
@@ -436,7 +436,7 @@ contract Rentable is
         if (lib != address(0)) {
             lib.functionDelegateCall(
                 abi.encodeCall(
-                    ICollectionLibrary(lib).postexpireRental,
+                    ICollectionLibrary(lib).postExpireRental,
                     (tokenAddress, tokenId, from, to)
                 ),
                 ""

@@ -25,7 +25,7 @@ interface ICollectionLibrary {
         address to
     ) external payable;
 
-    function postexpireRental(
+    function postExpireRental(
         address tokenAddress,
         uint256 tokenId,
         address from,
