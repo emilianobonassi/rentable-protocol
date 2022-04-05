@@ -150,12 +150,6 @@ contract Rentable is
         _wrentables[_tokenAddress] = _wRentable;
     }
 
-    /// @dev Set fixed absolute fee
-    /// @param _fixedFee fixed fee in 1e18 units
-    function setFixedFee(uint256 _fixedFee) external onlyGovernance {
-        fixedFee = _fixedFee;
-    }
-
     /// @dev Set fee (percentage)
     /// @param _fee fee in 1e4 units (e.g. 100% = 10000)
     function setFee(uint16 _fee) external onlyGovernance {
@@ -669,8 +663,7 @@ contract Rentable is
         // gross due amount
         uint256 paymentQty = rcs.pricePerSecond * duration;
         // protocol and rentee fees calc
-        uint256 feesForFeeCollector = fixedFee +
-            (((paymentQty - fixedFee) * fee) / BASE_FEE);
+        uint256 feesForFeeCollector = (paymentQty * fee) / BASE_FEE;
         uint256 feesForRentee = paymentQty - feesForFeeCollector;
 
         if (rcs.paymentTokenAddress == address(0)) {

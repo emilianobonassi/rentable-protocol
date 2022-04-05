@@ -119,10 +119,8 @@ contract RentableRent is SharedSetup {
             block.timestamp + rentalDuration
         );
 
-        uint256 totalFeesToPay = (
-            (((rentPayed - rentable.fixedFee()) * rentable.fee()) /
-                rentable.BASE_FEE())
-        ) + rentable.fixedFee();
+        uint256 totalFeesToPay = (rentPayed * rentable.fee()) /
+            rentable.BASE_FEE();
 
         assertEq(
             postBalanceFeeCollector - preBalanceFeeCollector,
@@ -261,10 +259,8 @@ contract RentableRent is SharedSetup {
             block.timestamp + rentalDuration
         );
 
-        uint256 totalFeesToPay = (
-            (((rentPayed - rentable.fixedFee()) * rentable.fee()) /
-                rentable.BASE_FEE())
-        ) + rentable.fixedFee();
+        uint256 totalFeesToPay = (rentPayed * rentable.fee()) /
+            rentable.BASE_FEE();
 
         assertEq(
             postBalanceFeeCollector - preBalanceFeeCollector,

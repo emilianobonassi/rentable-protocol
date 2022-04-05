@@ -24,7 +24,6 @@ contract RentableStorageV1 {
 
     uint16 public constant BASE_FEE = 10000;
     uint16 public fee;
-    uint256 public fixedFee;
 
     address payable public feeCollector;
 
