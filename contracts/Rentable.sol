@@ -323,23 +323,17 @@ contract Rentable is
     /// @param tokenAddress wrapped token address
     /// @param tokenId wrapped token id
     /// @param to user to mint
-    /// @param skipTransfer used when called directly on wrapped token safeTransferFrom
     function _deposit(
         address tokenAddress,
         uint256 tokenId,
-        address to,
-        bool skipTransfer
+        address to
     ) internal {
         IERC721ReadOnlyProxy oRentable = _getExistingORentable(tokenAddress);
 
-        if (!skipTransfer) {
-            IERC721(tokenAddress).transferFrom(to, address(this), tokenId);
-        } else {
-            require(
-                IERC721(tokenAddress).ownerOf(tokenId) == address(this),
-                "Token not deposited"
-            );
-        }
+        require(
+            IERC721(tokenAddress).ownerOf(tokenId) == address(this),
+            "Token not deposited"
+        );
 
         oRentable.mint(to, tokenId);
 
@@ -352,7 +346,6 @@ contract Rentable is
     /// @param tokenAddress wrapped token address
     /// @param tokenId wrapped token id
     /// @param to user to mint
-    /// @param skipTransfer used when called directly on wrapped token safeTransferFrom
     /// @param paymentTokenAddress payment token address allowed for the rental
     /// @param paymentTokenId payment token id allowed for the rental (0 for ETH and ERC20)
     /// @param maxTimeDuration max duration allowed for the rental
@@ -362,14 +355,13 @@ contract Rentable is
         address tokenAddress,
         uint256 tokenId,
         address to,
-        bool skipTransfer,
         address paymentTokenAddress,
         uint256 paymentTokenId,
         uint256 maxTimeDuration,
         uint256 pricePerSecond,
         address privateRenter
     ) internal {
-        _deposit(tokenAddress, tokenId, to, skipTransfer);
+        _deposit(tokenAddress, tokenId, to);
 
         _createOrUpdateRentalConditions(
             to,
@@ -570,7 +562,7 @@ contract Rentable is
         bytes calldata data
     ) public virtual override whenNotPaused nonReentrant returns (bytes4) {
         if (data.length == 0) {
-            _deposit(msg.sender, tokenId, from, true);
+            _deposit(msg.sender, tokenId, from);
         } else {
             RentableTypes.RentalConditions memory rc = abi.decode(
                 data,
@@ -581,7 +573,6 @@ contract Rentable is
                 msg.sender,
                 tokenId,
                 from,
-                true,
                 rc.paymentTokenAddress,
                 rc.paymentTokenId,
                 rc.maxTimeDuration,
