@@ -3,6 +3,7 @@
 pragma solidity ^0.8.13;
 
 import {IRentable} from "../../interfaces/IRentable.sol";
+import {IORentableHooks} from "../../interfaces/IORentableHooks.sol";
 import {ILandRegistry} from "./ILandRegistry.sol";
 import {ORentable} from "../../tokenization/ORentable.sol";
 
@@ -22,7 +23,7 @@ contract OLandRegistry is ORentable {
             "Operation not allowed during rental"
         );
 
-        IRentable(_rentable).proxyCall(
+        IORentableHooks(_rentable).proxyCall(
             _wrapped,
             0,
             ILandRegistry(_wrapped).setUpdateOperator.selector,

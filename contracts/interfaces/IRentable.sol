@@ -81,11 +81,4 @@ interface IRentable is IRentableEvents {
         address[] calldata tokenAddresses,
         uint256[] calldata tokenIds
     ) external;
-
-    function proxyCall(
-        address to,
-        uint256 value,
-        bytes4 selector,
-        bytes memory data
-    ) external payable returns (bytes memory);
 }

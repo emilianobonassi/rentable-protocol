@@ -2,7 +2,9 @@
 
 pragma solidity ^0.8.13;
 
-interface IORentableHooks {
+import {IRentableHooks} from "./IRentableHooks.sol";
+
+interface IORentableHooks is IRentableHooks {
     function afterOTokenTransfer(
         address tokenAddress,
         address from,
