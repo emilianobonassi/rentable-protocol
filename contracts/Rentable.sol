@@ -346,20 +346,12 @@ contract Rentable is
     /// @param tokenAddress wrapped token address
     /// @param tokenId wrapped token id
     /// @param to user to mint
-    /// @param paymentTokenAddress payment token address allowed for the rental
-    /// @param paymentTokenId payment token id allowed for the rental (0 for ETH and ERC20)
-    /// @param maxTimeDuration max duration allowed for the rental
-    /// @param pricePerSecond price per second in payment token units
-    /// @param privateRenter restrict rent only to this address
+    /// @param rentalConditions_ rental conditions see RentableTypes.RentalConditions
     function _depositAndList(
         address tokenAddress,
         uint256 tokenId,
         address to,
-        address paymentTokenAddress,
-        uint256 paymentTokenId,
-        uint256 maxTimeDuration,
-        uint256 pricePerSecond,
-        address privateRenter
+        RentableTypes.RentalConditions memory rentalConditions_
     ) internal {
         _deposit(tokenAddress, tokenId, to);
 
@@ -367,11 +359,7 @@ contract Rentable is
             to,
             tokenAddress,
             tokenId,
-            paymentTokenAddress,
-            paymentTokenId,
-            maxTimeDuration,
-            pricePerSecond,
-            privateRenter
+            rentalConditions_
         );
     }
 
@@ -379,45 +367,37 @@ contract Rentable is
     /// @param user who is changing the conditions
     /// @param tokenAddress wrapped token address
     /// @param tokenId wrapped token id
-    /// @param paymentTokenAddress payment token address allowed for the rental
-    /// @param paymentTokenId payment token id allowed for the rental (0 for ETH and ERC20)
-    /// @param maxTimeDuration max duration allowed for the rental
-    /// @param pricePerSecond price per second in payment token units
-    /// @param privateRenter restrict rent only to this address
+    /// @param rentalConditions_ rental conditions see RentableTypes.RentalConditions
     function _createOrUpdateRentalConditions(
         address user,
         address tokenAddress,
         uint256 tokenId,
-        address paymentTokenAddress,
-        uint256 paymentTokenId,
-        uint256 maxTimeDuration,
-        uint256 pricePerSecond,
-        address privateRenter
+        RentableTypes.RentalConditions memory rentalConditions_
     ) internal {
         require(
-            paymentTokenAllowlist[paymentTokenAddress] != NOT_ALLOWED_TOKEN,
+            paymentTokenAllowlist[rentalConditions_.paymentTokenAddress] !=
+                NOT_ALLOWED_TOKEN,
             "Not supported payment token"
         );
 
-        _rentalConditions[tokenAddress][tokenId] = RentableTypes
-            .RentalConditions({
-                maxTimeDuration: maxTimeDuration,
-                pricePerSecond: pricePerSecond,
-                paymentTokenAddress: paymentTokenAddress,
-                paymentTokenId: paymentTokenId,
-                privateRenter: privateRenter
-            });
+        _rentalConditions[tokenAddress][tokenId] = rentalConditions_;
 
-        _postList(tokenAddress, tokenId, user, maxTimeDuration, pricePerSecond);
+        _postList(
+            tokenAddress,
+            tokenId,
+            user,
+            rentalConditions_.maxTimeDuration,
+            rentalConditions_.pricePerSecond
+        );
 
         emit UpdateRentalConditions(
             tokenAddress,
             tokenId,
-            paymentTokenAddress,
-            paymentTokenId,
-            maxTimeDuration,
-            pricePerSecond,
-            privateRenter
+            rentalConditions_.paymentTokenAddress,
+            rentalConditions_.paymentTokenId,
+            rentalConditions_.maxTimeDuration,
+            rentalConditions_.pricePerSecond,
+            rentalConditions_.privateRenter
         );
     }
 
@@ -564,21 +544,10 @@ contract Rentable is
         if (data.length == 0) {
             _deposit(msg.sender, tokenId, from);
         } else {
-            RentableTypes.RentalConditions memory rc = abi.decode(
-                data,
-                (RentableTypes.RentalConditions)
-            );
+            RentableTypes.RentalConditions memory rentalConditions_ = abi
+                .decode(data, (RentableTypes.RentalConditions));
 
-            _depositAndList(
-                msg.sender,
-                tokenId,
-                from,
-                rc.paymentTokenAddress,
-                rc.paymentTokenId,
-                rc.maxTimeDuration,
-                rc.pricePerSecond,
-                rc.privateRenter
-            );
+            _depositAndList(msg.sender, tokenId, from, rentalConditions_);
         }
 
         return this.onERC721Received.selector;
@@ -615,11 +584,7 @@ contract Rentable is
     function createOrUpdateRentalConditions(
         address tokenAddress,
         uint256 tokenId,
-        address paymentTokenAddress,
-        uint256 paymentTokenId,
-        uint256 maxTimeDuration,
-        uint256 pricePerSecond,
-        address privateRenter
+        RentableTypes.RentalConditions calldata rentalConditions_
     )
         external
         virtual
@@ -631,11 +596,7 @@ contract Rentable is
             msg.sender,
             tokenAddress,
             tokenId,
-            paymentTokenAddress,
-            paymentTokenId,
-            maxTimeDuration,
-            pricePerSecond,
-            privateRenter
+            rentalConditions_
         );
     }
 

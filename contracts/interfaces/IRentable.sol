@@ -43,21 +43,12 @@ interface IRentable is IRentableEvents {
         @dev Lists an NFT with specified conditions or, if already listed, updates the conditions
         @param tokenAddress The address of the NFT smart contract to deposit and list
         @param tokenId The token id of the NFT smart contract to deposit and list
-        @param paymentTokenAddress The address of the token to use as currency for payments (use address(0) for ETH)
-        @param paymentTokenId The token id of the payment token (ERC1555 ONLY, use 0 otherwise)
-        @param maxTimeDuration The maximum duration of a single rental in seconds
-        @param pricePerSecond The price of rental per second in the specified currency
-        @param privateRenter The address of the user that reserved the rental (use address(0) for public rentals)
-
+        @param rentalConditions_ rental conditions see RentableTypes.RentalConditions
     */
     function createOrUpdateRentalConditions(
         address tokenAddress,
         uint256 tokenId,
-        address paymentTokenAddress,
-        uint256 paymentTokenId,
-        uint256 maxTimeDuration,
-        uint256 pricePerSecond,
-        address privateRenter
+        RentableTypes.RentalConditions calldata rentalConditions_
     ) external;
 
     function rentalConditions(address tokenAddress, uint256 tokenId)

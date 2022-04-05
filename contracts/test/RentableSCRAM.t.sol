@@ -11,6 +11,8 @@ import {DecentralandCollectionLibrary} from "../collections/decentraland/Decentr
 import {ICollectionLibrary} from "../collections/ICollectionLibrary.sol";
 import {IRentable} from "../interfaces/IRentable.sol";
 
+import {RentableTypes} from "./../RentableTypes.sol";
+
 import {ORentable} from "../tokenization/ORentable.sol";
 import {WRentable} from "../tokenization/WRentable.sol";
 
@@ -34,24 +36,21 @@ contract RentableSCRAM is SharedSetup {
         uint256 maxTimeDuration = 1000;
         uint256 pricePerSecond = 0.001 ether;
 
-        rentable.createOrUpdateRentalConditions(
-            address(testNFT),
-            tokenId,
-            address(0),
-            0,
-            maxTimeDuration,
-            pricePerSecond,
-            address(0)
-        );
+        RentableTypes.RentalConditions memory rc = RentableTypes
+            .RentalConditions({
+                paymentTokenAddress: address(0),
+                paymentTokenId: 0,
+                maxTimeDuration: maxTimeDuration,
+                pricePerSecond: pricePerSecond,
+                privateRenter: address(0)
+            });
+
+        rentable.createOrUpdateRentalConditions(address(testNFT), tokenId, rc);
 
         rentable.createOrUpdateRentalConditions(
             address(testNFT),
             tokenId + 1,
-            address(0),
-            0,
-            maxTimeDuration,
-            pricePerSecond,
-            address(0)
+            rc
         );
 
         uint256 rentalDuration = 70;
