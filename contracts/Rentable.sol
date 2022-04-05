@@ -237,32 +237,51 @@ contract Rentable is
 
     /* ---------- Public ---------- */
 
-    function getLibrary(address wrapped_) external view returns (address) {
-        return _libraries[wrapped_];
+    /// @notice Get library address for the specific wrapped token
+    /// @param tokenAddress wrapped token address
+    /// @return library address
+    function getLibrary(address tokenAddress) external view returns (address) {
+        return _libraries[tokenAddress];
     }
 
-    function getORentable(address wrapped_)
+    /// @notice Get OToken address associated to the specific wrapped token
+    /// @param tokenAddress wrapped token address
+    /// @return OToken address
+    function getORentable(address tokenAddress)
         external
         view
-        virtual
         returns (address)
     {
-        return address(_orentables[wrapped_]);
+        return address(_orentables[tokenAddress]);
     }
 
-    function getWRentable(address wrapped_) external view returns (address) {
-        return address(_wrentables[wrapped_]);
+    /// @notice Get WToken address associated to the specific wrapped token
+    /// @param tokenAddress wrapped token address
+    /// @return WToken address
+    function getWRentable(address tokenAddress)
+        external
+        view
+        returns (address)
+    {
+        return address(_wrentables[tokenAddress]);
     }
 
+    /// @notice Show O/W Token can invoke selector on respective wrapped token
+    /// @param caller O/W Token address
+    /// @param selector function selector to invoke
+    /// @return a bool representing enabled or not
     function isEnabledProxyCall(address caller, bytes4 selector)
         external
         view
-        onlyGovernance
         returns (bool)
     {
         return proxyAllowList[caller][selector];
     }
 
+    /// @notice Show current rental conditions for a specific wrapped token
+    /// @param tokenAddress wrapped token address
+    /// @param tokenId wrapped token id
+    /// @return rental conditions, see RentableTypes.RentalConditions for fields
     function rentalConditions(address tokenAddress, uint256 tokenId)
         external
         view
@@ -273,6 +292,10 @@ contract Rentable is
         return _rentalConditions[tokenAddress][tokenId];
     }
 
+    /// @notice Show rental expiration time for a specific wrapped token
+    /// @param tokenAddress wrapped token address
+    /// @param tokenId wrapped token id
+    /// @return expiration timestamp
     function expiresAt(address tokenAddress, uint256 tokenId)
         external
         view
