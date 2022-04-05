@@ -3,6 +3,7 @@ pragma solidity ^0.8.13;
 
 // Inheritance
 import {IRentable} from "./interfaces/IRentable.sol";
+import {IRentableHooks} from "./interfaces/IRentableHooks.sol";
 import {IORentableHooks} from "./interfaces/IORentableHooks.sol";
 import {IWRentableHooks} from "./interfaces/IWRentableHooks.sol";
 import {IERC721Receiver} from "@openzeppelin/contracts/token/ERC721/IERC721Receiver.sol";
@@ -754,6 +755,7 @@ contract Rentable is
 
     /* ---------- Public Permissioned ---------- */
 
+    /// @inheritdoc IORentableHooks
     function afterOTokenTransfer(
         address tokenAddress,
         address from,
@@ -774,6 +776,7 @@ contract Rentable is
         }
     }
 
+    /// @inheritdoc IWRentableHooks
     function afterWTokenTransfer(
         address tokenAddress,
         address from,
@@ -794,6 +797,7 @@ contract Rentable is
         }
     }
 
+    /// @inheritdoc IRentableHooks
     function proxyCall(
         address to,
         uint256 value,
@@ -803,7 +807,7 @@ contract Rentable is
         external
         payable
         whenNotPaused
-        onlyOTokenOrWToken(to)
+        onlyOTokenOrWToken(to) // this implicitly checks `to` is the associated wrapped token
         returns (bytes memory)
     {
         require(
