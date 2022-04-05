@@ -6,7 +6,6 @@ import {IRentable} from "./interfaces/IRentable.sol";
 import {IRentableHooks} from "./interfaces/IRentableHooks.sol";
 import {IORentableHooks} from "./interfaces/IORentableHooks.sol";
 import {IWRentableHooks} from "./interfaces/IWRentableHooks.sol";
-import {IERC721Receiver} from "@openzeppelin/contracts/token/ERC721/IERC721Receiver.sol";
 import {BaseSecurityInitializable} from "./upgradability/BaseSecurityInitializable.sol";
 import {RentableStorageV1} from "./RentableStorageV1.sol";
 import {ReentrancyGuard} from "@openzeppelin/contracts/security/ReentrancyGuard.sol";
@@ -31,7 +30,6 @@ contract Rentable is
     IRentable,
     IORentableHooks,
     IWRentableHooks,
-    IERC721Receiver,
     BaseSecurityInitializable,
     ReentrancyGuard,
     RentableStorageV1
@@ -282,10 +280,7 @@ contract Rentable is
         return proxyAllowList[caller][selector];
     }
 
-    /// @notice Show current rental conditions for a specific wrapped token
-    /// @param tokenAddress wrapped token address
-    /// @param tokenId wrapped token id
-    /// @return rental conditions, see RentableTypes.RentalConditions for fields
+    /// @inheritdoc IRentable
     function rentalConditions(address tokenAddress, uint256 tokenId)
         external
         view
@@ -296,10 +291,7 @@ contract Rentable is
         return _rentalConditions[tokenAddress][tokenId];
     }
 
-    /// @notice Show rental expiration time for a specific wrapped token
-    /// @param tokenAddress wrapped token address
-    /// @param tokenId wrapped token id
-    /// @return expiration timestamp
+    /// @inheritdoc IRentable
     function expiresAt(address tokenAddress, uint256 tokenId)
         external
         view
@@ -521,10 +513,7 @@ contract Rentable is
 
     /* ---------- Public ---------- */
 
-    /// @notice Entry point for deposits used by wrapped token safeTransferFrom
-    /// @param from depositor
-    /// @param tokenId wrapped token id
-    /// @param data (optional) abi encoded RentableTypes.RentalConditions rental conditions for listing
+    /// @inheritdoc IRentable
     function onERC721Received(
         address,
         address from,
@@ -545,9 +534,7 @@ contract Rentable is
         return this.onERC721Received.selector;
     }
 
-    /// @notice Withdraw and unwrap deposited token
-    /// @param tokenAddress wrapped token address
-    /// @param tokenId wrapped token id
+    /// @inheritdoc IRentable
     function withdraw(address tokenAddress, uint256 tokenId)
         external
         virtual
@@ -576,10 +563,7 @@ contract Rentable is
         emit Withdraw(tokenAddress, tokenId);
     }
 
-    /// @notice Manage rental conditions and listing
-    /// @param tokenAddress wrapped token address
-    /// @param tokenId wrapped token id
-    /// @param rentalConditions_ rental conditions see RentableTypes.RentalConditions
+    /// @inheritdoc IRentable
     function createOrUpdateRentalConditions(
         address tokenAddress,
         uint256 tokenId,
@@ -599,9 +583,7 @@ contract Rentable is
         );
     }
 
-    /// @notice De-list a wrapped token
-    /// @param tokenAddress wrapped token address
-    /// @param tokenId wrapped token id
+    /// @inheritdoc IRentable
     function deleteRentalConditions(address tokenAddress, uint256 tokenId)
         external
         virtual
@@ -612,10 +594,7 @@ contract Rentable is
         _deleteRentalConditions(tokenAddress, tokenId);
     }
 
-    /// @notice Rent a wrapped token
-    /// @param tokenAddress wrapped token address
-    /// @param tokenId wrapped token id
-    /// @param duration duration in seconds
+    /// @inheritdoc IRentable
     function rent(
         address tokenAddress,
         uint256 tokenId,
@@ -725,8 +704,6 @@ contract Rentable is
     /// @param tokenId wrapped token id
     function expireRental(address tokenAddress, uint256 tokenId)
         external
-        virtual
-        override
         whenNotPaused
     {
         _expireRental(address(0), tokenAddress, tokenId, false);
@@ -738,7 +715,7 @@ contract Rentable is
     function expireRentals(
         address[] calldata tokenAddresses,
         uint256[] calldata tokenIds
-    ) external virtual override whenNotPaused {
+    ) external whenNotPaused {
         for (uint256 i = 0; i < tokenAddresses.length; i++) {
             _expireRental(address(0), tokenAddresses[i], tokenIds[i], false);
         }

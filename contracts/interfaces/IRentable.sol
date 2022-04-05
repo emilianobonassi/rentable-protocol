@@ -2,83 +2,77 @@
 
 pragma solidity ^0.8.13;
 
+// Inheritance
+import {IERC721Receiver} from "@openzeppelin/contracts/token/ERC721/IERC721Receiver.sol";
 import {IRentableEvents} from "./IRentableEvents.sol";
+
+// References
 import {RentableTypes} from "../RentableTypes.sol";
 
-interface IRentable is IRentableEvents {
-    /* FLOWS
+/// @title Rentable protocol user interface
+/// @author Rentable Team <hello@rentable.world>
+interface IRentable is IRentableEvents, IERC721Receiver {
+    /* ========== VIEWS ========== */
 
-        A. To deposit an NFT w/o listing:
-        - Call safeTransferFrom(ownerAddress, rentableAddress, data) on the NFT contract with empty data
-        
-        B. To deposit and list (i.e. set price and max duration) an NFT:
-        - Encode listing info (RentableConditions). 
-        - Call safeTransferFrom(ownerAddress, rentableAddress, data) with data encoded before
-        - This will automatically call depositAndList on Rentable without the need of approvals.
+    /// @notice Show current rental conditions for a specific wrapped token
+    /// @param tokenAddress wrapped token address
+    /// @param tokenId wrapped token id
+    /// @return rental conditions, see RentableTypes.RentalConditions for fields
+    function rentalConditions(address tokenAddress, uint256 tokenId)
+        external
+        view
+        returns (RentableTypes.RentalConditions memory);
 
-        On A - B flows, the depositor will safely receive an NFT (oToken) which represent the deposit
-        Depositor, if smart contract, must implement IERC721Receiver
-        https://docs.openzeppelin.com/contracts/2.x/api/token/erc721#IERC721Receiver
+    /// @notice Show rental expiration time for a specific wrapped token
+    /// @param tokenAddress wrapped token address
+    /// @param tokenId wrapped token id
+    /// @return expiration timestamp
+    function expiresAt(address tokenAddress, uint256 tokenId)
+        external
+        view
+        returns (uint256);
 
-        C. To update rental conditions for an NFT
-        - Call createOrUpdateRentalConditions
+    /* ========== MUTATIVE FUNCTIONS ========== */
 
-        D. To unlist an NFT
-        - Call deleteRentalConditions
+    /// @notice Entry point for deposits used by wrapped token safeTransferFrom
+    /// @param from depositor
+    /// @param tokenId wrapped token id
+    /// @param data (optional) abi encoded RentableTypes.RentalConditions rental conditions for listing
+    function onERC721Received(
+        address,
+        address from,
+        uint256 tokenId,
+        bytes calldata data
+    ) external returns (bytes4);
 
-        E. To withdraw the NFT
-        - Call withdraw
-
-        When renter renter the asset, the owner receives the full amount payed by the renter
-    */
-
-    /**  
-        @dev Withdraws the specified NFT if the caller owns the respective oToken
-        @param tokenAddress The address of the NFT smart contract to withdraw
-        @param tokenId The token id of the NFT smart contract to withdraw
-    */
+    /// @notice Withdraw and unwrap deposited token
+    /// @param tokenAddress wrapped token address
+    /// @param tokenId wrapped token id
     function withdraw(address tokenAddress, uint256 tokenId) external;
 
-    /**  
-        @dev Lists an NFT with specified conditions or, if already listed, updates the conditions
-        @param tokenAddress The address of the NFT smart contract to deposit and list
-        @param tokenId The token id of the NFT smart contract to deposit and list
-        @param rentalConditions_ rental conditions see RentableTypes.RentalConditions
-    */
+    /// @notice Manage rental conditions and listing
+    /// @param tokenAddress wrapped token address
+    /// @param tokenId wrapped token id
+    /// @param rentalConditions_ rental conditions see RentableTypes.RentalConditions
     function createOrUpdateRentalConditions(
         address tokenAddress,
         uint256 tokenId,
         RentableTypes.RentalConditions calldata rentalConditions_
     ) external;
 
-    function rentalConditions(address tokenAddress, uint256 tokenId)
-        external
-        view
-        returns (RentableTypes.RentalConditions memory);
+    /// @notice De-list a wrapped token
+    /// @param tokenAddress wrapped token address
+    /// @param tokenId wrapped token id
+    function deleteRentalConditions(address tokenAddress, uint256 tokenId)
+        external;
 
+    /// @notice Rent a wrapped token
+    /// @param tokenAddress wrapped token address
+    /// @param tokenId wrapped token id
+    /// @param duration duration in seconds
     function rent(
         address tokenAddress,
         uint256 tokenId,
         uint256 duration
     ) external payable;
-
-    /**  
-        @dev Unlists an NFT from Rentable (the NFT remains deposited)
-        @param tokenAddress The address of the NFT smart contract to deposit and list
-        @param tokenId The token id of the NFT smart contract to deposit and list
-    **/
-    function deleteRentalConditions(address tokenAddress, uint256 tokenId)
-        external;
-
-    function expiresAt(address tokenAddress, uint256 tokenId)
-        external
-        view
-        returns (uint256);
-
-    function expireRental(address tokenAddress, uint256 tokenId) external;
-
-    function expireRentals(
-        address[] calldata tokenAddresses,
-        uint256[] calldata tokenIds
-    ) external;
 }
