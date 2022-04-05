@@ -816,10 +816,6 @@ contract Rentable is
         );
 
         return
-            to.functionCallWithValue(
-                abi.encodePacked(selector, data),
-                value,
-                ""
-            );
+            to.functionCallWithValue(bytes.concat(selector, data), value, "");
     }
 }
