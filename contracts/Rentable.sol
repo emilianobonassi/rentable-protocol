@@ -81,6 +81,15 @@ contract Rentable is
         _;
     }
 
+    /// @dev Prevents calling a library when not set for the respective wrapped token
+    /// @param tokenAddress wrapped token address
+    modifier skipIfLibraryNotSet(address tokenAddress) {
+        address lib = _libraries[tokenAddress];
+        if (lib != address(0)) {
+            _;
+        }
+    }
+
     /* ========== CONSTRUCTOR ========== */
 
     /// @dev Instatiate Rentable
@@ -468,13 +477,6 @@ contract Rentable is
         }
 
         return currentlyRented;
-    }
-
-    modifier skipIfLibraryNotSet(address tokenAddress) {
-        address lib = _libraries[tokenAddress];
-        if (lib != address(0)) {
-            _;
-        }
     }
 
     function _postDeposit(
