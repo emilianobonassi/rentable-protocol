@@ -544,7 +544,7 @@ contract Rentable is
         address from,
         uint256 tokenId,
         bytes calldata data
-    ) public virtual override whenNotPaused nonReentrant returns (bytes4) {
+    ) external virtual override whenNotPaused nonReentrant returns (bytes4) {
         if (data.length == 0) {
             _deposit(msg.sender, tokenId, from);
         } else {
