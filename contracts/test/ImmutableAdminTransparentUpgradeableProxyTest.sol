@@ -7,7 +7,7 @@ import {CheatCodes} from "./SharedSetup.t.sol";
 import {TestImplLogicV1} from "./mocks/TestImplLogicV1.sol";
 import {TestImplLogicV2} from "./mocks/TestImplLogicV2.sol";
 import {ImmutableAdminTransparentUpgradeableProxy} from "../upgradability/ImmutableAdminTransparentUpgradeableProxy.sol";
-import {ImmutableProxyAdmin} from "../upgradability/ImmutableProxyAdmin.sol";
+import {ProxyAdmin, TransparentUpgradeableProxy} from "@openzeppelin/contracts/proxy/transparent/ProxyAdmin.sol";
 
 contract ImmutableAdminTransparentUpgradeableProxyTest is DSTest {
     CheatCodes cheats = CheatCodes(HEVM_ADDRESS);
@@ -17,7 +17,7 @@ contract ImmutableAdminTransparentUpgradeableProxyTest is DSTest {
     TestImplLogicV1 logicV1;
 
     ImmutableAdminTransparentUpgradeableProxy proxy;
-    ImmutableProxyAdmin proxyAdmin;
+    ProxyAdmin proxyAdmin;
     address owner;
 
     function setUp() public {
@@ -32,7 +32,7 @@ contract ImmutableAdminTransparentUpgradeableProxyTest is DSTest {
         // Deploy proxy
 
         // 1. deploy admin
-        proxyAdmin = new ImmutableProxyAdmin();
+        proxyAdmin = new ProxyAdmin();
 
         // 2.prepare init data
         initialTestNumber = 4;
@@ -53,7 +53,14 @@ contract ImmutableAdminTransparentUpgradeableProxyTest is DSTest {
 
     function testProxySetup() public {
         // proxy admin is the admin
-        assertEq(proxyAdmin.getProxyAdmin(proxy), address(proxyAdmin));
+        assertEq(
+            address(
+                proxyAdmin.getProxyAdmin(
+                    TransparentUpgradeableProxy(payable(address(proxy)))
+                )
+            ),
+            address(proxyAdmin)
+        );
 
         // only owner can transfer ownership
         address anotherUser = cheats.addr(2);
@@ -68,7 +75,12 @@ contract ImmutableAdminTransparentUpgradeableProxyTest is DSTest {
         cheats.stopPrank();
 
         // proxy implementation is the v1
-        assertEq(proxyAdmin.getProxyImplementation(proxy), address(logicV1));
+        assertEq(
+            proxyAdmin.getProxyImplementation(
+                TransparentUpgradeableProxy(payable(address(proxy)))
+            ),
+            address(logicV1)
+        );
 
         // data proxy different data logic
         assertTrue(
@@ -92,7 +104,10 @@ contract ImmutableAdminTransparentUpgradeableProxyTest is DSTest {
 
         // upgrade as proxyadmin
         cheats.startPrank(owner);
-        proxyAdmin.upgrade(proxy, address(logicV2));
+        proxyAdmin.upgrade(
+            TransparentUpgradeableProxy(payable(address(proxy))),
+            address(logicV2)
+        );
         cheats.stopPrank();
 
         // check is still initialized

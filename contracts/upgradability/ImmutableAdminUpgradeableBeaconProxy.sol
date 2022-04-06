@@ -2,8 +2,13 @@
 
 pragma solidity ^0.8.13;
 
+// Inheritance
 import {BeaconProxy} from "@openzeppelin/contracts/proxy/beacon/BeaconProxy.sol";
 
+/**
+ * @dev This contract implements a beacon proxy that is upgradeable by an immutable admin.
+ *
+ */
 contract ImmutableAdminUpgradeableBeaconProxy is BeaconProxy {
     address internal immutable ADMIN;
 
@@ -90,7 +95,7 @@ contract ImmutableAdminUpgradeableBeaconProxy is BeaconProxy {
     function _beforeFallback() internal virtual override {
         require(
             msg.sender != ADMIN,
-            "ImmutableAdminTransparentUpgradeableProxy: admin cannot fallback to proxy target"
+            "ImmutableAdminUpgradeableBeaconProxy: admin cannot fallback to proxy target"
         );
         super._beforeFallback();
     }

@@ -23,7 +23,7 @@ import {IRentableEvents} from "./../interfaces/IRentableEvents.sol";
 import {ImmutableAdminTransparentUpgradeableProxy} from "../upgradability/ImmutableAdminTransparentUpgradeableProxy.sol";
 import {ImmutableAdminUpgradeableBeaconProxy} from "../upgradability/ImmutableAdminUpgradeableBeaconProxy.sol";
 
-import {ImmutableProxyAdmin} from "../upgradability/ImmutableProxyAdmin.sol";
+import {ProxyAdmin} from "@openzeppelin/contracts/proxy/transparent/ProxyAdmin.sol";
 
 import {UpgradeableBeacon} from "@openzeppelin/contracts/proxy/beacon/UpgradeableBeacon.sol";
 
@@ -69,7 +69,7 @@ abstract contract SharedSetup is DSTest, IRentableEvents {
     DummyERC1155 dummy1155;
 
     Rentable rentableLogic;
-    ImmutableProxyAdmin proxyAdmin;
+    ProxyAdmin proxyAdmin;
 
     Rentable rentable;
     ORentable orentable;
@@ -97,7 +97,7 @@ abstract contract SharedSetup is DSTest, IRentableEvents {
         dummy1155 = new DummyERC1155();
 
         rentableLogic = new Rentable(address(0), address(0));
-        proxyAdmin = new ImmutableProxyAdmin();
+        proxyAdmin = new ProxyAdmin();
         rentable = Rentable(
             address(
                 new ImmutableAdminTransparentUpgradeableProxy(

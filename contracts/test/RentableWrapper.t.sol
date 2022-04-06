@@ -11,7 +11,7 @@ import {ERC721ReadOnlyProxy} from "../tokenization/ERC721ReadOnlyProxy.sol";
 import {ERC721ReadOnlyProxyInitializable} from "./mocks/ERC721ReadOnlyProxyInitializable.sol";
 
 import {ImmutableAdminUpgradeableBeaconProxy} from "../upgradability/ImmutableAdminUpgradeableBeaconProxy.sol";
-import {ImmutableProxyAdmin} from "../upgradability/ImmutableProxyAdmin.sol";
+import {ProxyAdmin} from "@openzeppelin/contracts/proxy/transparent/ProxyAdmin.sol";
 import {UpgradeableBeacon} from "@openzeppelin/contracts/proxy/beacon/UpgradeableBeacon.sol";
 
 contract RentableWrapper is DSTest {
@@ -93,7 +93,7 @@ contract RentableWrapper is DSTest {
 
         string memory proxyPrefix = "j";
 
-        ImmutableProxyAdmin proxyAdmin = new ImmutableProxyAdmin();
+        ProxyAdmin proxyAdmin = new ProxyAdmin();
 
         UpgradeableBeacon beacon = new UpgradeableBeacon(address(wrapper));
 
@@ -136,7 +136,7 @@ contract RentableWrapper is DSTest {
 
         string memory proxyPrefix = "j";
 
-        ImmutableProxyAdmin proxyAdmin = new ImmutableProxyAdmin();
+        ProxyAdmin proxyAdmin = new ProxyAdmin();
 
         UpgradeableBeacon beacon = new UpgradeableBeacon(address(wrapper));
 
