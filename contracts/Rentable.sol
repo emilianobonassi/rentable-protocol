@@ -6,7 +6,7 @@ import {IRentable} from "./interfaces/IRentable.sol";
 import {IRentableHooks} from "./interfaces/IRentableHooks.sol";
 import {IORentableHooks} from "./interfaces/IORentableHooks.sol";
 import {IWRentableHooks} from "./interfaces/IWRentableHooks.sol";
-import {BaseSecurityInitializable} from "./upgradability/BaseSecurityInitializable.sol";
+import {BaseSecurityInitializable} from "./security/BaseSecurityInitializable.sol";
 import {RentableStorageV1} from "./RentableStorageV1.sol";
 import {ReentrancyGuardUpgradeable} from "@openzeppelin-upgradable/contracts/security/ReentrancyGuardUpgradeable.sol";
 
