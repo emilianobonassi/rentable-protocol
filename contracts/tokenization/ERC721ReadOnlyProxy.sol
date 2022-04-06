@@ -62,21 +62,20 @@ contract ERC721ReadOnlyProxy is
 
     /// @notice Set minter role
     /// @param minter_ wrapped token address
-    function setMinter(address minter_) external override onlyOwner {
+    function setMinter(address minter_) external onlyOwner {
         _minter = minter_;
     }
 
     /* ========== VIEWS ========== */
 
-    /// @notice Get wrapped token address
-    /// @return wrapped token address
+    /// @inheritdoc IERC721ReadOnlyProxy
     function getWrapped() external view virtual override returns (address) {
         return _wrapped;
     }
 
     /// @notice Get minter role address
     /// @return minter role address
-    function getMinter() external view virtual override returns (address) {
+    function getMinter() external view returns (address) {
         return _minter;
     }
 
@@ -117,9 +116,7 @@ contract ERC721ReadOnlyProxy is
 
     /* ========== MUTATIVE FUNCTIONS ========== */
 
-    /// @notice Mint a token
-    /// @param to receiver
-    /// @param tokenId token id
+    /// @inheritdoc IERC721ReadOnlyProxy
     function mint(address to, uint256 tokenId)
         external
         virtual
@@ -129,8 +126,7 @@ contract ERC721ReadOnlyProxy is
         _mint(to, tokenId);
     }
 
-    /// @notice Burn a token
-    /// @param tokenId token id
+    /// @inheritdoc IERC721ReadOnlyProxy
     function burn(uint256 tokenId) external virtual override onlyMinter {
         _burn(tokenId);
     }
