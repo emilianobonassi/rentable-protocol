@@ -19,9 +19,9 @@ import {IERC721} from "@openzeppelin/contracts/token/ERC721/IERC721.sol";
 import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import {IERC1155} from "@openzeppelin/contracts/token/ERC1155/IERC1155.sol";
 import {IERC721ReadOnlyProxy} from "./interfaces/IERC721ReadOnlyProxy.sol";
+import {IERC721ExistExtension} from "./interfaces/IERC721ExistExtension.sol";
 import {ICollectionLibrary} from "./collections/ICollectionLibrary.sol";
 import {RentableTypes} from "./RentableTypes.sol";
-import {WRentable} from "./tokenization/WRentable.sol";
 
 /// @title Rentable main contract
 /// @author Rentable Team <hello@rentable.world>
@@ -412,7 +412,7 @@ contract Rentable is
     ) internal returns (bool currentlyRented) {
         if (
             skipExistCheck ||
-            WRentable(_wrentables[tokenAddress]).exists(tokenId)
+            IERC721ExistExtension(_wrentables[tokenAddress]).exists(tokenId)
         ) {
             if (block.timestamp >= (_etas[tokenAddress][tokenId])) {
                 address currentRentee = oTokenOwner == address(0)
@@ -420,7 +420,7 @@ contract Rentable is
                         tokenId
                     )
                     : oTokenOwner;
-                WRentable(_wrentables[tokenAddress]).burn(tokenId);
+                IERC721ReadOnlyProxy(_wrentables[tokenAddress]).burn(tokenId);
                 _postExpireRental(tokenAddress, tokenId, currentRentee);
                 emit RentEnds(tokenAddress, tokenId);
             } else {
@@ -628,7 +628,10 @@ contract Rentable is
         // 3. mint wtoken
         uint256 eta = block.timestamp + duration;
         _etas[tokenAddress][tokenId] = eta;
-        WRentable(_wrentables[tokenAddress]).mint(msg.sender, tokenId);
+        IERC721ReadOnlyProxy(_wrentables[tokenAddress]).mint(
+            msg.sender,
+            tokenId
+        );
 
         // 4. fees distribution
         // gross due amount

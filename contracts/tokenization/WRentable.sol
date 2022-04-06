@@ -3,6 +3,7 @@
 pragma solidity ^0.8.13;
 
 // Inheritance
+import {IERC721ExistExtension} from "../interfaces/IERC721ExistExtension.sol";
 import {BaseTokenInitializable} from "./BaseTokenInitializable.sol";
 
 // References
@@ -11,7 +12,7 @@ import {IRentable} from "../interfaces/IRentable.sol";
 import {IWRentableHooks} from "../interfaces/IWRentableHooks.sol";
 import {ERC721Upgradeable} from "@openzeppelin-upgradable/contracts/token/ERC721/ERC721Upgradeable.sol";
 
-contract WRentable is BaseTokenInitializable {
+contract WRentable is IERC721ExistExtension, BaseTokenInitializable {
     /* ========== CONSTRUCTOR ========== */
 
     /// @notice Instantiate a token
@@ -52,10 +53,8 @@ contract WRentable is BaseTokenInitializable {
         }
     }
 
-    /// @notice Verify a specific token id exist
-    /// @param tokenId token id
-    /// @return true for existing token, false otw
-    function exists(uint256 tokenId) external view virtual returns (bool) {
+    /// @inheritdoc IERC721ExistExtension
+    function exists(uint256 tokenId) external view override returns (bool) {
         return super._exists(tokenId);
     }
 
