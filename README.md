@@ -4,46 +4,48 @@ The Renting Protocol for NFTs.
 
 ## Architecture
 
-- [`Rentable.sol`](contracts/Rentable.sol): the core logic of the protocol, it stores all the NFT deposited
-- [`ORentable.sol`](contracts/tokenization/ORentable.sol): an ERC721 token that represents a deposit (and the ownership of an asset). Each NFT collection has a respective `ORentable` with the same token ids. It is minted on deposit and burnt on withdraw. An ` ORentable` can contain custom logic and use function ``Rentable.proxyCall` to operate on a deposited asset.
-- [`WRentable.sol`](contracts/tokenization/WRentable.sol): an ERC721 token that is a wrapper of the original NFT. It represents a rental. Each NFT collection has a respective `WRentable` with the same token ids. It is minted when the rental starts and burnt on expire. Function `WRentable.ownerOf` reflects the rental duration (i.e., the renter loses the owerniship of the `WRentable` when the rental period is over). A `WRentable` can contain custom logic and use function `Rentable.proxyCall` to operate on a deposited asset.
-- [`ICollectionLibrary.sol`](contracts/collections/ICollectionLibrary.sol): an interface to implement hooks (e.g., `postDeposit`, `postRent`) for a given collection. A Collection Library can be set by the governace using function `Rentable.setLibrary`
+- [`Rentable.sol`](contracts/Rentable.sol): protocol core logic. It holds all the NFT deposited.
+- [`ORentable.sol`](contracts/tokenization/ORentable.sol): ERC721 token representing deposits (and asset ownership). Each NFT collection has a respective `ORentable` with the same token ids. It is minted on deposit and burnt on withdraw. `ORentable` can contain custom logic and use `Rentable.proxyCall` to operate on deposited assets.
+- [`WRentable.sol`](contracts/tokenization/WRentable.sol): ERC721 token, wrapper of the original NFT representing the rental. Each NFT collection has a respective `WRentable` with the same token ids. It is minted when rental starts and burnt on expiry. `WRentable.ownerOf` reflects rental duration (i.e., renter loses `WRentable` owerniship when rental period is over). `WRentable` can contain custom logic and use `Rentable.proxyCall` to operate on deposited assets.
+- [`ICollectionLibrary.sol`](contracts/collections/ICollectionLibrary.sol): interface to implement hooks on protocol events (e.g., `postDeposit`, `postRent`) for a given collection. Governance can set a Collection Library via `Rentable.setLibrary`.
 
-The following diagram shows the main components and their interactions. The _ERC721 NFT Collection_ represents a generic NFT collection (e.g., Bored Apes) and it is not part of Rentable.
+The following diagram shows the main components and their interactions. _ERC721 NFT Collection_ represents a generic NFT collection (e.g., Decentraland LAND) and it is not part of Rentable.
 
 ![Diagram](Rentable.png)
 
 ## Main flows
 
 - **Rentee deposits an NFT (without listing)**
-  - Call `safeTransferFrom(ownerAddress, rentableAddress, data)` on the NFT contract with empty data
-- **Rentee deposits and lists an NFT (single tx)**
-  - Call `safeTransferFrom(ownerAddress, rentableAddress, data)` on the NFT contract with the following encoded `data`:
-    - `uint256 maxTimeDuration`: the maximum duration of the rental
-    - `uint256 pricePerSecond`: the price per second of the rental
-    - `uint256 paymentTokenId`: the token id of the payment token (only needed for payment with ERC1155 tokens)
-    - `address paymentTokenAddress` the address of the payment token (`address(0)` for Ether)
-    - `address privateRenter` the address of the user that reserved the rental (use `address(0)` for public rentals)
-  - The rentee automatically receives a `ORentable` token that represents the deposit (and the ownership of the asset)
+  - Call `safeTransferFrom(ownerAddress, rentableAddress, data)` on the NFT collection contract with empty data
+- **Rentee deposits and lists an NFT**
+  - Call `safeTransferFrom(ownerAddress, rentableAddress, data)` on the NFT collection contract with [RentableTypes.RentalConditions](contracts/RentableTypes.sol) encoded in the `data` field
+  - Rentee receives a `ORentable` token representing the deposit (and asset ownership)
 - **Rentee changes the rental conditions of a listed NFT**
-  - Call `createOrUpdateRentalConditions` on Rentable (caller must be the owner of the proper `ORentable` token)
+  - Call `createOrUpdateRentalConditions` on Rentable
 - **Rentee delists an NFT**
-  - Call `deleteRentalConditions` on Rentable (caller must be the owner of the proper `ORentable` token)
+  - Call `deleteRentalConditions` on Rentable
 - **Rentee withdraws an NFT**
-  - Call `withdraw` on Rentable (caller must be the owner of the proper `ORentable` token)
+  - Call `withdraw` on Rentable
 - **Renter rents an NFT**
   - Call `rent(address tokenAddress, uint256 tokenId, uint256 duration)` on Rentable
-    - if the payment token is Ether, the renter must pay the function `pricePerSecond*duration`
-    - if the payment token is ERC20 or ERC1155, the renter must have an amount equals to `pricePerSecond*duration` and approve Rentable to transfer it
-  - The renter automatically receives a `WRentable` token that represents the rental
+    - if payment token is Ether, renter must pay `pricePerSecond*duration`
+    - if payment token is ERC20 or ERC1155, renter must have an amount equals to `pricePerSecond*duration` and approve Rentable to transfer it
+  - Renter receives a `WRentable`
 
 ## Requirements
 
 To run the project you need:
 
-- Python 3.8 local development environment and Node.js 10.x development environment for Ganache.
-- Brownie local environment setup. See instructions for how to install it
-  [here](https://eth-brownie.readthedocs.io/en/stable/install.html).
+- Python 3.8 local development environment and Node.js 14.x development environment for Ganache.
+- Brownie local environment setup. Install
+  [instructions](https://eth-brownie.readthedocs.io/en/stable/install.html).
+- Foundry. Install [instructions](https://github.com/gakonst/foundry#installation)
+
+## Test
+
+```bash
+yarn test
+```
 
 ## Installation
 
@@ -53,8 +55,8 @@ You will need [yarn](https://yarnpkg.com/lang/en/docs/install/) installed.
 It is recommended to use a Python virtual environment.
 
 ```bash
-git clone https://github.com/rent-fi/n
-cd n
+git clone https://github.com/rentable-world/rentable-protocol
+cd rentable-protocol
 yarn install --lock-file
 pip install -r requirements-dev.txt
 ```
@@ -93,15 +95,7 @@ yarn network:mainnet-fork
 ### Deploy contracts
 
 ```bash
-yarn deploy
-```
-
-### Prepare your account
-
-Mint some NFT to your account
-
-```bash
-yarn mintNFT
+yarn deploy:testnet
 ```
 
 ### Use network console
@@ -156,5 +150,3 @@ yarn test
 - Rentable: 0xb98108005848Ff5CAE9fDFCd5095ef89ab44136a
 - RentableLogic: 0x35FE6E1a5eb0aDaDabbb7A57736da2D03fB14A91
 - ProxyAdmin: 0x2079EE51c1cEedA15552050320a71e2BfBeAfE88
-
-Total Gas: 12084016
