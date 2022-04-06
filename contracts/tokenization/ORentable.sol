@@ -9,6 +9,9 @@ import {BaseTokenInitializable} from "./BaseTokenInitializable.sol";
 import {IORentableHooks} from "../interfaces/IORentableHooks.sol";
 import {ERC721Upgradeable} from "@openzeppelin-upgradable/contracts/token/ERC721/ERC721Upgradeable.sol";
 
+/// @title OToken
+/// @author Rentable Team <hello@rentable.world>
+/// @notice Represents a transferrable tokenized deposit and mimics the wrapped token
 contract ORentable is BaseTokenInitializable {
     /* ========== CONSTRUCTOR ========== */
 

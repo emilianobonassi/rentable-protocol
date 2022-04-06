@@ -12,6 +12,9 @@ import {IRentable} from "../interfaces/IRentable.sol";
 import {IWRentableHooks} from "../interfaces/IWRentableHooks.sol";
 import {ERC721Upgradeable} from "@openzeppelin-upgradable/contracts/token/ERC721/ERC721Upgradeable.sol";
 
+/// @title WToken
+/// @author Rentable Team <hello@rentable.world>
+/// @notice Represents a transferrable tokenized rental and mimics the wrapped token
 contract WRentable is IERC721ExistExtension, BaseTokenInitializable {
     /* ========== CONSTRUCTOR ========== */
 
