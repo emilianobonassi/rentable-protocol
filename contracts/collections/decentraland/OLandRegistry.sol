@@ -26,6 +26,8 @@ contract OLandRegistry is ORentable {
         address rentable
     ) ORentable(wrapped, owner, rentable) {}
 
+    /* ========== MUTATIVE FUNCTIONS ========== */
+
     /// @notice Update current land operator, who can update content
     /// @param tokenId land identifier
     /// @param operator operator address

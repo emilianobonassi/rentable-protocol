@@ -117,7 +117,9 @@ contract RentableSCRAM is SharedSetup {
         assertEq(testNFT.ownerOf(tokenId), governance);
 
         cheats.startPrank(governance);
-        rentable.emergencyWithdrawERC721(address(testNFT), tokenId + 1, true);
+        uint256[] memory tokenIds = new uint256[](1);
+        tokenIds[0] = tokenId + 1;
+        rentable.emergencyBatchWithdrawERC721(address(testNFT), tokenIds, true);
         assertEq(testNFT.ownerOf(tokenId + 1), governance);
         cheats.stopPrank();
     }

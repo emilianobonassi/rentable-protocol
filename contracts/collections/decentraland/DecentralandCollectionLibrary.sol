@@ -12,6 +12,8 @@ import {ILandRegistry} from "./ILandRegistry.sol";
 /// @author Rentable Team <hello@rentable.world>
 /// @notice Implement dedicated logic for LAND rentals
 contract DecentralandCollectionLibrary is ICollectionLibrary {
+    /* ========== MUTATIVE FUNCTIONS ========== */
+
     /// @inheritdoc ICollectionLibrary
     function postDeposit(
         address tokenAddress,

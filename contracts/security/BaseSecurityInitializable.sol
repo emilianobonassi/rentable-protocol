@@ -2,110 +2,143 @@
 
 pragma solidity ^0.8.13;
 
-import {IERC20Upgradeable} from "@openzeppelin-upgradable/contracts/token/ERC20/IERC20Upgradeable.sol";
-import {IERC721Upgradeable} from "@openzeppelin-upgradable/contracts/token/ERC721/IERC721Upgradeable.sol";
-import {IERC1155Upgradeable} from "@openzeppelin-upgradable/contracts/token/ERC1155/IERC1155Upgradeable.sol";
-import {SafeERC20Upgradeable} from "@openzeppelin-upgradable/contracts/token/ERC20/utils/SafeERC20Upgradeable.sol";
+// Inheritance
 
 import {PausableUpgradeable} from "@openzeppelin-upgradable/contracts/security/PausableUpgradeable.sol";
 import {Initializable} from "@openzeppelin-upgradable/contracts/proxy/utils/Initializable.sol";
 
-/**
- *  base security:
- *  1. establish simple two-roles contract, governance and operator.
- *  Operator can be changed only by governance. Governance update needs acceptance.
- *  2. can be paused by operator or governance via SCRAM()
- *  3. only governance can recover from pause via unpause
- *  4. only governance can withdraw in emergency
- *  5. only governance execute any tx in emergency
- */
+// Libraries
+import {SafeERC20Upgradeable} from "@openzeppelin-upgradable/contracts/token/ERC20/utils/SafeERC20Upgradeable.sol";
 
+// References
+import {IERC20Upgradeable} from "@openzeppelin-upgradable/contracts/token/ERC20/IERC20Upgradeable.sol";
+import {IERC721Upgradeable} from "@openzeppelin-upgradable/contracts/token/ERC721/IERC721Upgradeable.sol";
+import {IERC1155Upgradeable} from "@openzeppelin-upgradable/contracts/token/ERC1155/IERC1155Upgradeable.sol";
+
+/// @title Base contract for Rentable
+/// @author Rentable Team <hello@rentable.world>
+/// @notice Implement simple security helpers for safe operations
 contract BaseSecurityInitializable is Initializable, PausableUpgradeable {
+    ///  Base security:
+    ///  1. establish simple two-roles contract, _governance and _operator.
+    ///  Operator can be changed only by _governance. Governance update needs acceptance.
+    ///  2. can be paused by _operator or _governance via SCRAM()
+    ///  3. only _governance can recover from pause via unpause
+    ///  4. only _governance can withdraw in emergency
+    ///  5. only _governance execute any tx in emergency
+
+    /* ========== LIBRARIES ========== */
     using SafeERC20Upgradeable for IERC20Upgradeable;
-    address constant ETHER = address(0);
 
-    address public pendingGovernance;
-    address public governance;
-    address public operator;
+    /* ========== CONSTANTS ========== */
+    address internal constant ETHER = address(0);
 
-    event LogWithdraw(
-        address indexed _from,
-        address indexed _assetAddress,
-        uint256 indexed tokenId,
-        uint256 amount
-    );
+    /* ========== STATE VARIABLES ========== */
+    // current governance address
+    address internal _governance;
+    // new governance address awaiting to be confirmed
+    address internal _pendingGovernance;
+    // operator address
+    address internal _operator;
 
+    /* ========== MODIFIERS ========== */
+
+    /// @dev Prevents calling a function from anyone except governance
     modifier onlyGovernance() {
-        require(msg.sender == governance, "Only Governance");
+        require(msg.sender == _governance, "Only Governance");
         _;
     }
 
+    /// @dev Prevents calling a function from anyone except governance or operator
     modifier onlyOperatorOrGovernance() {
         require(
-            msg.sender == operator || msg.sender == governance,
+            msg.sender == _operator || msg.sender == _governance,
             "Only Operator or Governance"
         );
         _;
     }
 
+    /* ========== CONSTRUCTOR ========== */
+
+    /* ---------- INITIALIZER ---------- */
+
+    /// @dev For internal usage in the child initializers
+    /// @param governance address for governance role
+    /// @param operator address for operator role
     function __BaseSecurityInitializable_init(
-        address _governance,
-        address _operator
+        address governance,
+        address operator
     ) internal onlyInitializing {
         __Pausable_init();
 
-        governance = _governance;
-        operator = _operator;
+        _governance = governance;
+        _operator = operator;
     }
 
-    /**
-     * @dev Set operator
-     * @param _operator operator address.
-     */
-    function setOperator(address _operator) public virtual onlyGovernance {
-        operator = _operator;
+    /* ========== SETTERS ========== */
+
+    /// @notice Set governance
+    /// @param governance governance address
+    function setGovernance(address governance) external onlyGovernance {
+        _pendingGovernance = governance;
     }
 
-    /**
-     * @dev Set new governance
-     * @param _governance governance address.
-     */
-    function setGovernance(address _governance) public virtual onlyGovernance {
-        pendingGovernance = _governance;
+    /// @notice Accept proposed governance
+    function acceptGovernance() external {
+        require(msg.sender == _pendingGovernance, "Only Proposed Governance");
+
+        _governance = _pendingGovernance;
+        _pendingGovernance = address(0);
     }
 
-    /**
-     * @dev Accept proposed governance
-     */
-    function acceptGovernance() public virtual {
-        require(msg.sender == pendingGovernance, "Only Proposed Governance");
-
-        governance = pendingGovernance;
-        pendingGovernance = address(0);
+    /// @notice Set operator
+    /// @param operator _operator address
+    function setOperator(address operator) external onlyGovernance {
+        _operator = operator;
     }
 
-    /**
-     * @dev Pause all operations
-     */
-    function SCRAM() public onlyOperatorOrGovernance {
+    /* ========== VIEWS ========== */
+
+    /// @notice Shows current governance
+    /// @return governance address
+    function getGovernance() external view returns (address) {
+        return _governance;
+    }
+
+    /// @notice Shows upcoming governance
+    /// @return upcoming pending governance address
+    function getPendingGovernance() external view returns (address) {
+        return _pendingGovernance;
+    }
+
+    /// @notice Shows current operator
+    /// @return governance operator
+    function getOperator() external view returns (address) {
+        return _operator;
+    }
+
+    /* ========== MUTATIVE FUNCTIONS ========== */
+
+    /// @notice Pause all operations
+    function SCRAM() external onlyOperatorOrGovernance {
         _pause();
     }
 
-    /**
-     * @dev Returns to normal state.
-     */
-    function unpause() public onlyGovernance {
+    /// @notice Returns to normal state
+    function unpause() external onlyGovernance {
         _unpause();
     }
 
-    /**
-     * @dev Withdraw asset ERC20 or ETH
-     * @param _assetAddress Asset to be withdrawn.
-     */
-    function _withdrawERC20ETH(address _assetAddress) internal virtual {
+    /// @notice Withdraw asset ERC20 or ETH
+    /// @param _assetAddress Asset to be withdrawn
+    function emergencyWithdrawERC20ETH(address _assetAddress)
+        external
+        whenPaused
+        onlyGovernance
+    {
         uint256 assetBalance;
         if (_assetAddress == ETHER) {
-            address self = address(this); // workaround for a possible solidity bug
+            address self = address(this);
             assetBalance = self.balance;
             payable(msg.sender).transfer(assetBalance);
         } else {
@@ -117,139 +150,68 @@ contract BaseSecurityInitializable is Initializable, PausableUpgradeable {
                 assetBalance
             );
         }
-        emit LogWithdraw(msg.sender, _assetAddress, 0, assetBalance);
     }
 
-    /**
-     * @dev Withdraw asset ERC721
-     * @param _assetAddress token address.
-     * @param _tokenId token id.
-     * @param _notSafe use safeTransfer.
-     */
-    function _withdrawERC721(
-        address _assetAddress,
-        uint256 _tokenId,
-        bool _notSafe
-    ) internal virtual {
-        if (_notSafe) {
-            IERC721Upgradeable(_assetAddress).transferFrom(
-                address(this),
-                msg.sender,
-                _tokenId
-            );
-        } else {
-            IERC721Upgradeable(_assetAddress).safeTransferFrom(
-                address(this),
-                msg.sender,
-                _tokenId
-            );
-        }
-        emit LogWithdraw(msg.sender, _assetAddress, _tokenId, 1);
-    }
-
-    /**
-     * @dev Batch withdraw asset ERC721
-     * @param _assetAddress token address.
-     * @param _tokenIds token ids.
-     */
-    function _batchWithdrawERC721(
-        address _assetAddress,
-        uint256[] calldata _tokenIds,
-        bool _notSafe
-    ) internal virtual {
-        for (uint256 i = 0; i < _tokenIds.length; i++) {
-            _withdrawERC721(_assetAddress, _tokenIds[i], _notSafe);
-        }
-    }
-
-    /**
-     * @dev Withdraw asset ERC1155
-     * @param _assetAddress token address.
-     * @param _tokenId token id.
-     */
-    function _withdrawERC1155(address _assetAddress, uint256 _tokenId)
-        internal
-        virtual
-    {
-        uint256 assetBalance = IERC1155Upgradeable(_assetAddress).balanceOf(
-            address(this),
-            _tokenId
-        );
-        IERC1155Upgradeable(_assetAddress).safeTransferFrom(
-            address(this),
-            msg.sender,
-            _tokenId,
-            assetBalance,
-            ""
-        );
-        emit LogWithdraw(msg.sender, _assetAddress, _tokenId, assetBalance);
-    }
-
-    /**
-     * @dev Batch withdraw asset ERC1155
-     * @param _assetAddress token address.
-     * @param _tokenIds token ids.
-     */
-    function _batchWithdrawERC1155(
-        address _assetAddress,
-        uint256[] calldata _tokenIds
-    ) internal virtual {
-        for (uint256 i = 0; i < _tokenIds.length; i++) {
-            _withdrawERC1155(_assetAddress, _tokenIds[i]);
-        }
-    }
-
-    function emergencyWithdrawERC20ETH(address _assetAddress)
-        public
-        virtual
-        onlyGovernance
-        whenPaused
-    {
-        _withdrawERC20ETH(_assetAddress);
-    }
-
-    function emergencyWithdrawERC721(
-        address _assetAddress,
-        uint256 _tokenId,
-        bool _notSafe
-    ) public virtual onlyGovernance whenPaused {
-        _withdrawERC721(_assetAddress, _tokenId, _notSafe);
-    }
-
+    /// @notice Batch withdraw asset ERC721
+    /// @param _assetAddress token address
+    /// @param _tokenIds array of token ids
     function emergencyBatchWithdrawERC721(
         address _assetAddress,
         uint256[] calldata _tokenIds,
         bool _notSafe
-    ) public virtual onlyGovernance whenPaused {
-        _batchWithdrawERC721(_assetAddress, _tokenIds, _notSafe);
+    ) external whenPaused onlyGovernance {
+        for (uint256 i = 0; i < _tokenIds.length; i++) {
+            if (_notSafe) {
+                IERC721Upgradeable(_assetAddress).transferFrom(
+                    address(this),
+                    msg.sender,
+                    _tokenIds[i]
+                );
+            } else {
+                IERC721Upgradeable(_assetAddress).safeTransferFrom(
+                    address(this),
+                    msg.sender,
+                    _tokenIds[i]
+                );
+            }
+        }
     }
 
-    function emergencyWithdrawERC1155(address _assetAddress, uint256 _tokenId)
-        public
-        virtual
-        onlyGovernance
-        whenPaused
-    {
-        _withdrawERC1155(_assetAddress, _tokenId);
-    }
-
+    /// @notice Batch withdraw asset ERC1155
+    /// @param _assetAddress token address
+    /// @param _tokenIds array of token ids
     function emergencyBatchWithdrawERC1155(
         address _assetAddress,
         uint256[] calldata _tokenIds
-    ) public virtual onlyGovernance whenPaused {
-        _batchWithdrawERC1155(_assetAddress, _tokenIds);
+    ) external whenPaused onlyGovernance {
+        for (uint256 i = 0; i < _tokenIds.length; i++) {
+            uint256 assetBalance = IERC1155Upgradeable(_assetAddress).balanceOf(
+                address(this),
+                _tokenIds[i]
+            );
+            IERC1155Upgradeable(_assetAddress).safeTransferFrom(
+                address(this),
+                msg.sender,
+                _tokenIds[i],
+                assetBalance,
+                ""
+            );
+        }
     }
 
-    /**
-     * @dev Execute any tx in emergency (only governance)
-     */
+    /// @notice Execute any tx in emergency
+    /// @param to target
+    /// @param value ether value
+    /// @param data function+data
+    /// @param isDelegateCall true will execute a delegate call, false a call
+    /// @param txGas gas to forward
     function emergencyExecute(
         address to,
         uint256 value,
         bytes memory data,
         bool isDelegateCall,
         uint256 txGas
-    ) public payable virtual whenPaused onlyGovernance {
+    ) external payable whenPaused onlyGovernance {
         bool success;
 
         if (isDelegateCall) {
