@@ -5,7 +5,7 @@ import {TestLand} from "./mocks/TestLand.sol";
 
 import {SharedSetup, CheatCodes} from "./SharedSetup.t.sol";
 
-import "@openzeppelin/contracts/token/ERC721/IERC721.sol";
+import {IERC721Upgradeable} from "@openzeppelin-upgradable/contracts/token/ERC721/IERC721Upgradeable.sol";
 
 import {DecentralandCollectionLibrary} from "../collections/decentraland/DecentralandCollectionLibrary.sol";
 import {ICollectionLibrary} from "../collections/ICollectionLibrary.sol";
@@ -104,7 +104,7 @@ contract RentableSCRAM is SharedSetup {
             address(testNFT),
             0,
             abi.encodeWithSelector(
-                IERC721.transferFrom.selector,
+                IERC721Upgradeable.transferFrom.selector,
                 address(rentable),
                 governance,
                 tokenId

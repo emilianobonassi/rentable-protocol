@@ -3,7 +3,7 @@
 pragma solidity ^0.8.13;
 
 // Inheritance
-import {IERC721Receiver} from "@openzeppelin/contracts/token/ERC721/IERC721Receiver.sol";
+import {IERC721ReceiverUpgradeable} from "@openzeppelin-upgradable/contracts/token/ERC721/IERC721ReceiverUpgradeable.sol";
 import {IRentableEvents} from "./IRentableEvents.sol";
 
 // References
@@ -11,7 +11,7 @@ import {RentableTypes} from "../RentableTypes.sol";
 
 /// @title Rentable protocol user interface
 /// @author Rentable Team <hello@rentable.world>
-interface IRentable is IRentableEvents, IERC721Receiver {
+interface IRentable is IRentableEvents, IERC721ReceiverUpgradeable {
     /* ========== VIEWS ========== */
 
     /// @notice Show current rental conditions for a specific wrapped token

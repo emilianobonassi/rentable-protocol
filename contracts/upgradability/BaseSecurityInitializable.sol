@@ -2,13 +2,13 @@
 
 pragma solidity ^0.8.13;
 
-import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
-import {IERC721} from "@openzeppelin/contracts/token/ERC721/IERC721.sol";
-import {IERC1155} from "@openzeppelin/contracts/token/ERC1155/IERC1155.sol";
-import {SafeERC20} from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
+import {IERC20Upgradeable} from "@openzeppelin-upgradable/contracts/token/ERC20/IERC20Upgradeable.sol";
+import {IERC721Upgradeable} from "@openzeppelin-upgradable/contracts/token/ERC721/IERC721Upgradeable.sol";
+import {IERC1155Upgradeable} from "@openzeppelin-upgradable/contracts/token/ERC1155/IERC1155Upgradeable.sol";
+import {SafeERC20Upgradeable} from "@openzeppelin-upgradable/contracts/token/ERC20/utils/SafeERC20Upgradeable.sol";
 
-import {Pausable} from "@openzeppelin/contracts/security/Pausable.sol";
-import {Initializable} from "@openzeppelin/contracts/proxy/utils/Initializable.sol";
+import {PausableUpgradeable} from "@openzeppelin-upgradable/contracts/security/PausableUpgradeable.sol";
+import {Initializable} from "@openzeppelin-upgradable/contracts/proxy/utils/Initializable.sol";
 
 /**
  *  base security:
@@ -20,8 +20,8 @@ import {Initializable} from "@openzeppelin/contracts/proxy/utils/Initializable.s
  *  5. only governance execute any tx in emergency
  */
 
-contract BaseSecurityInitializable is Initializable, Pausable {
-    using SafeERC20 for IERC20;
+contract BaseSecurityInitializable is Initializable, PausableUpgradeable {
+    using SafeERC20Upgradeable for IERC20Upgradeable;
     address constant ETHER = address(0);
 
     address public pendingGovernance;
@@ -52,6 +52,8 @@ contract BaseSecurityInitializable is Initializable, Pausable {
         address _governance,
         address _operator
     ) internal onlyInitializing {
+        __Pausable_init();
+
         governance = _governance;
         operator = _operator;
     }
@@ -107,8 +109,13 @@ contract BaseSecurityInitializable is Initializable, Pausable {
             assetBalance = self.balance;
             payable(msg.sender).transfer(assetBalance);
         } else {
-            assetBalance = IERC20(_assetAddress).balanceOf(address(this));
-            IERC20(_assetAddress).safeTransfer(msg.sender, assetBalance);
+            assetBalance = IERC20Upgradeable(_assetAddress).balanceOf(
+                address(this)
+            );
+            IERC20Upgradeable(_assetAddress).safeTransfer(
+                msg.sender,
+                assetBalance
+            );
         }
         emit LogWithdraw(msg.sender, _assetAddress, 0, assetBalance);
     }
@@ -125,13 +132,13 @@ contract BaseSecurityInitializable is Initializable, Pausable {
         bool _notSafe
     ) internal virtual {
         if (_notSafe) {
-            IERC721(_assetAddress).transferFrom(
+            IERC721Upgradeable(_assetAddress).transferFrom(
                 address(this),
                 msg.sender,
                 _tokenId
             );
         } else {
-            IERC721(_assetAddress).safeTransferFrom(
+            IERC721Upgradeable(_assetAddress).safeTransferFrom(
                 address(this),
                 msg.sender,
                 _tokenId
@@ -164,11 +171,11 @@ contract BaseSecurityInitializable is Initializable, Pausable {
         internal
         virtual
     {
-        uint256 assetBalance = IERC1155(_assetAddress).balanceOf(
+        uint256 assetBalance = IERC1155Upgradeable(_assetAddress).balanceOf(
             address(this),
             _tokenId
         );
-        IERC1155(_assetAddress).safeTransferFrom(
+        IERC1155Upgradeable(_assetAddress).safeTransferFrom(
             address(this),
             msg.sender,
             _tokenId,

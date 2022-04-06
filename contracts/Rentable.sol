@@ -8,16 +8,16 @@ import {IORentableHooks} from "./interfaces/IORentableHooks.sol";
 import {IWRentableHooks} from "./interfaces/IWRentableHooks.sol";
 import {BaseSecurityInitializable} from "./upgradability/BaseSecurityInitializable.sol";
 import {RentableStorageV1} from "./RentableStorageV1.sol";
-import {ReentrancyGuard} from "@openzeppelin/contracts/security/ReentrancyGuard.sol";
+import {ReentrancyGuardUpgradeable} from "@openzeppelin-upgradable/contracts/security/ReentrancyGuardUpgradeable.sol";
 
 // Libraries
-import {SafeERC20} from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
+import {SafeERC20Upgradeable} from "@openzeppelin-upgradable/contracts/token/ERC20/utils/SafeERC20Upgradeable.sol";
 import {Address} from "@openzeppelin/contracts/utils/Address.sol";
 
 // References
-import {IERC721} from "@openzeppelin/contracts/token/ERC721/IERC721.sol";
-import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
-import {IERC1155} from "@openzeppelin/contracts/token/ERC1155/IERC1155.sol";
+import {IERC721Upgradeable} from "@openzeppelin-upgradable/contracts/token/ERC721/IERC721Upgradeable.sol";
+import {IERC20Upgradeable} from "@openzeppelin-upgradable/contracts/token/ERC20/IERC20Upgradeable.sol";
+import {IERC1155Upgradeable} from "@openzeppelin-upgradable/contracts/token/ERC1155/IERC1155Upgradeable.sol";
 import {IERC721ReadOnlyProxy} from "./interfaces/IERC721ReadOnlyProxy.sol";
 import {IERC721ExistExtension} from "./interfaces/IERC721ExistExtension.sol";
 import {ICollectionLibrary} from "./collections/ICollectionLibrary.sol";
@@ -31,13 +31,13 @@ contract Rentable is
     IORentableHooks,
     IWRentableHooks,
     BaseSecurityInitializable,
-    ReentrancyGuard,
+    ReentrancyGuardUpgradeable,
     RentableStorageV1
 {
     /* ========== LIBRARIES ========== */
 
     using Address for address;
-    using SafeERC20 for IERC20;
+    using SafeERC20Upgradeable for IERC20Upgradeable;
 
     /* ========== MODIFIERS ========== */
 
@@ -114,6 +114,7 @@ contract Rentable is
         initializer
     {
         __BaseSecurityInitializable_init(_governance, _operator);
+        __ReentrancyGuard_init();
     }
 
     /* ========== SETTERS ========== */
@@ -340,7 +341,7 @@ contract Rentable is
         IERC721ReadOnlyProxy oRentable = _getExistingORentable(tokenAddress);
 
         require(
-            IERC721(tokenAddress).ownerOf(tokenId) == address(this),
+            IERC721Upgradeable(tokenAddress).ownerOf(tokenId) == address(this),
             "Token not deposited"
         );
 
@@ -582,7 +583,11 @@ contract Rentable is
 
         oRentable.burn(tokenId);
 
-        IERC721(tokenAddress).safeTransferFrom(address(this), user, tokenId);
+        IERC721Upgradeable(tokenAddress).safeTransferFrom(
+            address(this),
+            user,
+            tokenId
+        );
 
         emit Withdraw(tokenAddress, tokenId);
     }
@@ -677,21 +682,21 @@ contract Rentable is
             _paymentTokenAllowlist[rcs.paymentTokenAddress] == ERC20_TOKEN
         ) {
             if (feesForFeeCollector > 0) {
-                IERC20(rcs.paymentTokenAddress).safeTransferFrom(
+                IERC20Upgradeable(rcs.paymentTokenAddress).safeTransferFrom(
                     msg.sender,
                     _feeCollector,
                     feesForFeeCollector
                 );
             }
 
-            IERC20(rcs.paymentTokenAddress).safeTransferFrom(
+            IERC20Upgradeable(rcs.paymentTokenAddress).safeTransferFrom(
                 msg.sender,
                 rentee,
                 feesForRentee
             );
         } else {
             if (feesForFeeCollector > 0) {
-                IERC1155(rcs.paymentTokenAddress).safeTransferFrom(
+                IERC1155Upgradeable(rcs.paymentTokenAddress).safeTransferFrom(
                     msg.sender,
                     _feeCollector,
                     rcs.paymentTokenId,
@@ -700,7 +705,7 @@ contract Rentable is
                 );
             }
 
-            IERC1155(rcs.paymentTokenAddress).safeTransferFrom(
+            IERC1155Upgradeable(rcs.paymentTokenAddress).safeTransferFrom(
                 msg.sender,
                 rentee,
                 rcs.paymentTokenId,
