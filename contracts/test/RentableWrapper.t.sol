@@ -8,7 +8,7 @@ import {TestNFT} from "./mocks/TestNFT.sol";
 import {CheatCodes} from "./SharedSetup.t.sol";
 
 import {ERC721ReadOnlyProxy} from "../tokenization/ERC721ReadOnlyProxy.sol";
-import {ERC721ReadOnlyProxyInitializable} from "../tokenization/ERC721ReadOnlyProxyInitializable.sol";
+import {ERC721ReadOnlyProxyInitializable} from "./mocks/ERC721ReadOnlyProxyInitializable.sol";
 
 import {ImmutableAdminUpgradeableBeaconProxy} from "../upgradability/ImmutableAdminUpgradeableBeaconProxy.sol";
 import {ImmutableProxyAdmin} from "../upgradability/ImmutableProxyAdmin.sol";
