@@ -1,6 +1,8 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.13;
 
+/// @title Rentable Types
+/// @author Rentable Team <hello@rentable.world>
 library RentableTypes {
     struct RentalConditions {
         uint256 maxTimeDuration; // max duration allowed for the rental

@@ -63,7 +63,7 @@ contract Rentable is
     /// @param tokenAddress wrapped token address
     modifier onlyWToken(address tokenAddress) {
         require(
-            msg.sender == _wrentables[tokenAddress],
+            msg.sender == address(_wrentables[tokenAddress]),
             "Only proper WRentables allowed"
         );
         _;
@@ -74,7 +74,7 @@ contract Rentable is
     modifier onlyOTokenOrWToken(address tokenAddress) {
         require(
             msg.sender == address(_orentables[tokenAddress]) ||
-                msg.sender == _wrentables[tokenAddress],
+                msg.sender == address(_wrentables[tokenAddress]),
             "Only w/o tokens are authorized"
         );
         _;
@@ -146,22 +146,22 @@ contract Rentable is
         external
         onlyGovernance
     {
-        _wrentables[_tokenAddress] = _wRentable;
+        _wrentables[_tokenAddress] = IERC721ReadOnlyProxy(_wRentable);
     }
 
     /// @dev Set fee (percentage)
-    /// @param _fee fee in 1e4 units (e.g. 100% = 10000)
-    function setFee(uint16 _fee) external onlyGovernance {
-        fee = _fee;
+    /// @param fee fee in 1e4 units (e.g. 100% = 10000)
+    function setFee(uint16 fee) external onlyGovernance {
+        _fee = fee;
     }
 
     /// @dev Set fee collector address
-    /// @param _feeCollector fee collector address
-    function setFeeCollector(address payable _feeCollector)
+    /// @param feeCollector fee collector address
+    function setFeeCollector(address payable feeCollector)
         external
         onlyGovernance
     {
-        feeCollector = _feeCollector;
+        _feeCollector = feeCollector;
     }
 
     /// @dev Enable payment token (ERC20)
@@ -200,7 +200,7 @@ contract Rentable is
         bytes4 _selector,
         bool _enabled
     ) external onlyGovernance {
-        proxyAllowList[_caller][_selector] = _enabled;
+        _proxyAllowList[_caller][_selector] = _enabled;
     }
 
     /* ========== VIEWS ========== */
@@ -239,17 +239,6 @@ contract Rentable is
 
     /* ---------- Public ---------- */
 
-    /// @notice Show a token is enabled as payment token
-    /// @param paymentTokenAddress payment token address
-    /// @return status, see RentableStorageV1 for values
-    function getPaymentTokenAllowlist(address paymentTokenAddress)
-        external
-        view
-        returns (uint8)
-    {
-        return _paymentTokenAllowlist[paymentTokenAddress];
-    }
-
     /// @notice Get library address for the specific wrapped token
     /// @param tokenAddress wrapped token address
     /// @return library address
@@ -279,6 +268,29 @@ contract Rentable is
         return address(_wrentables[tokenAddress]);
     }
 
+    /// @notice Show current protocol fee
+    /// @return protocol fee in 1e4 units, e.g. 100 = 1%
+    function getFee() external view returns (uint16) {
+        return _fee;
+    }
+
+    /// @notice Get protocol fee collector
+    /// @return protocol fee collector address
+    function getFeeCollector() external view returns (address payable) {
+        return _feeCollector;
+    }
+
+    /// @notice Show a token is enabled as payment token
+    /// @param paymentTokenAddress payment token address
+    /// @return status, see RentableStorageV1 for values
+    function getPaymentTokenAllowlist(address paymentTokenAddress)
+        external
+        view
+        returns (uint8)
+    {
+        return _paymentTokenAllowlist[paymentTokenAddress];
+    }
+
     /// @notice Show O/W Token can invoke selector on respective wrapped token
     /// @param caller O/W Token address
     /// @param selector function selector to invoke
@@ -288,7 +300,7 @@ contract Rentable is
         view
         returns (bool)
     {
-        return proxyAllowList[caller][selector];
+        return _proxyAllowList[caller][selector];
     }
 
     /// @inheritdoc IRentable
@@ -310,7 +322,7 @@ contract Rentable is
         override
         returns (uint256)
     {
-        return _etas[tokenAddress][tokenId];
+        return _expiresAt[tokenAddress][tokenId];
     }
 
     /* ========== MUTATIVE FUNCTIONS ========== */
@@ -423,15 +435,17 @@ contract Rentable is
     ) internal returns (bool currentlyRented) {
         if (
             skipExistCheck ||
-            IERC721ExistExtension(_wrentables[tokenAddress]).exists(tokenId)
+            IERC721ExistExtension(address(_wrentables[tokenAddress])).exists(
+                tokenId
+            )
         ) {
-            if (block.timestamp >= (_etas[tokenAddress][tokenId])) {
+            if (block.timestamp >= (_expiresAt[tokenAddress][tokenId])) {
                 address currentRentee = oTokenOwner == address(0)
                     ? IERC721ReadOnlyProxy(_orentables[tokenAddress]).ownerOf(
                         tokenId
                     )
                     : oTokenOwner;
-                IERC721ReadOnlyProxy(_wrentables[tokenAddress]).burn(tokenId);
+                _wrentables[tokenAddress].burn(tokenId);
                 _postExpireRental(tokenAddress, tokenId, currentRentee);
                 emit RentEnds(tokenAddress, tokenId);
             } else {
@@ -638,23 +652,20 @@ contract Rentable is
 
         // 3. mint wtoken
         uint256 eta = block.timestamp + duration;
-        _etas[tokenAddress][tokenId] = eta;
-        IERC721ReadOnlyProxy(_wrentables[tokenAddress]).mint(
-            msg.sender,
-            tokenId
-        );
+        _expiresAt[tokenAddress][tokenId] = eta;
+        _wrentables[tokenAddress].mint(msg.sender, tokenId);
 
         // 4. fees distribution
         // gross due amount
         uint256 paymentQty = rcs.pricePerSecond * duration;
         // protocol and rentee fees calc
-        uint256 feesForFeeCollector = (paymentQty * fee) / BASE_FEE;
+        uint256 feesForFeeCollector = (paymentQty * _fee) / BASE_FEE;
         uint256 feesForRentee = paymentQty - feesForFeeCollector;
 
         if (rcs.paymentTokenAddress == address(0)) {
             require(msg.value >= paymentQty, "Not enough funds");
             if (feesForFeeCollector > 0) {
-                Address.sendValue(feeCollector, feesForFeeCollector);
+                Address.sendValue(_feeCollector, feesForFeeCollector);
             }
 
             Address.sendValue(rentee, feesForRentee);
@@ -669,7 +680,7 @@ contract Rentable is
             if (feesForFeeCollector > 0) {
                 IERC20(rcs.paymentTokenAddress).safeTransferFrom(
                     msg.sender,
-                    feeCollector,
+                    _feeCollector,
                     feesForFeeCollector
                 );
             }
@@ -683,7 +694,7 @@ contract Rentable is
             if (feesForFeeCollector > 0) {
                 IERC1155(rcs.paymentTokenAddress).safeTransferFrom(
                     msg.sender,
-                    feeCollector,
+                    _feeCollector,
                     rcs.paymentTokenId,
                     feesForFeeCollector,
                     ""
@@ -793,7 +804,7 @@ contract Rentable is
         returns (bytes memory)
     {
         require(
-            proxyAllowList[msg.sender][selector],
+            _proxyAllowList[msg.sender][selector],
             "Proxy call unauthorized"
         );
 
