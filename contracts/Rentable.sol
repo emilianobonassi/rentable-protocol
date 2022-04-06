@@ -170,7 +170,7 @@ contract Rentable is
         external
         onlyGovernance
     {
-        paymentTokenAllowlist[_paymentTokenAddress] = ERC20_TOKEN;
+        _paymentTokenAllowlist[_paymentTokenAddress] = ERC20_TOKEN;
     }
 
     /// @dev Enable payment token (ERC1155)
@@ -179,7 +179,7 @@ contract Rentable is
         external
         onlyGovernance
     {
-        paymentTokenAllowlist[_paymentTokenAddress] = ERC1155_TOKEN;
+        _paymentTokenAllowlist[_paymentTokenAddress] = ERC1155_TOKEN;
     }
 
     /// @dev Disable payment token (ERC1155)
@@ -188,7 +188,7 @@ contract Rentable is
         external
         onlyGovernance
     {
-        paymentTokenAllowlist[_paymentTokenAddress] = NOT_ALLOWED_TOKEN;
+        _paymentTokenAllowlist[_paymentTokenAddress] = NOT_ALLOWED_TOKEN;
     }
 
     /// @dev Toggle o/w token to call on-behalf a selector on the wrapped token
@@ -238,6 +238,17 @@ contract Rentable is
     }
 
     /* ---------- Public ---------- */
+
+    /// @notice Show a token is enabled as payment token
+    /// @param paymentTokenAddress payment token address
+    /// @return status, see RentableStorageV1 for values
+    function getPaymentTokenAllowlist(address paymentTokenAddress)
+        external
+        view
+        returns (uint8)
+    {
+        return _paymentTokenAllowlist[paymentTokenAddress];
+    }
 
     /// @notice Get library address for the specific wrapped token
     /// @param tokenAddress wrapped token address
@@ -362,7 +373,7 @@ contract Rentable is
         RentableTypes.RentalConditions memory rentalConditions_
     ) internal {
         require(
-            paymentTokenAllowlist[rentalConditions_.paymentTokenAddress] !=
+            _paymentTokenAllowlist[rentalConditions_.paymentTokenAddress] !=
                 NOT_ALLOWED_TOKEN,
             "Not supported payment token"
         );
@@ -653,7 +664,7 @@ contract Rentable is
                 Address.sendValue(payable(msg.sender), msg.value - paymentQty);
             }
         } else if (
-            paymentTokenAllowlist[rcs.paymentTokenAddress] == ERC20_TOKEN
+            _paymentTokenAllowlist[rcs.paymentTokenAddress] == ERC20_TOKEN
         ) {
             if (feesForFeeCollector > 0) {
                 IERC20(rcs.paymentTokenAddress).safeTransferFrom(

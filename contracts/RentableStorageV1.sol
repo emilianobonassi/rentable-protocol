@@ -14,7 +14,7 @@ contract RentableStorageV1 {
     mapping(address => address) internal _wrentables;
     mapping(address => IERC721ReadOnlyProxy) internal _orentables;
 
-    mapping(address => uint8) public paymentTokenAllowlist;
+    mapping(address => uint8) internal _paymentTokenAllowlist;
 
     mapping(address => mapping(bytes4 => bool)) internal proxyAllowList;
 
