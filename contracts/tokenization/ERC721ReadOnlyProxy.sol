@@ -46,14 +46,15 @@ contract ERC721ReadOnlyProxy is
         string memory prefix,
         address owner
     ) internal onlyInitializing {
+        __Context_init_unchained();
+        _transferOwnership(owner);
+
         __ERC721_init(
             string(abi.encodePacked(prefix, ERC721Upgradeable(wrapped).name())),
             string(
                 abi.encodePacked(prefix, ERC721Upgradeable(wrapped).symbol())
             )
         );
-        __Context_init_unchained();
-        _transferOwnership(owner);
 
         _wrapped = wrapped;
     }
