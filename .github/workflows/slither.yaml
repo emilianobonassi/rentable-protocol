@@ -29,6 +29,6 @@ jobs:
           sarif: results.sarif
 
       - name: Upload SARIF file
-        uses: github/codeql-action/upload-sarif@81bfc289f5947eca8a3358341c874cb4f4697b64 # pin@codeql-bundle-20220322
+        uses: github/codeql-action/upload-sarif@v1
         with:
           sarif_file: ${{ steps.slither.outputs.sarif }}
