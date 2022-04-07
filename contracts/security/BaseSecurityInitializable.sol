@@ -4,16 +4,16 @@ pragma solidity ^0.8.13;
 
 // Inheritance
 
-import {PausableUpgradeable} from "@openzeppelin-upgradable/contracts/security/PausableUpgradeable.sol";
-import {Initializable} from "@openzeppelin-upgradable/contracts/proxy/utils/Initializable.sol";
+import {PausableUpgradeable} from "@openzeppelin/contracts-upgradeable/security/PausableUpgradeable.sol";
+import {Initializable} from "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol";
 
 // Libraries
-import {SafeERC20Upgradeable} from "@openzeppelin-upgradable/contracts/token/ERC20/utils/SafeERC20Upgradeable.sol";
+import {SafeERC20Upgradeable} from "@openzeppelin/contracts-upgradeable/token/ERC20/utils/SafeERC20Upgradeable.sol";
 
 // References
-import {IERC20Upgradeable} from "@openzeppelin-upgradable/contracts/token/ERC20/IERC20Upgradeable.sol";
-import {IERC721Upgradeable} from "@openzeppelin-upgradable/contracts/token/ERC721/IERC721Upgradeable.sol";
-import {IERC1155Upgradeable} from "@openzeppelin-upgradable/contracts/token/ERC1155/IERC1155Upgradeable.sol";
+import {IERC20Upgradeable} from "@openzeppelin/contracts-upgradeable/token/ERC20/IERC20Upgradeable.sol";
+import {IERC721Upgradeable} from "@openzeppelin/contracts-upgradeable/token/ERC721/IERC721Upgradeable.sol";
+import {IERC1155Upgradeable} from "@openzeppelin/contracts-upgradeable/token/ERC1155/IERC1155Upgradeable.sol";
 
 /// @title Base contract for Rentable
 /// @author Rentable Team <hello@rentable.world>

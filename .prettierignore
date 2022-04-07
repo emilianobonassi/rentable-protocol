@@ -2,3 +2,6 @@ out
 lib
 cache
 build
+artifacts
+reports
+out
