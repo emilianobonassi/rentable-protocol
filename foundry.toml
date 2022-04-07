@@ -3,7 +3,6 @@ src = 'contracts'
 out = 'out'
 test = 'test' 
 libs = ['lib']
-remappings = ['ds-test/=lib/ds-test/src/']
 gas_reports = ['*']
 optimizer = true
 optimizer_runs = 200

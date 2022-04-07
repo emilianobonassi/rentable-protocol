@@ -5,7 +5,7 @@ import {TestLand} from "./mocks/TestLand.sol";
 
 import {SharedSetup, CheatCodes} from "./SharedSetup.t.sol";
 
-import {IERC721Upgradeable} from "@openzeppelin-upgradable/contracts/token/ERC721/IERC721Upgradeable.sol";
+import {IERC721Upgradeable} from "@openzeppelin/contracts-upgradeable/token/ERC721/IERC721Upgradeable.sol";
 
 import {DecentralandCollectionLibrary} from "../collections/decentraland/DecentralandCollectionLibrary.sol";
 import {ICollectionLibrary} from "../collections/ICollectionLibrary.sol";

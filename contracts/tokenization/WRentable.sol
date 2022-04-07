@@ -7,10 +7,10 @@ import {IERC721ExistExtension} from "../interfaces/IERC721ExistExtension.sol";
 import {BaseTokenInitializable} from "./BaseTokenInitializable.sol";
 
 // References
-import {IERC721Upgradeable} from "@openzeppelin-upgradable/contracts/token/ERC721/IERC721Upgradeable.sol";
+import {IERC721Upgradeable} from "@openzeppelin/contracts-upgradeable/token/ERC721/IERC721Upgradeable.sol";
 import {IRentable} from "../interfaces/IRentable.sol";
 import {IWRentableHooks} from "../interfaces/IWRentableHooks.sol";
-import {ERC721Upgradeable} from "@openzeppelin-upgradable/contracts/token/ERC721/ERC721Upgradeable.sol";
+import {ERC721Upgradeable} from "@openzeppelin/contracts-upgradeable/token/ERC721/ERC721Upgradeable.sol";
 
 /// @title WToken
 /// @author Rentable Team <hello@rentable.world>

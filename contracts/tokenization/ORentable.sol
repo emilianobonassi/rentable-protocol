@@ -7,7 +7,7 @@ import {BaseTokenInitializable} from "./BaseTokenInitializable.sol";
 
 // References
 import {IORentableHooks} from "../interfaces/IORentableHooks.sol";
-import {ERC721Upgradeable} from "@openzeppelin-upgradable/contracts/token/ERC721/ERC721Upgradeable.sol";
+import {ERC721Upgradeable} from "@openzeppelin/contracts-upgradeable/token/ERC721/ERC721Upgradeable.sol";
 
 /// @title OToken
 /// @author Rentable Team <hello@rentable.world>

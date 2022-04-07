@@ -1,7 +1,8 @@
 {
   "solidity.remappings": [
-    "@openzeppelin-upgradable/=lib/openzeppelin-contracts-upgradeable/",
-    "@openzeppelin/=lib/openzeppelin-contracts/",
+    "@openzeppelin/contracts-upgradeable/=lib/openzeppelin-contracts-upgradeable/contracts/",
+    "@openzeppelin/contracts/=lib/openzeppelin-contracts/contracts/",
+    "solmate/=lib/solmate/src/",
     "ds-test/=lib/ds-test/src/"
   ],
   "editor.formatOnSave": true,

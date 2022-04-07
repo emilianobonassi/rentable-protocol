@@ -8,16 +8,16 @@ import {IORentableHooks} from "./interfaces/IORentableHooks.sol";
 import {IWRentableHooks} from "./interfaces/IWRentableHooks.sol";
 import {BaseSecurityInitializable} from "./security/BaseSecurityInitializable.sol";
 import {RentableStorageV1} from "./RentableStorageV1.sol";
-import {ReentrancyGuardUpgradeable} from "@openzeppelin-upgradable/contracts/security/ReentrancyGuardUpgradeable.sol";
+import {ReentrancyGuardUpgradeable} from "@openzeppelin/contracts-upgradeable/security/ReentrancyGuardUpgradeable.sol";
 
 // Libraries
-import {SafeERC20Upgradeable} from "@openzeppelin-upgradable/contracts/token/ERC20/utils/SafeERC20Upgradeable.sol";
+import {SafeERC20Upgradeable} from "@openzeppelin/contracts-upgradeable/token/ERC20/utils/SafeERC20Upgradeable.sol";
 import {Address} from "@openzeppelin/contracts/utils/Address.sol";
 
 // References
-import {IERC721Upgradeable} from "@openzeppelin-upgradable/contracts/token/ERC721/IERC721Upgradeable.sol";
-import {IERC20Upgradeable} from "@openzeppelin-upgradable/contracts/token/ERC20/IERC20Upgradeable.sol";
-import {IERC1155Upgradeable} from "@openzeppelin-upgradable/contracts/token/ERC1155/IERC1155Upgradeable.sol";
+import {IERC721Upgradeable} from "@openzeppelin/contracts-upgradeable/token/ERC721/IERC721Upgradeable.sol";
+import {IERC20Upgradeable} from "@openzeppelin/contracts-upgradeable/token/ERC20/IERC20Upgradeable.sol";
+import {IERC1155Upgradeable} from "@openzeppelin/contracts-upgradeable/token/ERC1155/IERC1155Upgradeable.sol";
 import {IERC721ReadOnlyProxy} from "./interfaces/IERC721ReadOnlyProxy.sol";
 import {IERC721ExistExtension} from "./interfaces/IERC721ExistExtension.sol";
 import {ICollectionLibrary} from "./collections/ICollectionLibrary.sol";

@@ -3,7 +3,7 @@
 pragma solidity ^0.8.13;
 
 // Inheritance
-import {IERC721Upgradeable} from "@openzeppelin-upgradable/contracts/token/ERC721/IERC721Upgradeable.sol";
+import {IERC721Upgradeable} from "@openzeppelin/contracts-upgradeable/token/ERC721/IERC721Upgradeable.sol";
 
 /// @title ERC721 Proxy Interface
 /// @author Rentable Team <hello@rentable.world>
