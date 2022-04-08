@@ -1,6 +1,6 @@
 # Rentable Protocol
 
-The Renting Protocol for NFTs.
+NFT Renting Protocol
 
 ## Architecture
 
