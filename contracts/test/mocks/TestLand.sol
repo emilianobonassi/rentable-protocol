@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: MIT
 
-pragma solidity ^0.8.13;
+pragma solidity >=0.8.7;
 
 import {ERC721} from "@openzeppelin/contracts/token/ERC721/ERC721.sol";
 
@@ -11,11 +11,19 @@ contract TestLand is ERC721, ILandRegistry {
 
     constructor() ERC721("LAND", "LAND") {}
 
-    function updateOperator(uint256 assetId) external view returns (address) {
+    function updateOperator(uint256 assetId)
+        external
+        view
+        override
+        returns (address)
+    {
         return _updateOperator[assetId];
     }
 
-    function setUpdateOperator(uint256 assetId, address operator) external {
+    function setUpdateOperator(uint256 assetId, address operator)
+        external
+        override
+    {
         _updateOperator[assetId] = operator;
     }
 

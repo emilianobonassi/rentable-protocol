@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: MIT
 
-pragma solidity ^0.8.11;
+pragma solidity >=0.8.7;
 
 import {IORentableHooks} from "../../interfaces/IORentableHooks.sol";
 
@@ -15,10 +15,10 @@ contract OTestNFT is ORentable {
     ) ORentable(wrapped_, owner, rentable) {}
 
     function proxiedBalanceOf(address owner) external {
-        IORentableHooks(_rentable).proxyCall(
-            _wrapped,
+        IORentableHooks(getRentable()).proxyCall(
+            getWrapped(),
             0,
-            ERC721URIStorageUpgradeable(_wrapped).balanceOf.selector,
+            ERC721URIStorageUpgradeable(getWrapped()).balanceOf.selector,
             abi.encode(owner)
         );
     }

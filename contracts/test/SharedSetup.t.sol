@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: AGPL-3.0-only
-pragma solidity ^0.8.0;
+pragma solidity >=0.8.7;
 
 import {DSTest} from "ds-test/test.sol";
 
@@ -96,7 +96,7 @@ abstract contract SharedSetup is DSTest, IRentableEvents {
 
         dummy1155 = new DummyERC1155();
 
-        rentableLogic = new Rentable(address(0), address(0));
+        rentableLogic = new Rentable(governance, address(0));
         proxyAdmin = new ProxyAdmin();
         rentable = Rentable(
             address(

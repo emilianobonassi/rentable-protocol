@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: MIT
 
-pragma solidity ^0.8.13;
+pragma solidity >=0.8.7;
 
 // Inheritance
 import {ORentable} from "../../tokenization/ORentable.sol";
@@ -36,16 +36,19 @@ contract OLandRegistry is ORentable {
         /// So depositor can still do OTC rent when not rented via Rentable
         require(ownerOf(tokenId) == msg.sender, "User not allowed");
 
+        address wrapped = getWrapped();
+        address rentable = getRentable();
+
         require(
-            IRentable(_rentable).expiresAt(_wrapped, tokenId) <=
-                block.timestamp,
+            IRentable(rentable).isExpired(wrapped, tokenId),
             "Operation not allowed during rental"
         );
 
-        IORentableHooks(_rentable).proxyCall(
-            _wrapped,
+        // slither-disable-next-line unused-return
+        IORentableHooks(rentable).proxyCall(
+            wrapped,
             0,
-            ILandRegistry(_wrapped).setUpdateOperator.selector,
+            ILandRegistry(wrapped).setUpdateOperator.selector,
             abi.encode(tokenId, operator)
         );
     }

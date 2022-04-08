@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: MIT
 
-pragma solidity ^0.8.13;
+pragma solidity >=0.8.7;
 
 // Inheritance
 import {IRentableHooks} from "./IRentableHooks.sol";

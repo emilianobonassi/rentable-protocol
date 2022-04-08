@@ -1,8 +1,9 @@
 // SPDX-License-Identifier: MIT
-pragma solidity ^0.8.13;
+pragma solidity >=0.8.7;
 
 // Inheritance
 import {IRentable} from "./interfaces/IRentable.sol";
+import {IRentableAdminEvents} from "./interfaces/IRentableAdminEvents.sol";
 import {IRentableHooks} from "./interfaces/IRentableHooks.sol";
 import {IORentableHooks} from "./interfaces/IORentableHooks.sol";
 import {IWRentableHooks} from "./interfaces/IWRentableHooks.sol";
@@ -28,6 +29,7 @@ import {RentableTypes} from "./RentableTypes.sol";
 /// @notice Main entry point to interact with Rentable protocol
 contract Rentable is
     IRentable,
+    IRentableAdminEvents,
     IORentableHooks,
     IWRentableHooks,
     BaseSecurityInitializable,
@@ -82,6 +84,7 @@ contract Rentable is
 
     /// @dev Prevents calling a library when not set for the respective wrapped token
     /// @param tokenAddress wrapped token address
+    // slither-disable-next-line incorrect-modifier
     modifier skipIfLibraryNotSet(address tokenAddress) {
         if (_libraries[tokenAddress] != address(0)) {
             _;
@@ -91,116 +94,165 @@ contract Rentable is
     /* ========== CONSTRUCTOR ========== */
 
     /// @dev Instatiate Rentable
-    /// @param _governance address for governance role
-    /// @param _operator address for operator role
-    constructor(address _governance, address _operator) {
-        _initialize(_governance, _operator);
+    /// @param governance address for governance role
+    /// @param operator address for operator role
+    constructor(address governance, address operator) {
+        _initialize(governance, operator);
     }
 
     /* ---------- INITIALIZER ---------- */
 
     /// @dev Initialize Rentable (to be used with proxies)
-    /// @param _governance address for governance role
-    /// @param _operator address for operator role
-    function initialize(address _governance, address _operator) external {
-        _initialize(_governance, _operator);
+    /// @param governance address for governance role
+    /// @param operator address for operator role
+    function initialize(address governance, address operator) external {
+        _initialize(governance, operator);
     }
 
     /// @dev For internal usage in the initializer external method
-    /// @param _governance address for governance role
-    /// @param _operator address for operator role
-    function _initialize(address _governance, address _operator)
+    /// @param governance address for governance role
+    /// @param operator address for operator role
+    function _initialize(address governance, address operator)
         internal
         initializer
     {
-        __BaseSecurityInitializable_init(_governance, _operator);
+        __BaseSecurityInitializable_init(governance, operator);
         __ReentrancyGuard_init();
     }
 
     /* ========== SETTERS ========== */
 
     /// @dev Associate the event hooks library to the specific wrapped token
-    /// @param _tokenAddress wrapped token address
-    /// @param _library library address
-    function setLibrary(address _tokenAddress, address _library)
+    /// @param tokenAddress wrapped token address
+    /// @param libraryAddress library address
+    function setLibrary(address tokenAddress, address libraryAddress)
         external
         onlyGovernance
     {
-        _libraries[_tokenAddress] = _library;
+        address previousValue = _libraries[tokenAddress];
+
+        _libraries[tokenAddress] = libraryAddress;
+
+        emit LibraryChanged(tokenAddress, previousValue, libraryAddress);
     }
 
     /// @dev Associate the otoken to the specific wrapped token
-    /// @param _tokenAddress wrapped token address
-    /// @param _oRentable otoken address
-    function setORentable(address _tokenAddress, address _oRentable)
+    /// @param tokenAddress wrapped token address
+    /// @param oRentable otoken address
+    function setORentable(address tokenAddress, address oRentable)
         external
         onlyGovernance
     {
-        _orentables[_tokenAddress] = IERC721ReadOnlyProxy(_oRentable);
+        address previousValue = address(_orentables[tokenAddress]);
+
+        _orentables[tokenAddress] = IERC721ReadOnlyProxy(oRentable);
+
+        emit ORentableChanged(tokenAddress, previousValue, oRentable);
     }
 
     /// @dev Associate the otoken to the specific wrapped token
-    /// @param _tokenAddress wrapped token address
-    /// @param _wRentable otoken address
-    function setWRentable(address _tokenAddress, address _wRentable)
+    /// @param tokenAddress wrapped token address
+    /// @param wRentable otoken address
+    function setWRentable(address tokenAddress, address wRentable)
         external
         onlyGovernance
     {
-        _wrentables[_tokenAddress] = IERC721ReadOnlyProxy(_wRentable);
+        address previousValue = address(_wrentables[tokenAddress]);
+
+        _wrentables[tokenAddress] = IERC721ReadOnlyProxy(wRentable);
+
+        emit WRentableChanged(tokenAddress, previousValue, wRentable);
     }
 
     /// @dev Set fee (percentage)
-    /// @param fee fee in 1e4 units (e.g. 100% = 10000)
-    function setFee(uint16 fee) external onlyGovernance {
-        _fee = fee;
+    /// @param newFee fee in 1e4 units (e.g. 100% = 10000)
+    function setFee(uint16 newFee) external onlyGovernance {
+        uint16 previousFee = _fee;
+
+        _fee = newFee;
+
+        emit FeeChanged(previousFee, newFee);
     }
 
     /// @dev Set fee collector address
-    /// @param feeCollector fee collector address
-    function setFeeCollector(address payable feeCollector)
+    /// @param newFeeCollector fee collector address
+    function setFeeCollector(address payable newFeeCollector)
         external
         onlyGovernance
     {
-        _feeCollector = feeCollector;
+        require(newFeeCollector != address(0), "FeeCollector cannot be null");
+
+        address previousFeeCollector = _feeCollector;
+
+        _feeCollector = newFeeCollector;
+
+        emit FeeCollectorChanged(previousFeeCollector, newFeeCollector);
     }
 
     /// @dev Enable payment token (ERC20)
-    /// @param _paymentTokenAddress payment token address
-    function enablePaymentToken(address _paymentTokenAddress)
-        external
-        onlyGovernance
-    {
-        _paymentTokenAllowlist[_paymentTokenAddress] = ERC20_TOKEN;
+    /// @param paymentToken payment token address
+    function enablePaymentToken(address paymentToken) external onlyGovernance {
+        uint8 previousStatus = _paymentTokenAllowlist[paymentToken];
+
+        _paymentTokenAllowlist[paymentToken] = ERC20_TOKEN;
+
+        emit PaymentTokenAllowListChanged(
+            paymentToken,
+            previousStatus,
+            ERC20_TOKEN
+        );
     }
 
     /// @dev Enable payment token (ERC1155)
-    /// @param _paymentTokenAddress payment token address
-    function enable1155PaymentToken(address _paymentTokenAddress)
+    /// @param paymentToken payment token address
+    function enable1155PaymentToken(address paymentToken)
         external
         onlyGovernance
     {
-        _paymentTokenAllowlist[_paymentTokenAddress] = ERC1155_TOKEN;
+        uint8 previousStatus = _paymentTokenAllowlist[paymentToken];
+
+        _paymentTokenAllowlist[paymentToken] = ERC1155_TOKEN;
+
+        emit PaymentTokenAllowListChanged(
+            paymentToken,
+            previousStatus,
+            ERC1155_TOKEN
+        );
     }
 
     /// @dev Disable payment token (ERC1155)
-    /// @param _paymentTokenAddress payment token address
-    function disablePaymentToken(address _paymentTokenAddress)
-        external
-        onlyGovernance
-    {
-        _paymentTokenAllowlist[_paymentTokenAddress] = NOT_ALLOWED_TOKEN;
+    /// @param paymentToken payment token address
+    function disablePaymentToken(address paymentToken) external onlyGovernance {
+        uint8 previousStatus = _paymentTokenAllowlist[paymentToken];
+
+        _paymentTokenAllowlist[paymentToken] = NOT_ALLOWED_TOKEN;
+
+        emit PaymentTokenAllowListChanged(
+            paymentToken,
+            previousStatus,
+            NOT_ALLOWED_TOKEN
+        );
     }
 
     /// @dev Toggle o/w token to call on-behalf a selector on the wrapped token
-    /// @param _caller o/w token address
-    /// @param _selector selector bytes on the target wrapped token
-    /// @param _enabled true to enable, false to disable
+    /// @param caller o/w token address
+    /// @param selector selector bytes on the target wrapped token
+    /// @param enabled true to enable, false to disable
     function enableProxyCall(
-        address _caller,
-        bytes4 _selector,
-        bool _enabled
+        address caller,
+        bytes4 selector,
+        bool enabled
     ) external onlyGovernance {
-        _proxyAllowList[_caller][_selector] = _enabled;
+        bool previousStatus = _proxyAllowList[caller][selector];
+
+        _proxyAllowList[caller][selector] = enabled;
+
+        emit ProxyCallAllowListChanged(
+            caller,
+            selector,
+            previousStatus,
+            enabled
+        );
     }
 
     /* ========== VIEWS ========== */
@@ -235,6 +287,19 @@ contract Rentable is
         oRentable = _getExistingORentable(tokenAddress);
 
         require(oRentable.ownerOf(tokenId) == user, "The token must be yours");
+    }
+
+    /// @dev Show rental validity
+    /// @param tokenAddress wrapped token address
+    /// @param tokenId wrapped token id
+    /// @return true if is expired, false otw
+    function _isExpired(address tokenAddress, uint256 tokenId)
+        internal
+        view
+        returns (bool)
+    {
+        // slither-disable-next-line timestamp
+        return block.timestamp >= (_expiresAt[tokenAddress][tokenId]);
     }
 
     /* ---------- Public ---------- */
@@ -307,7 +372,6 @@ contract Rentable is
     function rentalConditions(address tokenAddress, uint256 tokenId)
         external
         view
-        virtual
         override
         returns (RentableTypes.RentalConditions memory)
     {
@@ -318,11 +382,20 @@ contract Rentable is
     function expiresAt(address tokenAddress, uint256 tokenId)
         external
         view
-        virtual
         override
         returns (uint256)
     {
         return _expiresAt[tokenAddress][tokenId];
+    }
+
+    /// @inheritdoc IRentable
+    function isExpired(address tokenAddress, uint256 tokenId)
+        external
+        view
+        override
+        returns (bool)
+    {
+        return _isExpired(tokenAddress, tokenId);
     }
 
     /* ========== MUTATIVE FUNCTIONS ========== */
@@ -356,58 +429,52 @@ contract Rentable is
     /// @param tokenAddress wrapped token address
     /// @param tokenId wrapped token id
     /// @param to user to mint
-    /// @param rentalConditions_ rental conditions see RentableTypes.RentalConditions
+    /// @param rc rental conditions see RentableTypes.RentalConditions
     function _depositAndList(
         address tokenAddress,
         uint256 tokenId,
         address to,
-        RentableTypes.RentalConditions memory rentalConditions_
+        RentableTypes.RentalConditions memory rc
     ) internal {
         _deposit(tokenAddress, tokenId, to);
 
-        _createOrUpdateRentalConditions(
-            to,
-            tokenAddress,
-            tokenId,
-            rentalConditions_
-        );
+        _createOrUpdateRentalConditions(to, tokenAddress, tokenId, rc);
     }
 
     /// @dev Set rental conditions for a wrapped token
     /// @param user who is changing the conditions
     /// @param tokenAddress wrapped token address
     /// @param tokenId wrapped token id
-    /// @param rentalConditions_ rental conditions see RentableTypes.RentalConditions
+    /// @param rc rental conditions see RentableTypes.RentalConditions
     function _createOrUpdateRentalConditions(
         address user,
         address tokenAddress,
         uint256 tokenId,
-        RentableTypes.RentalConditions memory rentalConditions_
+        RentableTypes.RentalConditions memory rc
     ) internal {
         require(
-            _paymentTokenAllowlist[rentalConditions_.paymentTokenAddress] !=
-                NOT_ALLOWED_TOKEN,
+            _paymentTokenAllowlist[rc.paymentTokenAddress] != NOT_ALLOWED_TOKEN,
             "Not supported payment token"
         );
 
-        _rentalConditions[tokenAddress][tokenId] = rentalConditions_;
+        _rentalConditions[tokenAddress][tokenId] = rc;
 
         _postList(
             tokenAddress,
             tokenId,
             user,
-            rentalConditions_.maxTimeDuration,
-            rentalConditions_.pricePerSecond
+            rc.maxTimeDuration,
+            rc.pricePerSecond
         );
 
         emit UpdateRentalConditions(
             tokenAddress,
             tokenId,
-            rentalConditions_.paymentTokenAddress,
-            rentalConditions_.paymentTokenId,
-            rentalConditions_.maxTimeDuration,
-            rentalConditions_.pricePerSecond,
-            rentalConditions_.privateRenter
+            rc.paymentTokenAddress,
+            rc.paymentTokenId,
+            rc.maxTimeDuration,
+            rc.pricePerSecond,
+            rc.privateRenter
         );
     }
 
@@ -427,6 +494,7 @@ contract Rentable is
     /// @param tokenId wrapped token id
     /// @param skipExistCheck assume or not wtoken id exists (gas optimization)
     /// @return currentlyRented true if rental is not expired
+    // slither-disable-next-line calls-loop
     function _expireRental(
         address oTokenOwner,
         address tokenAddress,
@@ -439,7 +507,7 @@ contract Rentable is
                 tokenId
             )
         ) {
-            if (block.timestamp >= (_expiresAt[tokenAddress][tokenId])) {
+            if (_isExpired(tokenAddress, tokenId)) {
                 address currentRentee = oTokenOwner == address(0)
                     ? IERC721ReadOnlyProxy(_orentables[tokenAddress]).ownerOf(
                         tokenId
@@ -465,10 +533,13 @@ contract Rentable is
         uint256 tokenId,
         address user
     ) internal skipIfLibraryNotSet(tokenAddress) {
+        // slither-disable-next-line unused-return
         _libraries[tokenAddress].functionDelegateCall(
-            abi.encodeCall(
-                ICollectionLibrary.postDeposit,
-                (tokenAddress, tokenId, user)
+            abi.encodeWithSelector(
+                ICollectionLibrary.postDeposit.selector,
+                tokenAddress,
+                tokenId,
+                user
             ),
             ""
         );
@@ -487,10 +558,15 @@ contract Rentable is
         uint256 maxTimeDuration,
         uint256 pricePerSecond
     ) internal skipIfLibraryNotSet(tokenAddress) {
+        // slither-disable-next-line unused-return
         _libraries[tokenAddress].functionDelegateCall(
-            abi.encodeCall(
-                ICollectionLibrary.postList,
-                (tokenAddress, tokenId, user, maxTimeDuration, pricePerSecond)
+            abi.encodeWithSelector(
+                ICollectionLibrary.postList.selector,
+                tokenAddress,
+                tokenId,
+                user,
+                maxTimeDuration,
+                pricePerSecond
             ),
             ""
         );
@@ -509,10 +585,15 @@ contract Rentable is
         address from,
         address to
     ) internal skipIfLibraryNotSet(tokenAddress) {
+        // slither-disable-next-line unused-return
         _libraries[tokenAddress].functionDelegateCall(
-            abi.encodeCall(
-                ICollectionLibrary.postRent,
-                (tokenAddress, tokenId, duration, from, to)
+            abi.encodeWithSelector(
+                ICollectionLibrary.postRent.selector,
+                tokenAddress,
+                tokenId,
+                duration,
+                from,
+                to
             ),
             ""
         );
@@ -522,15 +603,19 @@ contract Rentable is
     /// @param tokenAddress wrapped token address
     /// @param tokenId wrapped token id
     /// @param from rentee
+    // slither-disable-next-line calls-loop
     function _postExpireRental(
         address tokenAddress,
         uint256 tokenId,
         address from
     ) internal skipIfLibraryNotSet(tokenAddress) {
+        // slither-disable-next-line unused-return
         _libraries[tokenAddress].functionDelegateCall(
-            abi.encodeCall(
-                ICollectionLibrary.postExpireRental,
-                (tokenAddress, tokenId, from)
+            abi.encodeWithSelector(
+                ICollectionLibrary.postExpireRental.selector,
+                tokenAddress,
+                tokenId,
+                from
             ),
             ""
         );
@@ -544,7 +629,7 @@ contract Rentable is
         address from,
         uint256 tokenId,
         bytes calldata data
-    ) external virtual override whenNotPaused nonReentrant returns (bytes4) {
+    ) external override whenNotPaused nonReentrant returns (bytes4) {
         if (data.length == 0) {
             _deposit(msg.sender, tokenId, from);
         } else {
@@ -562,7 +647,6 @@ contract Rentable is
     /// @inheritdoc IRentable
     function withdraw(address tokenAddress, uint256 tokenId)
         external
-        virtual
         override
         whenNotPaused
         nonReentrant
@@ -596,26 +680,14 @@ contract Rentable is
     function createOrUpdateRentalConditions(
         address tokenAddress,
         uint256 tokenId,
-        RentableTypes.RentalConditions calldata rentalConditions_
-    )
-        external
-        virtual
-        override
-        whenNotPaused
-        onlyOTokenOwner(tokenAddress, tokenId)
-    {
-        _createOrUpdateRentalConditions(
-            msg.sender,
-            tokenAddress,
-            tokenId,
-            rentalConditions_
-        );
+        RentableTypes.RentalConditions calldata rc
+    ) external override whenNotPaused onlyOTokenOwner(tokenAddress, tokenId) {
+        _createOrUpdateRentalConditions(msg.sender, tokenAddress, tokenId, rc);
     }
 
     /// @inheritdoc IRentable
     function deleteRentalConditions(address tokenAddress, uint256 tokenId)
         external
-        virtual
         override
         whenNotPaused
         onlyOTokenOwner(tokenAddress, tokenId)
@@ -628,7 +700,7 @@ contract Rentable is
         address tokenAddress,
         uint256 tokenId,
         uint256 duration
-    ) external payable virtual override whenNotPaused nonReentrant {
+    ) external payable override whenNotPaused nonReentrant {
         // 1. check token is deposited and available for rental
         IERC721ReadOnlyProxy oRentable = _getExistingORentable(tokenAddress);
         address payable rentee = payable(oRentable.ownerOf(tokenId));
@@ -758,15 +830,20 @@ contract Rentable is
         address from,
         address to,
         uint256 tokenId
-    ) external virtual override whenNotPaused onlyOToken(tokenAddress) {
+    ) external override whenNotPaused onlyOToken(tokenAddress) {
         bool rented = _expireRental(from, tokenAddress, tokenId, false);
 
         address lib = _libraries[tokenAddress];
         if (lib != address(0)) {
+            // slither-disable-next-line unused-return
             lib.functionDelegateCall(
-                abi.encodeCall(
-                    ICollectionLibrary(lib).postOTokenTransfer,
-                    (tokenAddress, tokenId, from, to, rented)
+                abi.encodeWithSelector(
+                    ICollectionLibrary.postOTokenTransfer.selector,
+                    tokenAddress,
+                    tokenId,
+                    from,
+                    to,
+                    rented
                 ),
                 ""
             );
@@ -779,15 +856,19 @@ contract Rentable is
         address from,
         address to,
         uint256 tokenId
-    ) external virtual override whenNotPaused onlyWToken(tokenAddress) {
+    ) external override whenNotPaused onlyWToken(tokenAddress) {
         _expireRental(address(0), tokenAddress, tokenId, true);
 
         address lib = _libraries[tokenAddress];
         if (lib != address(0)) {
+            // slither-disable-next-line unused-return
             lib.functionDelegateCall(
-                abi.encodeCall(
-                    ICollectionLibrary(lib).postWTokenTransfer,
-                    (tokenAddress, tokenId, from, to)
+                abi.encodeWithSelector(
+                    ICollectionLibrary.postWTokenTransfer.selector,
+                    tokenAddress,
+                    tokenId,
+                    from,
+                    to
                 ),
                 ""
             );
@@ -803,6 +884,7 @@ contract Rentable is
     )
         external
         payable
+        override
         whenNotPaused
         onlyOTokenOrWToken(to) // this implicitly checks `to` is the associated wrapped token
         returns (bytes memory)

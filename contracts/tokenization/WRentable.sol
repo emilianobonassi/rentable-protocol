@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: MIT
 
-pragma solidity ^0.8.13;
+pragma solidity >=0.8.7;
 
 // Inheritance
 import {IERC721ExistExtension} from "../interfaces/IERC721ExistExtension.sol";
@@ -10,6 +10,7 @@ import {BaseTokenInitializable} from "./BaseTokenInitializable.sol";
 import {IERC721Upgradeable} from "@openzeppelin/contracts-upgradeable/token/ERC721/IERC721Upgradeable.sol";
 import {IRentable} from "../interfaces/IRentable.sol";
 import {IWRentableHooks} from "../interfaces/IWRentableHooks.sol";
+
 import {ERC721Upgradeable} from "@openzeppelin/contracts-upgradeable/token/ERC721/ERC721Upgradeable.sol";
 
 /// @title WToken
@@ -39,17 +40,9 @@ contract WRentable is IERC721ExistExtension, BaseTokenInitializable {
     /* ---------- Public ---------- */
 
     /// @inheritdoc IERC721Upgradeable
-    function ownerOf(uint256 tokenId)
-        public
-        view
-        virtual
-        override(ERC721Upgradeable, IERC721Upgradeable)
-        returns (address)
-    {
+    function ownerOf(uint256 tokenId) public view override returns (address) {
         // Check rental expiration
-        if (
-            IRentable(_rentable).expiresAt(_wrapped, tokenId) > block.timestamp
-        ) {
+        if (!IRentable(getRentable()).isExpired(getWrapped(), tokenId)) {
             return super.ownerOf(tokenId);
         } else {
             return address(0);
@@ -70,11 +63,11 @@ contract WRentable is IERC721ExistExtension, BaseTokenInitializable {
         address from,
         address to,
         uint256 tokenId
-    ) internal virtual override {
+    ) internal override {
         // Notify Rentable after successful transfer
         super._transfer(from, to, tokenId);
-        IWRentableHooks(_rentable).afterWTokenTransfer(
-            _wrapped,
+        IWRentableHooks(getRentable()).afterWTokenTransfer(
+            getWrapped(),
             from,
             to,
             tokenId

@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: MIT
 
-pragma solidity ^0.8.13;
+pragma solidity >=0.8.7;
 
 // Inheritance
 import {IERC721ReceiverUpgradeable} from "@openzeppelin/contracts-upgradeable/token/ERC721/IERC721ReceiverUpgradeable.sol";
@@ -32,6 +32,15 @@ interface IRentable is IRentableEvents, IERC721ReceiverUpgradeable {
         view
         returns (uint256);
 
+    /// @dev Show rental validity
+    /// @param tokenAddress wrapped token address
+    /// @param tokenId wrapped token id
+    /// @return true if is expired, false otw
+    function isExpired(address tokenAddress, uint256 tokenId)
+        external
+        view
+        returns (bool);
+
     /* ========== MUTATIVE FUNCTIONS ========== */
 
     /// @notice Entry point for deposits used by wrapped token safeTransferFrom
@@ -43,7 +52,7 @@ interface IRentable is IRentableEvents, IERC721ReceiverUpgradeable {
         address from,
         uint256 tokenId,
         bytes calldata data
-    ) external returns (bytes4);
+    ) external override returns (bytes4);
 
     /// @notice Withdraw and unwrap deposited token
     /// @param tokenAddress wrapped token address
@@ -53,11 +62,11 @@ interface IRentable is IRentableEvents, IERC721ReceiverUpgradeable {
     /// @notice Manage rental conditions and listing
     /// @param tokenAddress wrapped token address
     /// @param tokenId wrapped token id
-    /// @param rentalConditions_ rental conditions see RentableTypes.RentalConditions
+    /// @param rc rental conditions see RentableTypes.RentalConditions
     function createOrUpdateRentalConditions(
         address tokenAddress,
         uint256 tokenId,
-        RentableTypes.RentalConditions calldata rentalConditions_
+        RentableTypes.RentalConditions calldata rc
     ) external;
 
     /// @notice De-list a wrapped token

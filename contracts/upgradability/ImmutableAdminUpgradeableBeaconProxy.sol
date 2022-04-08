@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: MIT
 
-pragma solidity ^0.8.13;
+pragma solidity >=0.8.7;
 
 // Inheritance
 import {BeaconProxy} from "@openzeppelin/contracts/proxy/beacon/BeaconProxy.sol";
@@ -10,25 +10,28 @@ import {BeaconProxy} from "@openzeppelin/contracts/proxy/beacon/BeaconProxy.sol"
  *
  */
 contract ImmutableAdminUpgradeableBeaconProxy is BeaconProxy {
-    address internal immutable ADMIN;
+    address private immutable _admin;
 
     /**
-     * @dev Initializes an upgradeable proxy managed by `_admin`, backed by the implementation at `_logic`, and
+     * @dev Initializes an upgradeable proxy managed by `admin`, backed by the implementation at `_logic`, and
      * optionally initialized with `_data` as explained in {ERC1967Proxy-constructor}.
      */
     constructor(
         address _beacon,
-        address _admin,
+        address admin_,
         bytes memory _data
     ) payable BeaconProxy(_beacon, _data) {
-        ADMIN = _admin;
+        // cheaper deployments
+        // slither-disable-next-line missing-zero-check
+        _admin = admin_;
     }
 
     /**
      * @dev Modifier used internally that will delegate the call to the implementation unless the sender is the admin.
      */
+    // slither-disable-next-line incorrect-modifier
     modifier ifAdmin() {
-        if (msg.sender == ADMIN) {
+        if (msg.sender == _admin) {
             _;
         } else {
             _fallback();
@@ -45,7 +48,7 @@ contract ImmutableAdminUpgradeableBeaconProxy is BeaconProxy {
      * `0xb53127684a568b3173ae13b9f8a6016e243e63b6e8ee1178d6a717850b5d6103`
      */
     function admin() external ifAdmin returns (address admin_) {
-        admin_ = ADMIN;
+        admin_ = _admin;
     }
 
     /**
@@ -94,7 +97,7 @@ contract ImmutableAdminUpgradeableBeaconProxy is BeaconProxy {
      */
     function _beforeFallback() internal virtual override {
         require(
-            msg.sender != ADMIN,
+            msg.sender != _admin,
             "ImmutableAdminUpgradeableBeaconProxy: admin cannot fallback to proxy target"
         );
         super._beforeFallback();

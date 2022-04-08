@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: MIT
 
-pragma solidity ^0.8.13;
+pragma solidity >=0.8.7;
 
 import {ICollectionLibrary} from "../../collections/ICollectionLibrary.sol";
 
@@ -9,7 +9,7 @@ contract DummyCollectionLibrary is ICollectionLibrary {
         address tokenAddress,
         uint256 tokenId,
         address user
-    ) external {}
+    ) external override {}
 
     function postList(
         address tokenAddress,
@@ -17,7 +17,7 @@ contract DummyCollectionLibrary is ICollectionLibrary {
         address user,
         uint256 maxTimeDuration,
         uint256 pricePerSecond
-    ) external {}
+    ) external override {}
 
     function postRent(
         address tokenAddress,
@@ -25,20 +25,20 @@ contract DummyCollectionLibrary is ICollectionLibrary {
         uint256 duration,
         address from,
         address to
-    ) external payable {}
+    ) external payable override {}
 
     function postExpireRental(
         address tokenAddress,
         uint256 tokenId,
         address from
-    ) external payable {}
+    ) external payable override {}
 
     function postWTokenTransfer(
         address tokenAddress,
         uint256 tokenId,
         address from,
         address to
-    ) external {}
+    ) external override {}
 
     function postOTokenTransfer(
         address tokenAddress,
@@ -46,5 +46,5 @@ contract DummyCollectionLibrary is ICollectionLibrary {
         address from,
         address to,
         bool rented
-    ) external {}
+    ) external override {}
 }

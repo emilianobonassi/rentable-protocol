@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: MIT
 
-pragma solidity ^0.8.13;
+pragma solidity >=0.8.7;
 
 // Inheritance
 import {ERC1967Proxy} from "@openzeppelin/contracts/proxy/ERC1967/ERC1967Proxy.sol";
@@ -10,7 +10,7 @@ import {ERC1967Proxy} from "@openzeppelin/contracts/proxy/ERC1967/ERC1967Proxy.s
  *
  */
 contract ImmutableAdminTransparentUpgradeableProxy is ERC1967Proxy {
-    address internal immutable ADMIN;
+    address private immutable _admin;
 
     /**
      * @dev Initializes an upgradeable proxy managed by `_admin`, backed by the implementation at `_logic`, and
@@ -18,17 +18,20 @@ contract ImmutableAdminTransparentUpgradeableProxy is ERC1967Proxy {
      */
     constructor(
         address _logic,
-        address _admin,
+        address admin_,
         bytes memory _data
     ) payable ERC1967Proxy(_logic, _data) {
-        ADMIN = _admin;
+        // cheaper deployments
+        // slither-disable-next-line missing-zero-check
+        _admin = admin_;
     }
 
     /**
      * @dev Modifier used internally that will delegate the call to the implementation unless the sender is the admin.
      */
+    // slither-disable-next-line incorrect-modifier
     modifier ifAdmin() {
-        if (msg.sender == ADMIN) {
+        if (msg.sender == _admin) {
             _;
         } else {
             _fallback();
@@ -45,7 +48,7 @@ contract ImmutableAdminTransparentUpgradeableProxy is ERC1967Proxy {
      * `0xb53127684a568b3173ae13b9f8a6016e243e63b6e8ee1178d6a717850b5d6103`
      */
     function admin() external ifAdmin returns (address admin_) {
-        admin_ = ADMIN;
+        admin_ = _admin;
     }
 
     /**
@@ -94,7 +97,7 @@ contract ImmutableAdminTransparentUpgradeableProxy is ERC1967Proxy {
      */
     function _beforeFallback() internal virtual override {
         require(
-            msg.sender != ADMIN,
+            msg.sender != _admin,
             "ImmutableAdminTransparentUpgradeableProxy: admin cannot fallback to proxy target"
         );
         super._beforeFallback();

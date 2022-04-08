@@ -14,7 +14,7 @@ subtask(TASK_COMPILE_SOLIDITY_GET_SOURCE_PATHS)
  * @type import('hardhat/config').HardhatUserConfig
  */
 module.exports = {
-  solidity: "0.8.13",
+  solidity: "0.8.7",
   settings: {
     optimizer: {
       enabled: true,

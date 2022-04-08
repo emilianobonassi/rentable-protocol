@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: AGPL-3.0-only
-pragma solidity ^0.8.0;
+pragma solidity >=0.8.7;
 
 import {SharedSetup, CheatCodes} from "./SharedSetup.t.sol";
 
@@ -15,9 +15,11 @@ contract RentableTest is SharedSetup {
         emit Deposit(user, address(testNFT), tokenId);
 
         // Test dummy library
-        bytes memory expectedData = abi.encodeCall(
-            ICollectionLibrary.postDeposit,
-            (address(testNFT), tokenId, user)
+        bytes memory expectedData = abi.encodeWithSelector(
+            ICollectionLibrary.postDeposit.selector,
+            address(testNFT),
+            tokenId,
+            user
         );
         cheats.expectCall(address(dummyLib), expectedData);
     }
@@ -51,9 +53,13 @@ contract RentableTest is SharedSetup {
             privateRenter
         );
 
-        bytes memory expectedData = abi.encodeCall(
-            ICollectionLibrary.postList,
-            (address(testNFT), tokenId, user, maxTimeDuration, pricePerSecond)
+        bytes memory expectedData = abi.encodeWithSelector(
+            ICollectionLibrary.postList.selector,
+            address(testNFT),
+            tokenId,
+            user,
+            maxTimeDuration,
+            pricePerSecond
         );
         cheats.expectCall(address(dummyLib), expectedData);
     }

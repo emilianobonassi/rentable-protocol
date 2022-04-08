@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: MIT
 
-pragma solidity ^0.8.13;
+pragma solidity >=0.8.7;
 
 // Inheritance
 import {ICollectionLibrary} from "../ICollectionLibrary.sol";
@@ -19,7 +19,7 @@ contract DecentralandCollectionLibrary is ICollectionLibrary {
         address tokenAddress,
         uint256 tokenId,
         address user
-    ) public {
+    ) external override {
         // Depositor can continue to manage land operators after deposit
         ILandRegistry(tokenAddress).setUpdateOperator(tokenId, user);
     }
@@ -31,26 +31,28 @@ contract DecentralandCollectionLibrary is ICollectionLibrary {
         address,
         uint256,
         uint256
-    ) public {}
+    ) external override {}
 
     /// @inheritdoc ICollectionLibrary
+    // slither-disable-next-line locked-ether
     function postRent(
         address tokenAddress,
         uint256 tokenId,
         uint256,
         address,
         address to
-    ) public payable {
+    ) external payable override {
         // Set renter as land operator
         ILandRegistry(tokenAddress).setUpdateOperator(tokenId, to);
     }
 
     /// @inheritdoc ICollectionLibrary
+    // slither-disable-next-line locked-ether
     function postExpireRental(
         address tokenAddress,
         uint256 tokenId,
         address from
-    ) external payable {
+    ) external payable override {
         // Restore current otoken owner as land operator
         ILandRegistry(tokenAddress).setUpdateOperator(tokenId, from);
     }
@@ -61,7 +63,7 @@ contract DecentralandCollectionLibrary is ICollectionLibrary {
         uint256 tokenId,
         address,
         address to
-    ) external {
+    ) external override {
         // Enable subletting, renter can transfer the right to update a land
         ILandRegistry(tokenAddress).setUpdateOperator(tokenId, to);
     }
@@ -73,7 +75,7 @@ contract DecentralandCollectionLibrary is ICollectionLibrary {
         address,
         address to,
         bool rented
-    ) external {
+    ) external override {
         // Depositor can transfer the right to update a land when not rented out
         if (!rented) ILandRegistry(tokenAddress).setUpdateOperator(tokenId, to);
     }

@@ -5,6 +5,7 @@ autofetch_sources: True
 # path remapping to support imports from GitHub/NPM
 compiler:
   solc:
+    #version: 0.8.7
     remappings:
       - "@openzeppelin/contracts-upgradeable/=lib/openzeppelin-contracts-upgradeable/contracts/"
       - "@openzeppelin/contracts/=lib/openzeppelin-contracts/contracts/"

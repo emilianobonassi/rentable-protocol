@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: MIT
 
-pragma solidity ^0.8.13;
+pragma solidity >=0.8.7;
 
 // Inheritance
 import {IERC721ReadOnlyProxy} from "../interfaces/IERC721ReadOnlyProxy.sol";
@@ -21,9 +21,9 @@ contract ERC721ReadOnlyProxy is
     /* ========== STATE VARIABLES ========== */
 
     // wrapped token address
-    address internal _wrapped;
+    address private _wrapped;
     // minter address
-    address internal _minter;
+    address private _minter;
 
     /* ========== MODIFIERS ========== */
 
@@ -33,6 +33,16 @@ contract ERC721ReadOnlyProxy is
         _;
     }
 
+    /* ========== EVENTS ========== */
+
+    /// @notice Emitted on minter change
+    /// @param previousMinter previous minter address
+    /// @param newMinter new minter address
+    event MinterTransferred(
+        address indexed previousMinter,
+        address indexed newMinter
+    );
+
     /* ========== CONSTRUCTOR ========== */
 
     /* ---------- INITIALIZER ---------- */
@@ -41,6 +51,7 @@ contract ERC721ReadOnlyProxy is
     /// @param wrapped wrapped token address
     /// @param prefix prefix to prepend to the token symbol
     /// @param owner admin for the contract
+    // slither-disable-next-line naming-convention
     function __ERC721ReadOnlyProxy_init(
         address wrapped,
         string memory prefix,
@@ -61,22 +72,39 @@ contract ERC721ReadOnlyProxy is
 
     /* ========== SETTERS ========== */
 
+    /* ---------- Internal ---------- */
+
     /// @notice Set minter role
-    /// @param minter_ wrapped token address
-    function setMinter(address minter_) external onlyOwner {
-        _minter = minter_;
+    /// @param newMinter wrapped token address
+    function _setMinter(address newMinter) internal {
+        address previousMinter = _minter;
+
+        // enable disable minting
+        // slither-disable-next-line missing-zero-check
+        _minter = newMinter;
+
+        emit MinterTransferred(previousMinter, newMinter);
+    }
+
+    /* ---------- Public ---------- */
+
+    /// @notice Set minter role
+    /// @param newMinter wrapped token address
+    function setMinter(address newMinter) external onlyOwner {
+        _setMinter(newMinter);
     }
 
     /* ========== VIEWS ========== */
 
     /// @inheritdoc IERC721ReadOnlyProxy
-    function getWrapped() external view virtual override returns (address) {
+    function getWrapped() public view override returns (address) {
         return _wrapped;
     }
 
     /// @notice Get minter role address
     /// @return minter role address
-    function getMinter() external view returns (address) {
+    // slither-disable-next-line external-function
+    function getMinter() public view returns (address) {
         return _minter;
     }
 
@@ -93,6 +121,7 @@ contract ERC721ReadOnlyProxy is
     }
 
     /// @notice Fallback any (static) call to the wrapped token
+    // slither-disable-next-line assembly
     fallback() external {
         assembly {
             let free_ptr := mload(0x40)
@@ -118,17 +147,12 @@ contract ERC721ReadOnlyProxy is
     /* ========== MUTATIVE FUNCTIONS ========== */
 
     /// @inheritdoc IERC721ReadOnlyProxy
-    function mint(address to, uint256 tokenId)
-        external
-        virtual
-        override
-        onlyMinter
-    {
+    function mint(address to, uint256 tokenId) external override onlyMinter {
         _mint(to, tokenId);
     }
 
     /// @inheritdoc IERC721ReadOnlyProxy
-    function burn(uint256 tokenId) external virtual override onlyMinter {
+    function burn(uint256 tokenId) external override onlyMinter {
         _burn(tokenId);
     }
 }

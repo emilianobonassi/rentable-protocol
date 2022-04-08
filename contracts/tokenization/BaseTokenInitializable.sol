@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: MIT
 
-pragma solidity ^0.8.13;
+pragma solidity >=0.8.7;
 
 // Inheritance
 import {ERC721ReadOnlyProxy} from "./ERC721ReadOnlyProxy.sol";
@@ -11,7 +11,7 @@ import {ERC721ReadOnlyProxy} from "./ERC721ReadOnlyProxy.sol";
 abstract contract BaseTokenInitializable is ERC721ReadOnlyProxy {
     /* ========== STATE VARIABLES ========== */
     // rentable reference
-    address internal _rentable;
+    address private _rentable;
 
     /* ========== MODIFIERS ========== */
     modifier onlyRentable() {
@@ -64,18 +64,18 @@ abstract contract BaseTokenInitializable is ERC721ReadOnlyProxy {
     /* ---------- Internal ---------- */
 
     /// @dev Set rentable address
-    /// @param rentable_ rentable address
-    function _setRentable(address rentable_) internal {
-        _rentable = rentable_;
-        _minter = rentable_;
+    /// @param rentable rentable address
+    function _setRentable(address rentable) internal {
+        _rentable = rentable;
+        _setMinter(rentable);
     }
 
     /* ---------- Public ---------- */
 
     /// @dev Set rentable address
-    /// @param rentable_ rentable address
-    function setRentable(address rentable_) external onlyOwner {
-        _setRentable(rentable_);
+    /// @param rentable rentable address
+    function setRentable(address rentable) external onlyOwner {
+        _setRentable(rentable);
     }
 
     /* ========== VIEWS ========== */
@@ -90,10 +90,11 @@ abstract contract BaseTokenInitializable is ERC721ReadOnlyProxy {
 
     /// @notice Get rentable address
     /// @return rentable address
-    function getRentable() external view returns (address) {
+    function getRentable() public view returns (address) {
         return _rentable;
     }
 
     // Reserved storage space to allow for layout changes in the future.
-    uint256[50] private ______gap;
+    // slither-disable-next-line unused-state
+    uint256[50] private _gap;
 }

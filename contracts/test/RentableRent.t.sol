@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: AGPL-3.0-only
-pragma solidity ^0.8.0;
+pragma solidity >=0.8.7;
 
 import {SharedSetup, CheatCodes} from "./SharedSetup.t.sol";
 
@@ -379,9 +379,12 @@ contract RentableRent is SharedSetup {
             rentalDuration
         );
 
-        bytes memory expectedData = abi.encodeCall(
-            ICollectionLibrary.postWTokenTransfer,
-            (address(testNFT), tokenId, renter, cheats.addr(9))
+        bytes memory expectedData = abi.encodeWithSelector(
+            ICollectionLibrary.postWTokenTransfer.selector,
+            address(testNFT),
+            tokenId,
+            renter,
+            cheats.addr(9)
         );
         cheats.expectCall(address(dummyLib), expectedData);
 
@@ -437,9 +440,13 @@ contract RentableRent is SharedSetup {
         cheats.stopPrank();
         cheats.startPrank(user);
 
-        bytes memory expectedData = abi.encodeCall(
-            ICollectionLibrary.postOTokenTransfer,
-            (address(testNFT), tokenId, user, cheats.addr(9), true)
+        bytes memory expectedData = abi.encodeWithSelector(
+            ICollectionLibrary.postOTokenTransfer.selector,
+            address(testNFT),
+            tokenId,
+            user,
+            cheats.addr(9),
+            true
         );
         cheats.expectCall(address(dummyLib), expectedData);
 

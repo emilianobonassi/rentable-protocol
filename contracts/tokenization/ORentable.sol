@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: MIT
 
-pragma solidity ^0.8.13;
+pragma solidity >=0.8.7;
 
 // Inheritance
 import {BaseTokenInitializable} from "./BaseTokenInitializable.sol";
@@ -42,11 +42,11 @@ contract ORentable is BaseTokenInitializable {
         address from,
         address to,
         uint256 tokenId
-    ) internal virtual override {
+    ) internal override {
         // Notify Rentable after successful transfer
         super._transfer(from, to, tokenId);
-        IORentableHooks(_rentable).afterOTokenTransfer(
-            _wrapped,
+        IORentableHooks(getRentable()).afterOTokenTransfer(
+            getWrapped(),
             from,
             to,
             tokenId
