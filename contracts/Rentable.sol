@@ -286,7 +286,10 @@ contract Rentable is
     ) internal view returns (IERC721ReadOnlyProxy oRentable) {
         oRentable = _getExistingORentable(tokenAddress);
 
-        require(oRentable.ownerOf(tokenId) == user, "The token must be yours");
+        require(
+            IERC721Upgradeable(address(oRentable)).ownerOf(tokenId) == user,
+            "The token must be yours"
+        );
     }
 
     /// @dev Show rental validity
@@ -509,9 +512,8 @@ contract Rentable is
         ) {
             if (_isExpired(tokenAddress, tokenId)) {
                 address currentRentee = oTokenOwner == address(0)
-                    ? IERC721ReadOnlyProxy(_orentables[tokenAddress]).ownerOf(
-                        tokenId
-                    )
+                    ? IERC721Upgradeable(address(_orentables[tokenAddress]))
+                        .ownerOf(tokenId)
                     : oTokenOwner;
                 _wrentables[tokenAddress].burn(tokenId);
                 _postExpireRental(tokenAddress, tokenId, currentRentee);
@@ -703,7 +705,9 @@ contract Rentable is
     ) external payable override whenNotPaused nonReentrant {
         // 1. check token is deposited and available for rental
         IERC721ReadOnlyProxy oRentable = _getExistingORentable(tokenAddress);
-        address payable rentee = payable(oRentable.ownerOf(tokenId));
+        address payable rentee = payable(
+            IERC721Upgradeable(address(oRentable)).ownerOf(tokenId)
+        );
 
         RentableTypes.RentalConditions memory rcs = _rentalConditions[
             tokenAddress

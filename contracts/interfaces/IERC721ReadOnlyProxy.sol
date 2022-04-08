@@ -2,13 +2,10 @@
 
 pragma solidity >=0.8.7;
 
-// Inheritance
-import {IERC721Upgradeable} from "@openzeppelin/contracts-upgradeable/token/ERC721/IERC721Upgradeable.sol";
-
 /// @title ERC721 Proxy Interface
 /// @author Rentable Team <hello@rentable.world>
 /// @notice O/W token interface used by Rentable main contract
-interface IERC721ReadOnlyProxy is IERC721Upgradeable {
+interface IERC721ReadOnlyProxy {
     /* ========== VIEWS ========== */
 
     /// @notice Get wrapped token address
