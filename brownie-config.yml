@@ -1,11 +1,14 @@
-dotenv: .env
+# dotenv: .env
 # automatically fetch contract sources from Etherscan
 autofetch_sources: True
 
 # path remapping to support imports from GitHub/NPM
 compiler:
   solc:
-    #version: 0.8.7
+    version: 0.8.7
+    optimizer:
+      enabled: true
+      runs: 1000
     remappings:
       - "@openzeppelin/contracts-upgradeable/=lib/openzeppelin-contracts-upgradeable/contracts/"
       - "@openzeppelin/contracts/=lib/openzeppelin-contracts/contracts/"

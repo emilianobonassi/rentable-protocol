@@ -1,5 +1,4 @@
 import click
-from pathlib import Path
 
 from brownie import (
     accounts,
@@ -7,14 +6,15 @@ from brownie import (
     ORentable,
     WRentable,
     TestNFT,
-    ImmutableProxyAdmin,
     ImmutableAdminTransparentUpgradeableProxy,
     ImmutableAdminUpgradeableBeaconProxy,
     history,
     project,
 )
 
-UpgradeableBeacon = project.load("./lib/openzeppelin-contracts").UpgradeableBeacon
+oz = project.load("./lib/openzeppelin-contracts")
+UpgradeableBeacon = oz.UpgradeableBeacon
+ProxyAdmin = oz.ProxyAdmin
 
 
 def main():
@@ -28,7 +28,7 @@ def main():
     testNFT = TestNFT.deploy({"from": dev})
     eth = "0x0000000000000000000000000000000000000000"
 
-    proxyAdmin = ImmutableProxyAdmin.deploy({"from": dev})
+    proxyAdmin = ProxyAdmin.deploy({"from": dev})
     rLogic = Rentable.deploy(governance, operator, {"from": dev})
     rLogic.SCRAM()
 
