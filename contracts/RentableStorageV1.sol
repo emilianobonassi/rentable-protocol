@@ -33,9 +33,9 @@ contract RentableStorageV1 {
 
     // token address => o/w token mapping
     // slither-disable-next-line naming-convention,similar-names
-    mapping(address => IERC721ReadOnlyProxy) internal _wrentables;
+    mapping(address => address) internal _orentables;
     // slither-disable-next-line naming-convention,similar-names
-    mapping(address => IERC721ReadOnlyProxy) internal _orentables;
+    mapping(address => address) internal _wrentables;
 
     // token address => library mapping, for custom logic execution
     // slither-disable-next-line naming-convention

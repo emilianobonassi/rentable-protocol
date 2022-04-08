@@ -55,7 +55,7 @@ contract Rentable is
     /// @param tokenAddress wrapped token address
     modifier onlyOToken(address tokenAddress) {
         require(
-            msg.sender == address(_orentables[tokenAddress]),
+            msg.sender == _orentables[tokenAddress],
             "Only proper ORentables allowed"
         );
         _;
@@ -65,7 +65,7 @@ contract Rentable is
     /// @param tokenAddress wrapped token address
     modifier onlyWToken(address tokenAddress) {
         require(
-            msg.sender == address(_wrentables[tokenAddress]),
+            msg.sender == _wrentables[tokenAddress],
             "Only proper WRentables allowed"
         );
         _;
@@ -75,8 +75,8 @@ contract Rentable is
     /// @param tokenAddress wrapped token address
     modifier onlyOTokenOrWToken(address tokenAddress) {
         require(
-            msg.sender == address(_orentables[tokenAddress]) ||
-                msg.sender == address(_wrentables[tokenAddress]),
+            msg.sender == _orentables[tokenAddress] ||
+                msg.sender == _wrentables[tokenAddress],
             "Only w/o tokens are authorized"
         );
         _;
@@ -143,9 +143,9 @@ contract Rentable is
         external
         onlyGovernance
     {
-        address previousValue = address(_orentables[tokenAddress]);
+        address previousValue = _orentables[tokenAddress];
 
-        _orentables[tokenAddress] = IERC721ReadOnlyProxy(oRentable);
+        _orentables[tokenAddress] = oRentable;
 
         emit ORentableChanged(tokenAddress, previousValue, oRentable);
     }
@@ -157,9 +157,9 @@ contract Rentable is
         external
         onlyGovernance
     {
-        address previousValue = address(_wrentables[tokenAddress]);
+        address previousValue = _wrentables[tokenAddress];
 
-        _wrentables[tokenAddress] = IERC721ReadOnlyProxy(wRentable);
+        _wrentables[tokenAddress] = wRentable;
 
         emit WRentableChanged(tokenAddress, previousValue, wRentable);
     }
@@ -265,13 +265,10 @@ contract Rentable is
     function _getExistingORentable(address tokenAddress)
         internal
         view
-        returns (IERC721ReadOnlyProxy oRentable)
+        returns (address oRentable)
     {
         oRentable = _orentables[tokenAddress];
-        require(
-            address(oRentable) != address(0),
-            "Token currently not supported"
-        );
+        require(oRentable != address(0), "Token currently not supported");
     }
 
     /// @dev Get and check (reverting) otoken user ownership
@@ -283,11 +280,11 @@ contract Rentable is
         address tokenAddress,
         uint256 tokenId,
         address user
-    ) internal view returns (IERC721ReadOnlyProxy oRentable) {
+    ) internal view returns (address oRentable) {
         oRentable = _getExistingORentable(tokenAddress);
 
         require(
-            IERC721Upgradeable(address(oRentable)).ownerOf(tokenId) == user,
+            IERC721Upgradeable(oRentable).ownerOf(tokenId) == user,
             "The token must be yours"
         );
     }
@@ -322,7 +319,7 @@ contract Rentable is
         view
         returns (address)
     {
-        return address(_orentables[tokenAddress]);
+        return _orentables[tokenAddress];
     }
 
     /// @notice Get WToken address associated to the specific wrapped token
@@ -333,7 +330,7 @@ contract Rentable is
         view
         returns (address)
     {
-        return address(_wrentables[tokenAddress]);
+        return _wrentables[tokenAddress];
     }
 
     /// @notice Show current protocol fee
@@ -414,14 +411,14 @@ contract Rentable is
         uint256 tokenId,
         address to
     ) internal {
-        IERC721ReadOnlyProxy oRentable = _getExistingORentable(tokenAddress);
+        address oRentable = _getExistingORentable(tokenAddress);
 
         require(
             IERC721Upgradeable(tokenAddress).ownerOf(tokenId) == address(this),
             "Token not deposited"
         );
 
-        oRentable.mint(to, tokenId);
+        IERC721ReadOnlyProxy(oRentable).mint(to, tokenId);
 
         _postDeposit(tokenAddress, tokenId, to);
 
@@ -506,16 +503,15 @@ contract Rentable is
     ) internal returns (bool currentlyRented) {
         if (
             skipExistCheck ||
-            IERC721ExistExtension(address(_wrentables[tokenAddress])).exists(
-                tokenId
-            )
+            IERC721ExistExtension(_wrentables[tokenAddress]).exists(tokenId)
         ) {
             if (_isExpired(tokenAddress, tokenId)) {
                 address currentRentee = oTokenOwner == address(0)
-                    ? IERC721Upgradeable(address(_orentables[tokenAddress]))
-                        .ownerOf(tokenId)
+                    ? IERC721Upgradeable(_orentables[tokenAddress]).ownerOf(
+                        tokenId
+                    )
                     : oTokenOwner;
-                _wrentables[tokenAddress].burn(tokenId);
+                IERC721ReadOnlyProxy(_wrentables[tokenAddress]).burn(tokenId);
                 _postExpireRental(tokenAddress, tokenId, currentRentee);
                 emit RentEnds(tokenAddress, tokenId);
             } else {
@@ -654,7 +650,7 @@ contract Rentable is
         nonReentrant
     {
         address user = msg.sender;
-        IERC721ReadOnlyProxy oRentable = _getExistingORentableCheckOwnership(
+        address oRentable = _getExistingORentableCheckOwnership(
             tokenAddress,
             tokenId,
             user
@@ -667,7 +663,7 @@ contract Rentable is
 
         _deleteRentalConditions(tokenAddress, tokenId);
 
-        oRentable.burn(tokenId);
+        IERC721ReadOnlyProxy(oRentable).burn(tokenId);
 
         IERC721Upgradeable(tokenAddress).safeTransferFrom(
             address(this),
@@ -704,9 +700,9 @@ contract Rentable is
         uint256 duration
     ) external payable override whenNotPaused nonReentrant {
         // 1. check token is deposited and available for rental
-        IERC721ReadOnlyProxy oRentable = _getExistingORentable(tokenAddress);
+        address oRentable = _getExistingORentable(tokenAddress);
         address payable rentee = payable(
-            IERC721Upgradeable(address(oRentable)).ownerOf(tokenId)
+            IERC721Upgradeable(oRentable).ownerOf(tokenId)
         );
 
         RentableTypes.RentalConditions memory rcs = _rentalConditions[
@@ -733,7 +729,10 @@ contract Rentable is
         // 3. mint wtoken
         uint256 eta = block.timestamp + duration;
         _expiresAt[tokenAddress][tokenId] = eta;
-        _wrentables[tokenAddress].mint(msg.sender, tokenId);
+        IERC721ReadOnlyProxy(_wrentables[tokenAddress]).mint(
+            msg.sender,
+            tokenId
+        );
 
         // 4. fees distribution
         // gross due amount
