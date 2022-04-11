@@ -13,15 +13,6 @@ contract RentableTest is SharedSetup {
         // Test event emitted
         vm.expectEmit(true, true, true, true);
         emit Deposit(user, address(testNFT), tokenId);
-
-        // Test dummy library
-        bytes memory expectedData = abi.encodeWithSelector(
-            ICollectionLibrary.postDeposit.selector,
-            address(testNFT),
-            tokenId,
-            user
-        );
-        vm.expectCall(address(dummyLib), expectedData);
     }
 
     function postAssertsTestDeposit(uint256 tokenId) internal {

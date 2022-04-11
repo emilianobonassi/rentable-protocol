@@ -5,6 +5,8 @@ import {SharedSetup} from "./SharedSetup.t.sol";
 
 import {ICollectionLibrary} from "../collections/ICollectionLibrary.sol";
 
+import {RentableTypes} from "./../RentableTypes.sol";
+
 contract RentableLibrary is SharedSetup {
     function testTransferWToken() public payable executeByUser(user) {
         _prepareRent();
@@ -68,5 +70,52 @@ contract RentableLibrary is SharedSetup {
         orentable.transferFrom(user, receiver, tokenId);
 
         assertEq(orentable.ownerOf(tokenId), receiver);
+    }
+
+    function testPostList() public executeByUser(user) {
+        prepareTestDeposit();
+
+        bytes memory expectedData = abi.encodeWithSelector(
+            ICollectionLibrary.postDeposit.selector,
+            address(testNFT),
+            tokenId,
+            user
+        );
+        vm.expectCall(address(dummyLib), expectedData);
+
+        testNFT.safeTransferFrom(user, address(rentable), tokenId);
+    }
+
+    function testPostDeposit() public executeByUser(user) {
+        maxTimeDuration = 10 days;
+        pricePerSecond = 0.001 ether;
+
+        renter = getNewAddress();
+        prepareTestDeposit();
+
+        bytes memory expectedData = abi.encodeWithSelector(
+            ICollectionLibrary.postList.selector,
+            address(testNFT),
+            tokenId,
+            user,
+            maxTimeDuration,
+            pricePerSecond
+        );
+        vm.expectCall(address(dummyLib), expectedData);
+
+        testNFT.safeTransferFrom(
+            user,
+            address(rentable),
+            tokenId,
+            abi.encode(
+                RentableTypes.RentalConditions({
+                    maxTimeDuration: maxTimeDuration,
+                    pricePerSecond: pricePerSecond,
+                    paymentTokenId: paymentTokenId,
+                    paymentTokenAddress: paymentTokenAddress,
+                    privateRenter: privateRenter
+                })
+            )
+        );
     }
 }
