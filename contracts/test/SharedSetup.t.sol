@@ -9,8 +9,6 @@ import {TestHelper} from "./TestHelper.t.sol";
 import {TestNFT} from "./mocks/TestNFT.sol";
 import {WETH} from "solmate/tokens/WETH.sol";
 import {DummyERC1155} from "./mocks/DummyERC1155.sol";
-
-import {ICollectionLibrary} from "../collections/ICollectionLibrary.sol";
 import {IRentable} from "../interfaces/IRentable.sol";
 import {BaseTokenInitializable} from "../tokenization/BaseTokenInitializable.sol";
 
@@ -66,6 +64,10 @@ abstract contract SharedSetup is DSTest, TestHelper, IRentableEvents {
 
     address[] privateRenters;
     address privateRenter;
+
+    uint256 pricePerSecond;
+    uint256 maxTimeDuration;
+    address renter;
 
     modifier paymentTokensCoverage() {
         for (uint256 i = 0; i < paymentTokens.length; i++) {
@@ -242,5 +244,32 @@ abstract contract SharedSetup is DSTest, TestHelper, IRentableEvents {
         } else {
             return _user.balance;
         }
+    }
+
+    function _prepareRent() internal {
+        _prepareRent(getNewAddress());
+    }
+
+    function _prepareRent(address _renter) internal {
+        maxTimeDuration = 10 days;
+        pricePerSecond = 0.001 ether;
+
+        renter = _renter;
+        prepareTestDeposit();
+
+        testNFT.safeTransferFrom(
+            user,
+            address(rentable),
+            tokenId,
+            abi.encode(
+                RentableTypes.RentalConditions({
+                    maxTimeDuration: maxTimeDuration,
+                    pricePerSecond: pricePerSecond,
+                    paymentTokenId: paymentTokenId,
+                    paymentTokenAddress: paymentTokenAddress,
+                    privateRenter: privateRenter
+                })
+            )
+        );
     }
 }

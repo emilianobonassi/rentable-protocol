@@ -8,37 +8,6 @@ import {IRentable} from "../interfaces/IRentable.sol";
 import {RentableTypes} from "./../RentableTypes.sol";
 
 contract RentableRent is SharedSetup {
-    uint256 pricePerSecond;
-    uint256 maxTimeDuration;
-    address renter;
-
-    function _prepareRent() internal {
-        _prepareRent(getNewAddress());
-    }
-
-    function _prepareRent(address _renter) internal {
-        maxTimeDuration = 10 days;
-        pricePerSecond = 0.001 ether;
-
-        renter = _renter;
-        prepareTestDeposit();
-
-        testNFT.safeTransferFrom(
-            user,
-            address(rentable),
-            tokenId,
-            abi.encode(
-                RentableTypes.RentalConditions({
-                    maxTimeDuration: maxTimeDuration,
-                    pricePerSecond: pricePerSecond,
-                    paymentTokenId: paymentTokenId,
-                    paymentTokenAddress: paymentTokenAddress,
-                    privateRenter: privateRenter
-                })
-            )
-        );
-    }
-
     function testRent()
         public
         payable
@@ -306,66 +275,6 @@ contract RentableRent is SharedSetup {
             tokenId,
             rentalDuration
         );
-    }
-
-    function testTransferWToken() public payable executeByUser(user) {
-        _prepareRent();
-
-        uint256 rentalDuration = 80;
-        uint256 value = 0.08 ether;
-
-        switchUser(renter);
-        depositAndApprove(renter, value, paymentTokenAddress, paymentTokenId);
-
-        rentable.rent{value: paymentTokenAddress == address(0) ? value : 0}(
-            address(testNFT),
-            tokenId,
-            rentalDuration
-        );
-
-        bytes memory expectedData = abi.encodeWithSelector(
-            ICollectionLibrary.postWTokenTransfer.selector,
-            address(testNFT),
-            tokenId,
-            renter,
-            vm.addr(9)
-        );
-        vm.expectCall(address(dummyLib), expectedData);
-
-        wrentable.transferFrom(renter, vm.addr(9), tokenId);
-
-        assertEq(wrentable.ownerOf(tokenId), vm.addr(9));
-    }
-
-    function testTransferOToken() public payable executeByUser(user) {
-        _prepareRent();
-
-        uint256 rentalDuration = 80;
-        uint256 value = 0.08 ether;
-
-        switchUser(renter);
-        depositAndApprove(renter, value, paymentTokenAddress, paymentTokenId);
-
-        rentable.rent{value: paymentTokenAddress == address(0) ? value : 0}(
-            address(testNFT),
-            tokenId,
-            rentalDuration
-        );
-        switchUser(user);
-
-        bytes memory expectedData = abi.encodeWithSelector(
-            ICollectionLibrary.postOTokenTransfer.selector,
-            address(testNFT),
-            tokenId,
-            user,
-            vm.addr(9),
-            true
-        );
-        vm.expectCall(address(dummyLib), expectedData);
-
-        orentable.transferFrom(user, vm.addr(9), tokenId);
-
-        assertEq(orentable.ownerOf(tokenId), vm.addr(9));
     }
 
     function testRentAfterExpire() public payable executeByUser(user) {
