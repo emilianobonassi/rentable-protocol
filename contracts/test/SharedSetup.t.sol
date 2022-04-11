@@ -196,30 +196,30 @@ abstract contract SharedSetup is DSTest, TestHelper, IRentableEvents {
     function depositAndApprove(
         address _user,
         uint256 value,
-        address paymentToken,
-        uint256 paymentTokenId
+        address _paymentToken,
+        uint256 _paymentTokenId
     ) public {
         vm.deal(_user, value);
-        if (paymentToken == address(weth)) {
+        if (_paymentToken == address(weth)) {
             weth.deposit{value: value}();
             weth.approve(address(rentable), ~uint256(0));
-        } else if (paymentToken == address(dummy1155)) {
-            dummy1155.deposit{value: value}(paymentTokenId);
+        } else if (_paymentToken == address(dummy1155)) {
+            dummy1155.deposit{value: value}(_paymentTokenId);
             dummy1155.setApprovalForAll(address(rentable), true);
         }
     }
 
     function getBalance(
-        address user,
+        address _user,
         address paymentToken,
         uint256 _paymentTokenId
     ) public view returns (uint256) {
         if (paymentToken == address(weth)) {
-            return weth.balanceOf(user);
+            return weth.balanceOf(_user);
         } else if (paymentToken == address(dummy1155)) {
-            return dummy1155.balanceOf(user, _paymentTokenId);
+            return dummy1155.balanceOf(_user, _paymentTokenId);
         } else {
-            return user.balance;
+            return _user.balance;
         }
     }
 }
