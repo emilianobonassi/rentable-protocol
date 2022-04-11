@@ -1,15 +1,8 @@
 // SPDX-License-Identifier: AGPL-3.0-only
 pragma solidity >=0.8.7;
-
-import {TestLand} from "./mocks/TestLand.sol";
-
-import {SharedSetup, Vm} from "./SharedSetup.t.sol";
+import {SharedSetup} from "./SharedSetup.t.sol";
 
 import {IERC721Upgradeable} from "@openzeppelin/contracts-upgradeable/token/ERC721/IERC721Upgradeable.sol";
-
-import {DecentralandCollectionLibrary} from "../collections/decentraland/DecentralandCollectionLibrary.sol";
-import {ICollectionLibrary} from "../collections/ICollectionLibrary.sol";
-import {IRentable} from "../interfaces/IRentable.sol";
 
 import {RentableTypes} from "./../RentableTypes.sol";
 
@@ -19,7 +12,7 @@ import {WRentable} from "../tokenization/WRentable.sol";
 contract RentableSCRAM is SharedSetup {
     function testSCRAM() public executeByUser(user) {
         //2 subscription, SCRAM, operation stopped, safe withdrawal by governance
-        address renter = vm.addr(10);
+        address renter = getNewAddress();
 
         uint256 tokenId = 123;
         testNFT.mint(user, tokenId);
