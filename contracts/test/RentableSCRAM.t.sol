@@ -64,34 +64,72 @@ contract RentableSCRAM is SharedSetup {
 
         rentable.SCRAM();
 
-        switchUser(user);
-
         assert(rentable.paused());
 
+        switchUser(user);
+
+        // onERC721Received
+        vm.expectRevert(bytes("Pausable: paused"));
+        rentable.onERC721Received(address(0), address(0), 0, "");
+
+        // withdraw
         vm.expectRevert(bytes("Pausable: paused"));
         rentable.withdraw(address(testNFT), tokenId);
 
+        // createOrUpdateRentalConditions
+        vm.expectRevert(bytes("Pausable: paused"));
+        rentable.createOrUpdateRentalConditions(address(testNFT), tokenId, rc);
+
+        // deleteRentalConditions
+        vm.expectRevert(bytes("Pausable: paused"));
+        rentable.deleteRentalConditions(address(testNFT), tokenId);
+
+        // rent
+        depositAndApprove(renter, value, address(0), 0);
+        switchUser(renter);
+        vm.expectRevert(bytes("Pausable: paused"));
+        rentable.rent{value: value}(address(testNFT), tokenId, rentalDuration);
+
+        switchUser(user);
+        // expireRental
         vm.expectRevert(bytes("Pausable: paused"));
         rentable.expireRental(address(testNFT), 1);
+        /*
+        proxyCall
+        */
 
+        // expireRentals
+        address[] memory addressesToExpire = new address[](1);
+        addressesToExpire[0] = address(testNFT);
+        uint256[] memory idsToExpire = new uint256[](1);
+        idsToExpire[0] = 1;
+        vm.expectRevert(bytes("Pausable: paused"));
+        rentable.expireRentals(addressesToExpire, idsToExpire);
+
+        // afterOTokenTransfer
+        vm.expectRevert(bytes("Pausable: paused"));
+        rentable.afterOTokenTransfer(address(0), address(0), address(0), 0);
         vm.expectRevert(bytes("Pausable: paused"));
         orentable.transferFrom(user, operator, tokenId);
 
+        // afterWTokenTransfer
         switchUser(renter);
-
+        vm.expectRevert(bytes("Pausable: paused"));
+        rentable.afterWTokenTransfer(address(0), address(0), address(0), 0);
         vm.expectRevert(bytes("Pausable: paused"));
         wrentable.transferFrom(renter, user, tokenId);
 
+        // proxyCall
+        vm.expectRevert(bytes("Pausable: paused"));
+        rentable.proxyCall(address(0), 0, "", "");
+
         switchUser(user);
 
-        vm.expectRevert(bytes("Pausable: paused"));
-        testNFT.safeTransferFrom(user, address(rentable), tokenId + 2);
         /*
-    Test safe withdrawal by governance
-    1. exec emergency operation
-    2. withdrawal single
-    3. withdrawal batch
-    */
+            Test safe withdrawal by governance
+            1. exec emergency operation
+            3. withdrawal batch
+        */
 
         switchUser(governance);
 
