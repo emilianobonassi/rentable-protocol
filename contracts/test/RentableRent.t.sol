@@ -131,8 +131,6 @@ contract RentableRent is SharedSetup {
 
         vm.warp(block.timestamp + rentalDuration + 1);
 
-        assertEq(wrentable.ownerOf(tokenId), address(0));
-
         // Test event emitted
         vm.expectEmit(true, true, true, true);
         emit RentEnds(address(testNFT), tokenId);
@@ -173,6 +171,28 @@ contract RentableRent is SharedSetup {
             tokenId,
             rentalDuration
         );
+    }
+
+    function testWTokenExpiresOnRentalEnd() public payable executeByUser(user) {
+        _prepareRent();
+
+        uint256 rentalDuration = 80;
+        uint256 value = 0.08 ether;
+
+        switchUser(renter);
+        depositAndApprove(renter, value, paymentTokenAddress, paymentTokenId);
+
+        rentable.rent{value: paymentTokenAddress == address(0) ? value : 0}(
+            address(testNFT),
+            tokenId,
+            rentalDuration
+        );
+
+        assertEq(wrentable.ownerOf(tokenId), renter);
+
+        vm.warp(block.timestamp + rentalDuration + 1);
+
+        assertEq(wrentable.ownerOf(tokenId), address(0));
     }
 
     function testCannotWithdrawOnRent() public payable executeByUser(user) {
