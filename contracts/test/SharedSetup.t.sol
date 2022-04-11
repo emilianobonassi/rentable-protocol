@@ -62,11 +62,21 @@ abstract contract SharedSetup is DSTest, TestHelper, IRentableEvents {
     uint256 paymentTokenId = 0;
     uint256 tokenId = 123;
 
-    address[] paymentTokens = new address[](3);
+    address[] paymentTokens;
+
+    address[] privateRenters;
+    address privateRenter;
 
     modifier paymentTokensCoverage() {
         for (uint256 i = 0; i < paymentTokens.length; i++) {
             paymentTokenAddress = paymentTokens[i];
+            _;
+        }
+    }
+
+    modifier privateRentersCoverage() {
+        for (uint256 i = 0; i < privateRenters.length; i++) {
+            privateRenter = privateRenters[i];
             _;
         }
     }
@@ -171,6 +181,12 @@ abstract contract SharedSetup is DSTest, TestHelper, IRentableEvents {
         paymentTokens.push(address(0));
         paymentTokens.push(address(weth));
         paymentTokens.push(address(dummy1155));
+    }
+
+    function initPrivateRenters() internal {
+        privateRenters = new address[](2);
+        privateRenters.push(address(0));
+        privateRenters.push(getNewAddress());
     }
 
     function prepareTestDeposit() internal {
