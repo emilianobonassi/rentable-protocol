@@ -15,13 +15,19 @@ import {ERC721ReadOnlyProxyInitializable} from "./mocks/ERC721ReadOnlyProxyIniti
 import {ImmutableAdminUpgradeableBeaconProxy} from "../upgradability/ImmutableAdminUpgradeableBeaconProxy.sol";
 import {ProxyAdmin} from "@openzeppelin/contracts/proxy/transparent/ProxyAdmin.sol";
 import {UpgradeableBeacon} from "@openzeppelin/contracts/proxy/beacon/UpgradeableBeacon.sol";
+import {Address} from "@openzeppelin/contracts/utils/Address.sol";
 
 contract RentableWrapper is DSTest, TestHelper {
+    using Address for address;
+
     Vm public constant vm = Vm(HEVM_ADDRESS);
 
     TestNFT testNFT;
 
     address deployer;
+
+    ERC721ReadOnlyProxyInitializable wrapperLogic;
+    string prefix;
 
     function setUp() public virtual {
         deployer = getNewAddress();
@@ -30,49 +36,109 @@ contract RentableWrapper is DSTest, TestHelper {
 
         testNFT = new TestNFT();
 
+        prefix = "z";
+
+        wrapperLogic = new ERC721ReadOnlyProxyInitializable(
+            address(testNFT),
+            prefix
+        );
+
         vm.stopPrank();
     }
 
-    function testWrapper() public virtual executeByUser(deployer) {
-        testNFT.mint(deployer, 123);
+    function testWrapperWrapped() public virtual executeByUser(deployer) {
+        assertEq(wrapperLogic.getWrapped(), address(testNFT));
+    }
 
-        string memory prefix = "z";
-        ERC721ReadOnlyProxyInitializable wrapper = new ERC721ReadOnlyProxyInitializable(
-                address(testNFT),
-                prefix
-            );
-
+    function testWrapperSymbolAndName() public virtual executeByUser(deployer) {
         assertEq(
-            wrapper.symbol(),
+            wrapperLogic.symbol(),
             string(abi.encodePacked(prefix, testNFT.symbol()))
         );
         assertEq(
-            wrapper.name(),
+            wrapperLogic.name(),
             string(abi.encodePacked(prefix, testNFT.name()))
         );
-        assertEq(wrapper.tokenURI(123), testNFT.tokenURI(123));
+    }
 
+    function testWrapperTokenURI() public virtual executeByUser(deployer) {
+        testNFT.mint(deployer, 123);
+
+        assertEq(wrapperLogic.tokenURI(123), testNFT.tokenURI(123));
+    }
+
+    function testWrapperSetMinter() public {
+        address minter = getNewAddress();
+
+        vm.expectRevert(bytes("Ownable: caller is not the owner"));
+        wrapperLogic.setMinter(minter);
+
+        switchUser(deployer);
+        wrapperLogic.setMinter(minter);
+
+        assertEq(wrapperLogic.getMinter(), minter);
+    }
+
+    function testWrapperMint() public executeByUser(deployer) {
         address minter = getNewAddress();
         address user = getNewAddress();
-        wrapper.setMinter(minter);
-        assertEq(wrapper.getMinter(), minter);
+
+        wrapperLogic.setMinter(minter);
+
+        uint256 tokenId = 123;
+        switchUser(minter);
+        wrapperLogic.mint(user, tokenId);
+
+        assertEq(wrapperLogic.ownerOf(tokenId), user);
+
+        address wrongMinter = getNewAddress();
+        switchUser(wrongMinter);
+        vm.expectRevert(bytes("Only minter"));
+        wrapperLogic.mint(user, tokenId + 1);
+    }
+
+    function testWrapperBurn() public executeByUser(deployer) {
+        address minter = getNewAddress();
+        address user = getNewAddress();
+
+        wrapperLogic.setMinter(minter);
+
+        uint256 tokenId = 123;
+        switchUser(minter);
+        wrapperLogic.mint(user, tokenId);
+
+        address wrongMinter = getNewAddress();
+        switchUser(wrongMinter);
+        vm.expectRevert(bytes("Only minter"));
+        wrapperLogic.burn(tokenId);
 
         switchUser(minter);
-        uint256 tokenId = 50;
-        wrapper.mint(user, tokenId);
+        wrapperLogic.burn(tokenId);
+        vm.expectRevert(bytes("ERC721: owner query for nonexistent token"));
+        wrapperLogic.ownerOf(tokenId);
+    }
 
-        switchUser(user);
+    function testProxyCallView() public {
+        string memory callResult = abi.decode(
+            Address.functionCallWithValue(
+                address(wrapperLogic),
+                abi.encodeWithSelector(testNFT.simpleView.selector),
+                0,
+                ""
+            ),
+            (string)
+        );
+        assertEq(callResult, testNFT.simpleView());
+    }
 
-        vm.expectRevert(bytes("Only minter"));
-        wrapper.mint(user, tokenId + 1);
-
-        vm.expectRevert(bytes("Only minter"));
-        wrapper.burn(tokenId);
-
-        switchUser(minter);
-        wrapper.burn(tokenId);
-        vm.expectRevert("ERC721: owner query for nonexistent token");
-        wrapper.ownerOf(tokenId);
+    function testProxyCallCannotMutate() public {
+        vm.expectRevert();
+        Address.functionCallWithValue(
+            address(wrapperLogic),
+            abi.encodeWithSelector(testNFT.simpleMutate.selector),
+            0,
+            ""
+        );
     }
 
     function testWrapperProxyInit() public {

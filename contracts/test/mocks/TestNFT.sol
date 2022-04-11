@@ -33,4 +33,14 @@ contract TestNFT is ERC721URIStorage {
     }
 
     function donate() external payable {}
+
+    function simpleView() external view returns (string memory) {
+        return "simple";
+    }
+
+    uint256 public count;
+
+    function simpleMutate() external {
+        count++;
+    }
 }
