@@ -84,8 +84,6 @@ contract RentableTest is SharedSetup {
     }
 
     function testDeposit() public executeByUser(user) {
-        uint256 tokenId = 123;
-
         prepareTestDeposit();
 
         testNFT.safeTransferFrom(user, address(rentable), tokenId);
@@ -100,7 +98,6 @@ contract RentableTest is SharedSetup {
         address paymentTokenAddress = address(0);
         uint256 paymentTokenId = 0;
         address[2] memory privateRenters = [address(0), vm.addr(5)];
-        uint256 tokenId = 123;
 
         for (uint256 j = 0; j < 2; j++) {
             address privateRenter = privateRenters[j];
@@ -148,8 +145,6 @@ contract RentableTest is SharedSetup {
     }
 
     function testWithdraw() public executeByUser(user) {
-        uint256 tokenId = 123;
-
         prepareTestDeposit();
         testNFT.safeTransferFrom(user, address(rentable), tokenId);
 
@@ -172,7 +167,6 @@ contract RentableTest is SharedSetup {
         address paymentTokenAddress = address(0);
         uint256 paymentTokenId = 0;
         address[2] memory privateRenters = [address(0), vm.addr(5)];
-        uint256 tokenId = 123;
 
         for (uint256 j = 0; j < 2; j++) {
             address privateRenter = privateRenters[j];
@@ -224,7 +218,6 @@ contract RentableTest is SharedSetup {
         address paymentTokenAddress = address(0);
         uint256 paymentTokenId = 0;
         address[2] memory privateRenters = [address(0), vm.addr(5)];
-        uint256 tokenId = 123;
 
         for (uint256 j = 0; j < 2; j++) {
             address privateRenter = privateRenters[j];
@@ -267,7 +260,6 @@ contract RentableTest is SharedSetup {
         address paymentTokenAddress = address(0);
         uint256 paymentTokenId = 0;
         address[2] memory privateRenters = [address(0), vm.addr(5)];
-        uint256 tokenId = 123;
 
         for (uint256 j = 0; j < 2; j++) {
             address privateRenter = privateRenters[j];
