@@ -263,11 +263,17 @@ contract BaseSecurityInitializable is Initializable, PausableUpgradeable {
         uint256 value,
         bytes memory data,
         bool isDelegateCall
-    ) external payable whenPaused onlyGovernance {
+    )
+        external
+        payable
+        whenPaused
+        onlyGovernance
+        returns (bytes memory returnData)
+    {
         if (isDelegateCall) {
-            to.functionDelegateCall(data, "");
+            returnData = to.functionDelegateCall(data, "");
         } else {
-            to.functionCallWithValue(data, value, "");
+            returnData = to.functionCallWithValue(data, value, "");
         }
     }
 
