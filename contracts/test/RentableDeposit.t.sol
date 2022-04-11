@@ -264,67 +264,63 @@ contract RentableTest is SharedSetup {
         );
     }
 
+    function _testRentalConditions(
+        uint256 _tokenId,
+        address _paymentTokenAddress,
+        uint256 _paymentTokenId,
+        uint256 _maxTimeDuration,
+        uint256 _pricePerSecond,
+        address _privateRenter
+    ) internal {
+        preAssertsUpdateRentalConditions(
+            _tokenId,
+            _paymentTokenAddress,
+            _paymentTokenId,
+            _maxTimeDuration,
+            _pricePerSecond,
+            _privateRenter
+        );
+
+        RentableTypes.RentalConditions memory rc = RentableTypes
+            .RentalConditions({
+                paymentTokenAddress: _paymentTokenAddress,
+                paymentTokenId: _paymentTokenId,
+                maxTimeDuration: _maxTimeDuration,
+                pricePerSecond: _pricePerSecond,
+                privateRenter: _privateRenter
+            });
+
+        rentable.createOrUpdateRentalConditions(address(testNFT), _tokenId, rc);
+
+        postAssertsUpdateRentalConditions(
+            _tokenId,
+            _paymentTokenAddress,
+            _paymentTokenId,
+            _maxTimeDuration,
+            _pricePerSecond,
+            _privateRenter
+        );
+    }
+
     function testUpdateRentalConditions() public executeByUser(user) {
-        uint256 maxTimeDuration = 1000;
+        uint256 maxTimeDuration = 10 days;
         uint256 pricePerSecond = 0.001 ether;
 
-        address paymentTokenAddress = address(0);
-        uint256 paymentTokenId = 0;
-        address[2] memory privateRenters = [address(0), vm.addr(5)];
+        prepareTestDeposit();
 
-        for (uint256 j = 0; j < 2; j++) {
-            address privateRenter = privateRenters[j];
-            prepareTestDeposit();
+        testNFT.safeTransferFrom(user, address(rentable), tokenId);
 
-            testNFT.safeTransferFrom(user, address(rentable), tokenId);
+        preAssertsUpdateRentalConditions(
+            tokenId,
+            paymentTokenAddress,
+            paymentTokenId,
+            maxTimeDuration,
+            pricePerSecond,
+            privateRenter
+        );
 
-            preAssertsUpdateRentalConditions(
-                tokenId,
-                paymentTokenAddress,
-                paymentTokenId,
-                maxTimeDuration,
-                pricePerSecond,
-                privateRenter
-            );
-
-            RentableTypes.RentalConditions memory rc = RentableTypes
-                .RentalConditions({
-                    paymentTokenAddress: paymentTokenAddress,
-                    paymentTokenId: paymentTokenId,
-                    maxTimeDuration: maxTimeDuration,
-                    pricePerSecond: pricePerSecond,
-                    privateRenter: privateRenter
-                });
-
-            rentable.createOrUpdateRentalConditions(
-                address(testNFT),
-                tokenId,
-                rc
-            );
-
-            postAssertsUpdateRentalConditions(
-                tokenId,
-                paymentTokenAddress,
-                paymentTokenId,
-                maxTimeDuration,
-                pricePerSecond,
-                privateRenter
-            );
-
-            //Change rental conditions
-            maxTimeDuration = 1000;
-            pricePerSecond = 0.001 ether;
-
-            preAssertsUpdateRentalConditions(
-                tokenId,
-                paymentTokenAddress,
-                paymentTokenId,
-                maxTimeDuration,
-                pricePerSecond,
-                privateRenter
-            );
-
-            rc = RentableTypes.RentalConditions({
+        RentableTypes.RentalConditions memory rc = RentableTypes
+            .RentalConditions({
                 paymentTokenAddress: paymentTokenAddress,
                 paymentTokenId: paymentTokenId,
                 maxTimeDuration: maxTimeDuration,
@@ -332,22 +328,58 @@ contract RentableTest is SharedSetup {
                 privateRenter: privateRenter
             });
 
-            rentable.createOrUpdateRentalConditions(
-                address(testNFT),
-                tokenId,
-                rc
-            );
+        rentable.createOrUpdateRentalConditions(address(testNFT), tokenId, rc);
 
-            postAssertsUpdateRentalConditions(
-                tokenId,
-                paymentTokenAddress,
-                paymentTokenId,
-                maxTimeDuration,
-                pricePerSecond,
-                privateRenter
-            );
+        //Change rental conditions field by field
 
-            tokenId++;
-        }
+        // PaymentTokenAddress
+        _testRentalConditions(
+            tokenId,
+            address(dummy1155),
+            paymentTokenId,
+            maxTimeDuration,
+            pricePerSecond,
+            privateRenter
+        );
+
+        // PaymentTokenId
+        _testRentalConditions(
+            tokenId,
+            paymentTokenAddress,
+            paymentTokenId + 1,
+            maxTimeDuration,
+            pricePerSecond,
+            privateRenter
+        );
+
+        // MaxDuration
+        _testRentalConditions(
+            tokenId,
+            paymentTokenAddress,
+            paymentTokenId,
+            maxTimeDuration + 2 days,
+            pricePerSecond,
+            privateRenter
+        );
+
+        // PricePerSecond
+        _testRentalConditions(
+            tokenId,
+            paymentTokenAddress,
+            paymentTokenId,
+            maxTimeDuration,
+            pricePerSecond + 0.05 ether,
+            privateRenter
+        );
+
+        // PrivateRenter
+        _testRentalConditions(
+            tokenId,
+            paymentTokenAddress,
+            paymentTokenId,
+            maxTimeDuration,
+            pricePerSecond,
+            getNewAddress()
+        );
     }
 }
