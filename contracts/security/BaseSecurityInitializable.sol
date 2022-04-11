@@ -8,6 +8,7 @@ import {PausableUpgradeable} from "@openzeppelin/contracts-upgradeable/security/
 import {Initializable} from "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol";
 
 // Libraries
+import {Address} from "@openzeppelin/contracts/utils/Address.sol";
 import {SafeERC20Upgradeable} from "@openzeppelin/contracts-upgradeable/token/ERC20/utils/SafeERC20Upgradeable.sol";
 
 // References
@@ -28,6 +29,8 @@ contract BaseSecurityInitializable is Initializable, PausableUpgradeable {
     ///  5. only _governance execute any tx in emergency
 
     /* ========== LIBRARIES ========== */
+    using Address for address;
+
     using SafeERC20Upgradeable for IERC20Upgradeable;
 
     /* ========== CONSTANTS ========== */
@@ -255,45 +258,17 @@ contract BaseSecurityInitializable is Initializable, PausableUpgradeable {
     /// @param value ether value
     /// @param data function+data
     /// @param isDelegateCall true will execute a delegate call, false a call
-    /// @param txGas gas to forward
-    // slither-disable-next-line assembly
     function emergencyExecute(
         address to,
         uint256 value,
         bytes memory data,
-        bool isDelegateCall,
-        uint256 txGas
+        bool isDelegateCall
     ) external payable whenPaused onlyGovernance {
-        bool success;
-
         if (isDelegateCall) {
-            // solhint-disable-next-line no-inline-assembly
-            assembly {
-                success := delegatecall(
-                    txGas,
-                    to,
-                    add(data, 0x20),
-                    mload(data),
-                    0,
-                    0
-                )
-            }
+            to.functionDelegateCall(data, "");
         } else {
-            // solhint-disable-next-line no-inline-assembly
-            assembly {
-                success := call(
-                    txGas,
-                    to,
-                    value,
-                    add(data, 0x20),
-                    mload(data),
-                    0,
-                    0
-                )
-            }
+            to.functionCallWithValue(data, value, "");
         }
-
-        require(success, "failed execution");
     }
 
     // Reserved storage space to allow for layout changes in the future.

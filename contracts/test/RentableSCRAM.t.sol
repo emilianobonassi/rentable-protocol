@@ -135,8 +135,7 @@ contract RentableSCRAM is SharedSetup {
                 governance,
                 tokenId
             ),
-            false,
-            200000
+            false
         );
 
         assertEq(testNFT.ownerOf(tokenId), governance);

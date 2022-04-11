@@ -17,6 +17,8 @@ import {BaseSecurityInitializable} from "../security/BaseSecurityInitializable.s
 
 import {DummyBaseSecurityInitializable} from "./mocks/DummyBaseSecurityInitializable.sol";
 
+import {DummyEmergencyHelper} from "./mocks/DummyEmergencyHelper.sol";
+
 import {Address} from "@openzeppelin/contracts/utils/Address.sol";
 
 import {IERC721Upgradeable} from "@openzeppelin/contracts-upgradeable/token/ERC721/IERC721Upgradeable.sol";
@@ -142,7 +144,7 @@ contract BaseSecurityInitializableTest is DSTest, TestHelper, stdCheats {
         bsi.emergencyBatchWithdrawERC1155(getNewAddress(), ids);
 
         vm.expectRevert(bytes("Pausable: not paused"));
-        bsi.emergencyExecute(getNewAddress(), 0, "", true, 0);
+        bsi.emergencyExecute(getNewAddress(), 0, "", true);
     }
 
     function testEmergencyETHWithdraw() public {
@@ -224,5 +226,38 @@ contract BaseSecurityInitializableTest is DSTest, TestHelper, stdCheats {
         bsi.emergencyBatchWithdrawERC1155(address(token), ids);
 
         assertEq(token.balanceOf(governance, tokenId), qty);
+    }
+
+    function testEmergencyExecution() public {
+        DummyEmergencyHelper helper = new DummyEmergencyHelper();
+
+        switchUser(governance);
+        bsi.SCRAM();
+
+        uint256 fieldValue = 3;
+
+        bsi.emergencyExecute(
+            address(helper),
+            0,
+            abi.encodeWithSelector(helper.setField.selector, (fieldValue)),
+            false
+        );
+
+        assertEq(helper.field(), fieldValue);
+
+        bsi.emergencyExecute(
+            address(helper),
+            0,
+            abi.encodeWithSelector(helper.revertOnDelegate.selector),
+            false
+        );
+
+        vm.expectRevert(bytes("Called via delegate"));
+        bsi.emergencyExecute(
+            address(helper),
+            0,
+            abi.encodeWithSelector(helper.revertOnDelegate.selector),
+            true
+        );
     }
 }
