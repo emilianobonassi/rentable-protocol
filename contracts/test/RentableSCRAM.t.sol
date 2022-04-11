@@ -3,7 +3,7 @@ pragma solidity >=0.8.7;
 
 import {TestLand} from "./mocks/TestLand.sol";
 
-import {SharedSetup, CheatCodes} from "./SharedSetup.t.sol";
+import {SharedSetup, Vm} from "./SharedSetup.t.sol";
 
 import {IERC721Upgradeable} from "@openzeppelin/contracts-upgradeable/token/ERC721/IERC721Upgradeable.sol";
 
@@ -18,9 +18,9 @@ import {WRentable} from "../tokenization/WRentable.sol";
 
 contract RentableSCRAM is SharedSetup {
     function testSCRAM() public {
-        cheats.startPrank(user);
+        vm.startPrank(user);
         //2 subscription, SCRAM, operation stopped, safe withdrawal by governance
-        address renter = cheats.addr(10);
+        address renter = vm.addr(10);
 
         uint256 tokenId = 123;
         testNFT.mint(user, tokenId);
@@ -58,40 +58,40 @@ contract RentableSCRAM is SharedSetup {
 
         depositAndApprove(renter, value, address(0), 0);
 
-        cheats.stopPrank();
-        cheats.startPrank(renter);
+        vm.stopPrank();
+        vm.startPrank(renter);
         rentable.rent{value: value}(address(testNFT), tokenId, rentalDuration);
-        cheats.stopPrank();
+        vm.stopPrank();
 
-        cheats.startPrank(operator);
+        vm.startPrank(operator);
 
         rentable.SCRAM();
 
-        cheats.stopPrank();
+        vm.stopPrank();
 
-        cheats.startPrank(user);
+        vm.startPrank(user);
 
         assert(rentable.paused());
 
-        cheats.expectRevert(bytes("Pausable: paused"));
+        vm.expectRevert(bytes("Pausable: paused"));
         rentable.withdraw(address(testNFT), tokenId);
 
-        cheats.expectRevert(bytes("Pausable: paused"));
+        vm.expectRevert(bytes("Pausable: paused"));
         rentable.expireRental(address(testNFT), 1);
 
-        cheats.expectRevert(bytes("Pausable: paused"));
+        vm.expectRevert(bytes("Pausable: paused"));
         orentable.transferFrom(user, operator, tokenId);
 
-        cheats.stopPrank();
-        cheats.startPrank(renter);
-        cheats.expectRevert(bytes("Pausable: paused"));
+        vm.stopPrank();
+        vm.startPrank(renter);
+        vm.expectRevert(bytes("Pausable: paused"));
         wrentable.transferFrom(renter, user, tokenId);
-        cheats.stopPrank();
+        vm.stopPrank();
 
-        cheats.startPrank(user);
-        cheats.expectRevert(bytes("Pausable: paused"));
+        vm.startPrank(user);
+        vm.expectRevert(bytes("Pausable: paused"));
         testNFT.safeTransferFrom(user, address(rentable), tokenId + 2);
-        cheats.stopPrank();
+        vm.stopPrank();
         /*
     Test safe withdrawal by governance
     1. exec emergency operation
@@ -99,7 +99,7 @@ contract RentableSCRAM is SharedSetup {
     3. withdrawal batch
     */
 
-        cheats.startPrank(governance);
+        vm.startPrank(governance);
         rentable.emergencyExecute(
             address(testNFT),
             0,
@@ -112,15 +112,15 @@ contract RentableSCRAM is SharedSetup {
             false,
             200000
         );
-        cheats.stopPrank();
+        vm.stopPrank();
 
         assertEq(testNFT.ownerOf(tokenId), governance);
 
-        cheats.startPrank(governance);
+        vm.startPrank(governance);
         uint256[] memory tokenIds = new uint256[](1);
         tokenIds[0] = tokenId + 1;
         rentable.emergencyBatchWithdrawERC721(address(testNFT), tokenIds, true);
         assertEq(testNFT.ownerOf(tokenId + 1), governance);
-        cheats.stopPrank();
+        vm.stopPrank();
     }
 }

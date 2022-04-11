@@ -2,6 +2,7 @@
 pragma solidity >=0.8.7;
 
 import {DSTest} from "ds-test/test.sol";
+import {Vm} from "forge-std/Vm.sol";
 
 import {TestNFT} from "./mocks/TestNFT.sol";
 import {WETH} from "solmate/tokens/WETH.sol";
@@ -27,33 +28,8 @@ import {ProxyAdmin} from "@openzeppelin/contracts/proxy/transparent/ProxyAdmin.s
 
 import {UpgradeableBeacon} from "@openzeppelin/contracts/proxy/beacon/UpgradeableBeacon.sol";
 
-interface CheatCodes {
-    function prank(address) external;
-
-    function addr(uint256) external returns (address);
-
-    function startPrank(address) external;
-
-    function stopPrank() external;
-
-    function expectEmit(
-        bool checkTopic1,
-        bool checkTopic2,
-        bool checkTopic3,
-        bool checkData
-    ) external;
-
-    function expectCall(address where, bytes calldata data) external;
-
-    function expectRevert(bytes calldata) external;
-
-    function warp(uint256) external;
-
-    function deal(address who, uint256 newBalance) external;
-}
-
 abstract contract SharedSetup is DSTest, IRentableEvents {
-    CheatCodes cheats = CheatCodes(HEVM_ADDRESS);
+    Vm public constant vm = Vm(HEVM_ADDRESS);
 
     address user;
 
@@ -81,12 +57,12 @@ abstract contract SharedSetup is DSTest, IRentableEvents {
     WRentable wrentableLogic;
 
     function setUp() public virtual {
-        governance = cheats.addr(1);
-        operator = cheats.addr(2);
-        feeCollector = payable(cheats.addr(3));
-        user = cheats.addr(4);
+        governance = vm.addr(1);
+        operator = vm.addr(2);
+        feeCollector = payable(vm.addr(3));
+        user = vm.addr(4);
 
-        cheats.startPrank(governance);
+        vm.startPrank(governance);
 
         dummyLib = new DummyCollectionLibrary();
 
@@ -170,7 +146,7 @@ abstract contract SharedSetup is DSTest, IRentableEvents {
 
         rentable.setLibrary(address(testNFT), address(dummyLib));
 
-        cheats.stopPrank();
+        vm.stopPrank();
     }
 
     function prepareTestDeposit(uint256 tokenId) internal {
@@ -183,7 +159,7 @@ abstract contract SharedSetup is DSTest, IRentableEvents {
         address paymentToken,
         uint256 paymentTokenId
     ) public {
-        cheats.deal(_user, value);
+        vm.deal(_user, value);
         if (paymentToken == address(weth)) {
             weth.deposit{value: value}();
             weth.approve(address(rentable), ~uint256(0));

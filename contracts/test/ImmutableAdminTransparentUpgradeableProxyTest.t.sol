@@ -2,7 +2,7 @@
 pragma solidity >=0.8.7;
 
 import {DSTest} from "ds-test/test.sol";
-import {CheatCodes} from "./SharedSetup.t.sol";
+import {Vm} from "forge-std/Vm.sol";
 
 import {TestImplLogicV1} from "./mocks/TestImplLogicV1.sol";
 import {TestImplLogicV2} from "./mocks/TestImplLogicV2.sol";
@@ -10,7 +10,7 @@ import {ImmutableAdminTransparentUpgradeableProxy} from "../upgradability/Immuta
 import {ProxyAdmin, TransparentUpgradeableProxy} from "@openzeppelin/contracts/proxy/transparent/ProxyAdmin.sol";
 
 contract ImmutableAdminTransparentUpgradeableProxyTest is DSTest {
-    CheatCodes cheats = CheatCodes(HEVM_ADDRESS);
+    Vm public constant vm = Vm(HEVM_ADDRESS);
 
     uint256 initialTestNumber;
 
@@ -21,9 +21,9 @@ contract ImmutableAdminTransparentUpgradeableProxyTest is DSTest {
     address owner;
 
     function setUp() public {
-        owner = cheats.addr(1);
+        owner = vm.addr(1);
 
-        cheats.startPrank(owner);
+        vm.startPrank(owner);
 
         // Deploy logic
         logicV1 = new TestImplLogicV1();
@@ -48,7 +48,7 @@ contract ImmutableAdminTransparentUpgradeableProxyTest is DSTest {
             _data
         );
 
-        cheats.stopPrank();
+        vm.stopPrank();
     }
 
     function testProxySetup() public {
@@ -63,16 +63,16 @@ contract ImmutableAdminTransparentUpgradeableProxyTest is DSTest {
         );
 
         // only owner can transfer ownership
-        address anotherUser = cheats.addr(2);
-        cheats.startPrank(anotherUser);
-        cheats.expectRevert(bytes("Ownable: caller is not the owner"));
+        address anotherUser = vm.addr(2);
+        vm.startPrank(anotherUser);
+        vm.expectRevert(bytes("Ownable: caller is not the owner"));
         proxyAdmin.transferOwnership(anotherUser);
-        cheats.stopPrank();
+        vm.stopPrank();
 
-        cheats.startPrank(owner);
+        vm.startPrank(owner);
         proxyAdmin.transferOwnership(anotherUser);
         assertEq(proxyAdmin.owner(), anotherUser);
-        cheats.stopPrank();
+        vm.stopPrank();
 
         // proxy implementation is the v1
         assertEq(
@@ -96,22 +96,22 @@ contract ImmutableAdminTransparentUpgradeableProxyTest is DSTest {
 
         // change implementation to the proxy
         // only proxyadmin can
-        address anotherUser = cheats.addr(2);
-        cheats.startPrank(anotherUser);
-        cheats.expectRevert(bytes(""));
+        address anotherUser = vm.addr(2);
+        vm.startPrank(anotherUser);
+        vm.expectRevert(bytes(""));
         proxy.upgradeTo(address(logicV2));
-        cheats.stopPrank();
+        vm.stopPrank();
 
         // upgrade as proxyadmin
-        cheats.startPrank(owner);
+        vm.startPrank(owner);
         proxyAdmin.upgrade(
             TransparentUpgradeableProxy(payable(address(proxy))),
             address(logicV2)
         );
-        cheats.stopPrank();
+        vm.stopPrank();
 
         // check is still initialized
-        cheats.expectRevert(
+        vm.expectRevert(
             bytes("Initializable: contract is already initialized")
         );
         TestImplLogicV2(address(proxy)).init(5);

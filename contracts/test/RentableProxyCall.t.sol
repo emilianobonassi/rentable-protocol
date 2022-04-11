@@ -4,7 +4,7 @@ pragma solidity >=0.8.7;
 import {OTestNFT} from "./mocks/OTestNFT.sol";
 import {TestNFT} from "./mocks/TestNFT.sol";
 
-import {SharedSetup, CheatCodes} from "./SharedSetup.t.sol";
+import {SharedSetup} from "./SharedSetup.t.sol";
 
 import {IRentable} from "../interfaces/IRentable.sol";
 
@@ -16,21 +16,21 @@ contract RentableProxyCall is SharedSetup {
     function setUp() public override {
         super.setUp();
 
-        cheats.startPrank(governance);
+        vm.startPrank(governance);
         oTestNFT = new OTestNFT(
             address(testNFT),
             governance,
             address(rentable)
         );
-        cheats.stopPrank();
+        vm.stopPrank();
     }
 
     function testProxyCall() public {
-        address user1 = cheats.addr(1);
+        address user1 = vm.addr(1);
 
-        cheats.startPrank(user1);
+        vm.startPrank(user1);
 
-        cheats.expectRevert(bytes("Only w/o tokens are authorized"));
+        vm.expectRevert(bytes("Only w/o tokens are authorized"));
 
         rentable.proxyCall(
             address(testNFT),
@@ -39,46 +39,46 @@ contract RentableProxyCall is SharedSetup {
             abi.encode(user1)
         );
 
-        cheats.expectRevert(bytes("Only w/o tokens are authorized"));
+        vm.expectRevert(bytes("Only w/o tokens are authorized"));
         oTestNFT.proxiedBalanceOf(user1);
-        cheats.stopPrank();
+        vm.stopPrank();
 
-        cheats.startPrank(governance);
+        vm.startPrank(governance);
         rentable.setORentable(address(testNFT), address(oTestNFT));
-        cheats.stopPrank();
+        vm.stopPrank();
 
-        cheats.startPrank(user1);
-        cheats.expectRevert(bytes("Proxy call unauthorized"));
+        vm.startPrank(user1);
+        vm.expectRevert(bytes("Proxy call unauthorized"));
         oTestNFT.proxiedBalanceOf(user1);
-        cheats.stopPrank();
+        vm.stopPrank();
 
-        cheats.startPrank(governance);
+        vm.startPrank(governance);
         rentable.enableProxyCall(
             address(oTestNFT),
             testNFT.balanceOf.selector,
             true
         );
-        cheats.stopPrank();
+        vm.stopPrank();
 
-        cheats.startPrank(user1);
+        vm.startPrank(user1);
         oTestNFT.proxiedBalanceOf(user1);
-        cheats.stopPrank();
+        vm.stopPrank();
 
-        cheats.startPrank(governance);
+        vm.startPrank(governance);
         rentable.setORentable(address(testNFT), address(0));
-        cheats.stopPrank();
+        vm.stopPrank();
 
-        cheats.startPrank(user1);
-        cheats.expectRevert(bytes("Only w/o tokens are authorized"));
+        vm.startPrank(user1);
+        vm.expectRevert(bytes("Only w/o tokens are authorized"));
         oTestNFT.proxiedBalanceOf(user1);
-        cheats.stopPrank();
+        vm.stopPrank();
 
-        cheats.startPrank(governance);
+        vm.startPrank(governance);
         rentable.setWRentable(address(testNFT), address(oTestNFT));
-        cheats.stopPrank();
+        vm.stopPrank();
 
-        cheats.startPrank(user1);
+        vm.startPrank(user1);
         oTestNFT.proxiedBalanceOf(user1);
-        cheats.stopPrank();
+        vm.stopPrank();
     }
 }

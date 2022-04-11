@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: AGPL-3.0-only
 pragma solidity >=0.8.7;
 
-import {SharedSetup, CheatCodes} from "./SharedSetup.t.sol";
+import {SharedSetup} from "./SharedSetup.t.sol";
 
 import {ICollectionLibrary} from "../collections/ICollectionLibrary.sol";
 import {IRentable} from "../interfaces/IRentable.sol";
@@ -11,7 +11,7 @@ import {RentableTypes} from "./../RentableTypes.sol";
 contract RentableTest is SharedSetup {
     function preAssertsTestDeposit(uint256 tokenId) internal {
         // Test event emitted
-        cheats.expectEmit(true, true, true, true);
+        vm.expectEmit(true, true, true, true);
         emit Deposit(user, address(testNFT), tokenId);
 
         // Test dummy library
@@ -21,7 +21,7 @@ contract RentableTest is SharedSetup {
             tokenId,
             user
         );
-        cheats.expectCall(address(dummyLib), expectedData);
+        vm.expectCall(address(dummyLib), expectedData);
     }
 
     function postAssertsTestDeposit(uint256 tokenId) internal {
@@ -41,7 +41,7 @@ contract RentableTest is SharedSetup {
         address privateRenter
     ) internal {
         // Test event emitted
-        cheats.expectEmit(true, true, true, true);
+        vm.expectEmit(true, true, true, true);
 
         emit UpdateRentalConditions(
             address(testNFT),
@@ -61,7 +61,7 @@ contract RentableTest is SharedSetup {
             maxTimeDuration,
             pricePerSecond
         );
-        cheats.expectCall(address(dummyLib), expectedData);
+        vm.expectCall(address(dummyLib), expectedData);
     }
 
     function postAssertsUpdateRentalConditions(
@@ -84,7 +84,7 @@ contract RentableTest is SharedSetup {
     }
 
     function testDeposit() public {
-        cheats.startPrank(user);
+        vm.startPrank(user);
 
         uint256 tokenId = 123;
 
@@ -94,18 +94,18 @@ contract RentableTest is SharedSetup {
 
         postAssertsTestDeposit(tokenId);
 
-        cheats.stopPrank();
+        vm.stopPrank();
     }
 
     function testDepositAndList() public {
-        cheats.startPrank(user);
+        vm.startPrank(user);
 
         uint256 maxTimeDuration = 1000;
         uint256 pricePerSecond = 0.001 ether;
 
         address paymentTokenAddress = address(0);
         uint256 paymentTokenId = 0;
-        address[2] memory privateRenters = [address(0), cheats.addr(5)];
+        address[2] memory privateRenters = [address(0), vm.addr(5)];
         uint256 tokenId = 123;
 
         for (uint256 j = 0; j < 2; j++) {
@@ -152,40 +152,40 @@ contract RentableTest is SharedSetup {
             tokenId++;
         }
 
-        cheats.stopPrank();
+        vm.stopPrank();
     }
 
     function testWithdraw() public {
-        cheats.startPrank(user);
+        vm.startPrank(user);
 
         uint256 tokenId = 123;
 
         prepareTestDeposit(tokenId);
         testNFT.safeTransferFrom(user, address(rentable), tokenId);
 
-        cheats.expectEmit(true, true, true, true);
+        vm.expectEmit(true, true, true, true);
         emit Withdraw(address(testNFT), tokenId);
 
         rentable.withdraw(address(testNFT), tokenId);
 
-        cheats.expectRevert(bytes("ERC721: owner query for nonexistent token"));
+        vm.expectRevert(bytes("ERC721: owner query for nonexistent token"));
 
         orentable.ownerOf(tokenId);
 
         assertEq(testNFT.ownerOf(tokenId), user);
 
-        cheats.stopPrank();
+        vm.stopPrank();
     }
 
     function testCreateRentalConditions() public {
-        cheats.startPrank(user);
+        vm.startPrank(user);
 
         uint256 maxTimeDuration = 1000;
         uint256 pricePerSecond = 0.001 ether;
 
         address paymentTokenAddress = address(0);
         uint256 paymentTokenId = 0;
-        address[2] memory privateRenters = [address(0), cheats.addr(5)];
+        address[2] memory privateRenters = [address(0), vm.addr(5)];
         uint256 tokenId = 123;
 
         for (uint256 j = 0; j < 2; j++) {
@@ -230,18 +230,18 @@ contract RentableTest is SharedSetup {
             tokenId++;
         }
 
-        cheats.stopPrank();
+        vm.stopPrank();
     }
 
     function testDeleteRentalConditions() public {
-        cheats.startPrank(user);
+        vm.startPrank(user);
 
         uint256 maxTimeDuration = 1000;
         uint256 pricePerSecond = 0.001 ether;
 
         address paymentTokenAddress = address(0);
         uint256 paymentTokenId = 0;
-        address[2] memory privateRenters = [address(0), cheats.addr(5)];
+        address[2] memory privateRenters = [address(0), vm.addr(5)];
         uint256 tokenId = 123;
 
         for (uint256 j = 0; j < 2; j++) {
@@ -277,18 +277,18 @@ contract RentableTest is SharedSetup {
             tokenId++;
         }
 
-        cheats.stopPrank();
+        vm.stopPrank();
     }
 
     function testUpdateRentalConditions() public {
-        cheats.startPrank(user);
+        vm.startPrank(user);
 
         uint256 maxTimeDuration = 1000;
         uint256 pricePerSecond = 0.001 ether;
 
         address paymentTokenAddress = address(0);
         uint256 paymentTokenId = 0;
-        address[2] memory privateRenters = [address(0), cheats.addr(5)];
+        address[2] memory privateRenters = [address(0), vm.addr(5)];
         uint256 tokenId = 123;
 
         for (uint256 j = 0; j < 2; j++) {
@@ -369,6 +369,6 @@ contract RentableTest is SharedSetup {
             tokenId++;
         }
 
-        cheats.stopPrank();
+        vm.stopPrank();
     }
 }

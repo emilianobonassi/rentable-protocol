@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: AGPL-3.0-only
 pragma solidity >=0.8.7;
 
-import {SharedSetup, CheatCodes} from "./SharedSetup.t.sol";
+import {SharedSetup} from "./SharedSetup.t.sol";
 
 import {ICollectionLibrary} from "../collections/ICollectionLibrary.sol";
 import {IRentable} from "../interfaces/IRentable.sol";
@@ -27,12 +27,12 @@ contract RentableRent is SharedSetup {
     }
 
     function testRent() public payable {
-        cheats.startPrank(user);
+        vm.startPrank(user);
 
         uint256 maxTimeDuration = 1000;
         uint256 pricePerSecond = 0.001 ether;
 
-        address renter = cheats.addr(5);
+        address renter = vm.addr(5);
         address privateRenter = address(0);
         prepareTestDeposit(tokenId);
         //1tx
@@ -55,7 +55,7 @@ contract RentableRent is SharedSetup {
         uint256 value = 0.08 ether;
 
         // Test event emitted
-        cheats.expectEmit(true, true, true, true);
+        vm.expectEmit(true, true, true, true);
 
         emit Rent(
             user,
@@ -67,8 +67,8 @@ contract RentableRent is SharedSetup {
             block.timestamp + rentalDuration
         );
 
-        cheats.stopPrank();
-        cheats.startPrank(renter);
+        vm.stopPrank();
+        vm.startPrank(renter);
         depositAndApprove(renter, value, paymentTokenAddress, paymentTokenId);
 
         uint256 preBalanceUser = getBalance(
@@ -93,8 +93,8 @@ contract RentableRent is SharedSetup {
             rentalDuration
         );
 
-        cheats.stopPrank();
-        cheats.startPrank(user);
+        vm.stopPrank();
+        vm.startPrank(user);
 
         uint256 postBalanceUser = getBalance(
             user,
@@ -132,26 +132,26 @@ contract RentableRent is SharedSetup {
 
         assertEq(wrentable.ownerOf(tokenId), renter);
 
-        cheats.warp(block.timestamp + rentalDuration + 1);
+        vm.warp(block.timestamp + rentalDuration + 1);
 
         assertEq(wrentable.ownerOf(tokenId), address(0));
 
         // Test event emitted
-        cheats.expectEmit(true, true, true, true);
+        vm.expectEmit(true, true, true, true);
         emit RentEnds(address(testNFT), tokenId);
 
         rentable.expireRental(address(testNFT), tokenId);
 
-        cheats.stopPrank();
+        vm.stopPrank();
     }
 
     function testRentPrivate() public payable {
-        cheats.startPrank(user);
+        vm.startPrank(user);
 
         uint256 maxTimeDuration = 1000;
         uint256 pricePerSecond = 0.001 ether;
 
-        address renter = cheats.addr(5);
+        address renter = vm.addr(5);
         address privateRenter = renter;
 
         prepareTestDeposit(tokenId);
@@ -175,8 +175,8 @@ contract RentableRent is SharedSetup {
         uint256 rentalDuration = 80;
         uint256 value = 0.08 ether;
 
-        cheats.stopPrank();
-        cheats.startPrank(renter);
+        vm.stopPrank();
+        vm.startPrank(renter);
         depositAndApprove(renter, value, paymentTokenAddress, paymentTokenId);
 
         uint256 preBalanceUser = getBalance(
@@ -195,26 +195,26 @@ contract RentableRent is SharedSetup {
             paymentTokenId
         );
 
-        cheats.stopPrank();
-        cheats.startPrank(cheats.addr(8));
+        vm.stopPrank();
+        vm.startPrank(vm.addr(8));
         depositAndApprove(
-            cheats.addr(8),
+            vm.addr(8),
             value,
             paymentTokenAddress,
             paymentTokenId
         );
-        cheats.expectRevert(bytes("Rental reserved for another user"));
+        vm.expectRevert(bytes("Rental reserved for another user"));
         rentable.rent{value: paymentTokenAddress == address(0) ? value : 0}(
             address(testNFT),
             tokenId,
             rentalDuration
         );
 
-        cheats.stopPrank();
-        cheats.startPrank(renter);
+        vm.stopPrank();
+        vm.startPrank(renter);
 
         // Test event emitted
-        cheats.expectEmit(true, true, true, true);
+        vm.expectEmit(true, true, true, true);
 
         emit Rent(
             user,
@@ -232,8 +232,8 @@ contract RentableRent is SharedSetup {
             rentalDuration
         );
 
-        cheats.stopPrank();
-        cheats.startPrank(user);
+        vm.stopPrank();
+        vm.startPrank(user);
 
         uint256 postBalanceUser = getBalance(
             user,
@@ -271,26 +271,26 @@ contract RentableRent is SharedSetup {
 
         assertEq(wrentable.ownerOf(tokenId), renter);
 
-        cheats.warp(block.timestamp + rentalDuration + 1);
+        vm.warp(block.timestamp + rentalDuration + 1);
 
         assertEq(wrentable.ownerOf(tokenId), address(0));
 
         // Test event emitted
-        cheats.expectEmit(true, true, true, true);
+        vm.expectEmit(true, true, true, true);
         emit RentEnds(address(testNFT), tokenId);
 
         rentable.expireRental(address(testNFT), tokenId);
 
-        cheats.stopPrank();
+        vm.stopPrank();
     }
 
     function testCannotWithdrawOnRent() public payable {
-        cheats.startPrank(user);
+        vm.startPrank(user);
 
         uint256 maxTimeDuration = 1000;
         uint256 pricePerSecond = 0.001 ether;
 
-        address renter = cheats.addr(5);
+        address renter = vm.addr(5);
         address privateRenter = address(0);
 
         prepareTestDeposit(tokenId);
@@ -314,8 +314,8 @@ contract RentableRent is SharedSetup {
         uint256 rentalDuration = 80;
         uint256 value = 0.08 ether;
 
-        cheats.stopPrank();
-        cheats.startPrank(renter);
+        vm.stopPrank();
+        vm.startPrank(renter);
         depositAndApprove(renter, value, paymentTokenAddress, paymentTokenId);
 
         rentable.rent{value: paymentTokenAddress == address(0) ? value : 0}(
@@ -324,28 +324,28 @@ contract RentableRent is SharedSetup {
             rentalDuration
         );
 
-        cheats.stopPrank();
-        cheats.startPrank(user);
+        vm.stopPrank();
+        vm.startPrank(user);
 
-        cheats.expectRevert(bytes("Current rent still pending"));
+        vm.expectRevert(bytes("Current rent still pending"));
         rentable.withdraw(address(testNFT), tokenId);
 
-        cheats.warp(block.timestamp + rentalDuration + 1);
+        vm.warp(block.timestamp + rentalDuration + 1);
 
         rentable.withdraw(address(testNFT), tokenId);
 
         tokenId++;
 
-        cheats.stopPrank();
+        vm.stopPrank();
     }
 
     function testTransferWToken() public payable {
-        cheats.startPrank(user);
+        vm.startPrank(user);
 
         uint256 maxTimeDuration = 1000;
         uint256 pricePerSecond = 0.001 ether;
 
-        address renter = cheats.addr(5);
+        address renter = vm.addr(5);
         address privateRenter = address(0);
 
         prepareTestDeposit(tokenId);
@@ -369,8 +369,8 @@ contract RentableRent is SharedSetup {
         uint256 rentalDuration = 80;
         uint256 value = 0.08 ether;
 
-        cheats.stopPrank();
-        cheats.startPrank(renter);
+        vm.stopPrank();
+        vm.startPrank(renter);
         depositAndApprove(renter, value, paymentTokenAddress, paymentTokenId);
 
         rentable.rent{value: paymentTokenAddress == address(0) ? value : 0}(
@@ -384,27 +384,27 @@ contract RentableRent is SharedSetup {
             address(testNFT),
             tokenId,
             renter,
-            cheats.addr(9)
+            vm.addr(9)
         );
-        cheats.expectCall(address(dummyLib), expectedData);
+        vm.expectCall(address(dummyLib), expectedData);
 
-        wrentable.transferFrom(renter, cheats.addr(9), tokenId);
+        wrentable.transferFrom(renter, vm.addr(9), tokenId);
 
-        assertEq(wrentable.ownerOf(tokenId), cheats.addr(9));
+        assertEq(wrentable.ownerOf(tokenId), vm.addr(9));
 
-        cheats.stopPrank();
-        cheats.startPrank(user);
+        vm.stopPrank();
+        vm.startPrank(user);
 
-        cheats.stopPrank();
+        vm.stopPrank();
     }
 
     function testTransferOToken() public payable {
-        cheats.startPrank(user);
+        vm.startPrank(user);
 
         uint256 maxTimeDuration = 1000;
         uint256 pricePerSecond = 0.001 ether;
 
-        address renter = cheats.addr(5);
+        address renter = vm.addr(5);
         address privateRenter = address(0);
         prepareTestDeposit(tokenId);
 
@@ -427,8 +427,8 @@ contract RentableRent is SharedSetup {
         uint256 rentalDuration = 80;
         uint256 value = 0.08 ether;
 
-        cheats.stopPrank();
-        cheats.startPrank(renter);
+        vm.stopPrank();
+        vm.startPrank(renter);
         depositAndApprove(renter, value, paymentTokenAddress, paymentTokenId);
 
         rentable.rent{value: paymentTokenAddress == address(0) ? value : 0}(
@@ -437,33 +437,33 @@ contract RentableRent is SharedSetup {
             rentalDuration
         );
 
-        cheats.stopPrank();
-        cheats.startPrank(user);
+        vm.stopPrank();
+        vm.startPrank(user);
 
         bytes memory expectedData = abi.encodeWithSelector(
             ICollectionLibrary.postOTokenTransfer.selector,
             address(testNFT),
             tokenId,
             user,
-            cheats.addr(9),
+            vm.addr(9),
             true
         );
-        cheats.expectCall(address(dummyLib), expectedData);
+        vm.expectCall(address(dummyLib), expectedData);
 
-        orentable.transferFrom(user, cheats.addr(9), tokenId);
+        orentable.transferFrom(user, vm.addr(9), tokenId);
 
-        assertEq(orentable.ownerOf(tokenId), cheats.addr(9));
+        assertEq(orentable.ownerOf(tokenId), vm.addr(9));
 
-        cheats.stopPrank();
+        vm.stopPrank();
     }
 
     function testRentAfterExpire() public payable {
-        cheats.startPrank(user);
+        vm.startPrank(user);
 
         uint256 maxTimeDuration = 1000;
         uint256 pricePerSecond = 0.001 ether;
 
-        address renter = cheats.addr(5);
+        address renter = vm.addr(5);
         address privateRenter = address(0);
 
         prepareTestDeposit(tokenId);
@@ -487,8 +487,8 @@ contract RentableRent is SharedSetup {
         uint256 rentalDuration = 80;
         uint256 value = 0.08 ether;
 
-        cheats.stopPrank();
-        cheats.startPrank(renter);
+        vm.stopPrank();
+        vm.startPrank(renter);
         depositAndApprove(renter, value, paymentTokenAddress, paymentTokenId);
 
         rentable.rent{value: paymentTokenAddress == address(0) ? value : 0}(
@@ -497,7 +497,7 @@ contract RentableRent is SharedSetup {
             rentalDuration
         );
 
-        cheats.warp(block.timestamp + rentalDuration + 1);
+        vm.warp(block.timestamp + rentalDuration + 1);
 
         depositAndApprove(renter, value, paymentTokenAddress, paymentTokenId);
 
@@ -507,9 +507,9 @@ contract RentableRent is SharedSetup {
             rentalDuration
         );
 
-        cheats.stopPrank();
-        cheats.startPrank(user);
+        vm.stopPrank();
+        vm.startPrank(user);
 
-        cheats.stopPrank();
+        vm.stopPrank();
     }
 }
