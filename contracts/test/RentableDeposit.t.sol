@@ -91,12 +91,14 @@ contract RentableTest is SharedSetup {
         postAssertsTestDeposit(tokenId);
     }
 
-    function testDepositAndList() public executeByUser(user) {
-        uint256 maxTimeDuration = 1000;
+    function testDepositAndList()
+        public
+        paymentTokensCoverage
+        executeByUser(user)
+    {
+        uint256 maxTimeDuration = 10 days;
         uint256 pricePerSecond = 0.001 ether;
 
-        address paymentTokenAddress = address(0);
-        uint256 paymentTokenId = 0;
         address[2] memory privateRenters = [address(0), vm.addr(5)];
 
         for (uint256 j = 0; j < 2; j++) {
