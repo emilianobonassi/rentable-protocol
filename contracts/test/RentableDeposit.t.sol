@@ -99,7 +99,7 @@ contract RentableTest is SharedSetup {
         uint256 maxTimeDuration = 10 days;
         uint256 pricePerSecond = 0.001 ether;
 
-        address[2] memory privateRenters = [address(0), vm.addr(5)];
+        address[2] memory privateRenters = [address(0), getNewAddress()];
 
         for (uint256 j = 0; j < 2; j++) {
             address privateRenter = privateRenters[j];
