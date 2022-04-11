@@ -716,6 +716,8 @@ contract Rentable is
         );
 
         // 2. validate renter offer with rentee conditions
+        require(duration > 0, "Duration cannot be zero");
+
         require(
             duration <= rcs.maxTimeDuration,
             "Duration greater than conditions"

@@ -250,6 +250,23 @@ contract RentableRent is SharedSetup {
         );
     }
 
+    function testCannotRentForZeroSeconds() public payable executeByUser(user) {
+        _prepareRent();
+
+        uint256 rentalDuration = 0;
+        uint256 value = 0;
+
+        switchUser(renter);
+        depositAndApprove(renter, value, paymentTokenAddress, paymentTokenId);
+
+        vm.expectRevert(bytes("Duration cannot be zero"));
+        rentable.rent{value: paymentTokenAddress == address(0) ? value : 0}(
+            address(testNFT),
+            tokenId,
+            rentalDuration
+        );
+    }
+
     function testTransferWToken() public payable executeByUser(user) {
         _prepareRent();
 
