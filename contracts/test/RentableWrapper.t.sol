@@ -10,6 +10,9 @@ import {Vm} from "forge-std/Vm.sol";
 import {TestHelper} from "./TestHelper.t.sol";
 
 import {ERC721ReadOnlyProxy} from "../tokenization/ERC721ReadOnlyProxy.sol";
+
+import {DummyBaseTokenInitializable} from "./mocks/DummyBaseTokenInitializable.sol";
+
 import {ERC721ReadOnlyProxyInitializable} from "./mocks/ERC721ReadOnlyProxyInitializable.sol";
 
 import {ImmutableAdminUpgradeableBeaconProxy} from "../upgradability/ImmutableAdminUpgradeableBeaconProxy.sol";
@@ -225,5 +228,30 @@ contract RentableWrapper is DSTest, TestHelper {
             bytes("Initializable: contract is already initialized")
         );
         wrapper.initialize(address(t1), "l", deployer);
+    }
+
+    function testBaseTokenSetRentable() public executeByUser(deployer) {
+        address rentable = getNewAddress();
+
+        DummyBaseTokenInitializable baseToken = new DummyBaseTokenInitializable(
+            address(testNFT),
+            deployer,
+            rentable
+        );
+
+        assertEq(baseToken.getRentable(), rentable);
+        assertEq(baseToken.getMinter(), rentable);
+        assertEq(baseToken.owner(), deployer);
+
+        address newRentable = getNewAddress();
+        address anotherUser = getNewAddress();
+
+        switchUser(anotherUser);
+        vm.expectRevert(bytes("Ownable: caller is not the owner"));
+        baseToken.setRentable(newRentable);
+
+        switchUser(deployer);
+        baseToken.setRentable(newRentable);
+        assertEq(baseToken.getRentable(), newRentable);
     }
 }
