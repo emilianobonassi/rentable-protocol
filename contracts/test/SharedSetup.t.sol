@@ -81,6 +81,27 @@ abstract contract SharedSetup is DSTest, TestHelper, IRentableEvents {
         }
     }
 
+    modifier protocolFeeCoverage() {
+        // 0%
+        vm.prank(governance);
+        rentable.setFee(0);
+        _;
+
+        // 2.5%
+        vm.prank(governance);
+        rentable.setFee(250);
+        _;
+
+        // 5%
+        vm.prank(governance);
+        rentable.setFee(500);
+        _;
+
+        // Reset
+        vm.prank(governance);
+        rentable.setFee(0);
+    }
+
     function setUp() public virtual {
         user = getNewAddress();
         governance = getNewAddress();

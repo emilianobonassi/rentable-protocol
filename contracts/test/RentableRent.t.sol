@@ -11,6 +11,7 @@ contract RentableRent is SharedSetup {
     function testRent()
         public
         payable
+        protocolFeeCoverage
         paymentTokensCoverage
         executeByUser(user)
     {
@@ -97,6 +98,8 @@ contract RentableRent is SharedSetup {
 
         uint256 rentPayed = preBalanceRenter - postBalanceRenter;
 
+        assertEq(rentPayed, rentalDuration * pricePerSecond);
+
         assertEq(
             rentable.expiresAt(address(testNFT), tokenId),
             block.timestamp + rentalDuration
@@ -109,7 +112,7 @@ contract RentableRent is SharedSetup {
             totalFeesToPay
         );
 
-        uint256 renteePayout = preBalanceRenter - postBalanceRenter;
+        uint256 renteePayout = rentPayed - totalFeesToPay;
 
         assertEq(postBalanceUser - preBalanceUser, renteePayout);
 
