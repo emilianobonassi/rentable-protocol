@@ -4,12 +4,14 @@ pragma solidity >=0.8.7;
 import {DSTest} from "ds-test/test.sol";
 import {Vm} from "forge-std/Vm.sol";
 
+import {TestHelper} from "./TestHelper.t.sol";
+
 import {TestImplLogicV1} from "./mocks/TestImplLogicV1.sol";
 import {TestImplLogicV2} from "./mocks/TestImplLogicV2.sol";
 import {ImmutableAdminTransparentUpgradeableProxy} from "../upgradability/ImmutableAdminTransparentUpgradeableProxy.sol";
 import {ProxyAdmin, TransparentUpgradeableProxy} from "@openzeppelin/contracts/proxy/transparent/ProxyAdmin.sol";
 
-contract ImmutableAdminTransparentUpgradeableProxyTest is DSTest {
+contract ImmutableAdminTransparentUpgradeableProxyTest is DSTest, TestHelper {
     Vm public constant vm = Vm(HEVM_ADDRESS);
 
     uint256 initialTestNumber;
@@ -64,15 +66,13 @@ contract ImmutableAdminTransparentUpgradeableProxyTest is DSTest {
 
         // only owner can transfer ownership
         address anotherUser = vm.addr(2);
-        vm.startPrank(anotherUser);
+        switchUser(anotherUser);
         vm.expectRevert(bytes("Ownable: caller is not the owner"));
         proxyAdmin.transferOwnership(anotherUser);
-        vm.stopPrank();
 
-        vm.startPrank(owner);
+        switchUser(owner);
         proxyAdmin.transferOwnership(anotherUser);
         assertEq(proxyAdmin.owner(), anotherUser);
-        vm.stopPrank();
 
         // proxy implementation is the v1
         assertEq(
@@ -97,18 +97,16 @@ contract ImmutableAdminTransparentUpgradeableProxyTest is DSTest {
         // change implementation to the proxy
         // only proxyadmin can
         address anotherUser = vm.addr(2);
-        vm.startPrank(anotherUser);
+        switchUser(anotherUser);
         vm.expectRevert(bytes(""));
         proxy.upgradeTo(address(logicV2));
-        vm.stopPrank();
 
         // upgrade as proxyadmin
-        vm.startPrank(owner);
+        switchUser(owner);
         proxyAdmin.upgrade(
             TransparentUpgradeableProxy(payable(address(proxy))),
             address(logicV2)
         );
-        vm.stopPrank();
 
         // check is still initialized
         vm.expectRevert(

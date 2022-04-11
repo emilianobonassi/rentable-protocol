@@ -4,6 +4,8 @@ pragma solidity >=0.8.7;
 import {DSTest} from "ds-test/test.sol";
 import {Vm} from "forge-std/Vm.sol";
 
+import {TestHelper} from "./TestHelper.t.sol";
+
 import {TestNFT} from "./mocks/TestNFT.sol";
 import {WETH} from "solmate/tokens/WETH.sol";
 import {DummyERC1155} from "./mocks/DummyERC1155.sol";
@@ -28,7 +30,7 @@ import {ProxyAdmin} from "@openzeppelin/contracts/proxy/transparent/ProxyAdmin.s
 
 import {UpgradeableBeacon} from "@openzeppelin/contracts/proxy/beacon/UpgradeableBeacon.sol";
 
-abstract contract SharedSetup is DSTest, IRentableEvents {
+abstract contract SharedSetup is DSTest, TestHelper, IRentableEvents {
     Vm public constant vm = Vm(HEVM_ADDRESS);
 
     address user;
@@ -56,11 +58,15 @@ abstract contract SharedSetup is DSTest, IRentableEvents {
     UpgradeableBeacon wbeacon;
     WRentable wrentableLogic;
 
+    address paymentTokenAddress = address(0);
+    uint256 paymentTokenId = 0;
+    uint256 tokenId = 123;
+
     function setUp() public virtual {
-        governance = vm.addr(1);
-        operator = vm.addr(2);
-        feeCollector = payable(vm.addr(3));
-        user = vm.addr(4);
+        user = getNewAddress();
+        governance = getNewAddress();
+        operator = getNewAddress();
+        feeCollector = payable(getNewAddress());
 
         vm.startPrank(governance);
 
@@ -166,6 +172,20 @@ abstract contract SharedSetup is DSTest, IRentableEvents {
         } else if (paymentToken == address(dummy1155)) {
             dummy1155.deposit{value: value}(paymentTokenId);
             dummy1155.setApprovalForAll(address(rentable), true);
+        }
+    }
+
+    function getBalance(
+        address user,
+        address paymentToken,
+        uint256 _paymentTokenId
+    ) public view returns (uint256) {
+        if (paymentToken == address(weth)) {
+            return weth.balanceOf(user);
+        } else if (paymentToken == address(dummy1155)) {
+            return dummy1155.balanceOf(user, _paymentTokenId);
+        } else {
+            return user.balance;
         }
     }
 }

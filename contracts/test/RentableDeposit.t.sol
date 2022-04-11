@@ -83,9 +83,7 @@ contract RentableTest is SharedSetup {
         assertEq(rcs.privateRenter, privateRenter);
     }
 
-    function testDeposit() public {
-        vm.startPrank(user);
-
+    function testDeposit() public executeByUser(user) {
         uint256 tokenId = 123;
 
         prepareTestDeposit(tokenId);
@@ -93,13 +91,9 @@ contract RentableTest is SharedSetup {
         testNFT.safeTransferFrom(user, address(rentable), tokenId);
 
         postAssertsTestDeposit(tokenId);
-
-        vm.stopPrank();
     }
 
-    function testDepositAndList() public {
-        vm.startPrank(user);
-
+    function testDepositAndList() public executeByUser(user) {
         uint256 maxTimeDuration = 1000;
         uint256 pricePerSecond = 0.001 ether;
 
@@ -151,13 +145,9 @@ contract RentableTest is SharedSetup {
 
             tokenId++;
         }
-
-        vm.stopPrank();
     }
 
-    function testWithdraw() public {
-        vm.startPrank(user);
-
+    function testWithdraw() public executeByUser(user) {
         uint256 tokenId = 123;
 
         prepareTestDeposit(tokenId);
@@ -173,13 +163,9 @@ contract RentableTest is SharedSetup {
         orentable.ownerOf(tokenId);
 
         assertEq(testNFT.ownerOf(tokenId), user);
-
-        vm.stopPrank();
     }
 
-    function testCreateRentalConditions() public {
-        vm.startPrank(user);
-
+    function testCreateRentalConditions() public executeByUser(user) {
         uint256 maxTimeDuration = 1000;
         uint256 pricePerSecond = 0.001 ether;
 
@@ -229,13 +215,9 @@ contract RentableTest is SharedSetup {
 
             tokenId++;
         }
-
-        vm.stopPrank();
     }
 
-    function testDeleteRentalConditions() public {
-        vm.startPrank(user);
-
+    function testDeleteRentalConditions() public executeByUser(user) {
         uint256 maxTimeDuration = 1000;
         uint256 pricePerSecond = 0.001 ether;
 
@@ -276,13 +258,9 @@ contract RentableTest is SharedSetup {
 
             tokenId++;
         }
-
-        vm.stopPrank();
     }
 
-    function testUpdateRentalConditions() public {
-        vm.startPrank(user);
-
+    function testUpdateRentalConditions() public executeByUser(user) {
         uint256 maxTimeDuration = 1000;
         uint256 pricePerSecond = 0.001 ether;
 
@@ -368,7 +346,5 @@ contract RentableTest is SharedSetup {
 
             tokenId++;
         }
-
-        vm.stopPrank();
     }
 }

@@ -17,8 +17,7 @@ import {ORentable} from "../tokenization/ORentable.sol";
 import {WRentable} from "../tokenization/WRentable.sol";
 
 contract RentableSCRAM is SharedSetup {
-    function testSCRAM() public {
-        vm.startPrank(user);
+    function testSCRAM() public executeByUser(user) {
         //2 subscription, SCRAM, operation stopped, safe withdrawal by governance
         address renter = vm.addr(10);
 
@@ -58,18 +57,14 @@ contract RentableSCRAM is SharedSetup {
 
         depositAndApprove(renter, value, address(0), 0);
 
-        vm.stopPrank();
-        vm.startPrank(renter);
+        switchUser(renter);
         rentable.rent{value: value}(address(testNFT), tokenId, rentalDuration);
-        vm.stopPrank();
 
-        vm.startPrank(operator);
+        switchUser(operator);
 
         rentable.SCRAM();
 
-        vm.stopPrank();
-
-        vm.startPrank(user);
+        switchUser(user);
 
         assert(rentable.paused());
 
@@ -82,16 +77,15 @@ contract RentableSCRAM is SharedSetup {
         vm.expectRevert(bytes("Pausable: paused"));
         orentable.transferFrom(user, operator, tokenId);
 
-        vm.stopPrank();
-        vm.startPrank(renter);
+        switchUser(renter);
+
         vm.expectRevert(bytes("Pausable: paused"));
         wrentable.transferFrom(renter, user, tokenId);
-        vm.stopPrank();
 
-        vm.startPrank(user);
+        switchUser(user);
+
         vm.expectRevert(bytes("Pausable: paused"));
         testNFT.safeTransferFrom(user, address(rentable), tokenId + 2);
-        vm.stopPrank();
         /*
     Test safe withdrawal by governance
     1. exec emergency operation
@@ -99,7 +93,8 @@ contract RentableSCRAM is SharedSetup {
     3. withdrawal batch
     */
 
-        vm.startPrank(governance);
+        switchUser(governance);
+
         rentable.emergencyExecute(
             address(testNFT),
             0,
@@ -112,15 +107,12 @@ contract RentableSCRAM is SharedSetup {
             false,
             200000
         );
-        vm.stopPrank();
 
         assertEq(testNFT.ownerOf(tokenId), governance);
 
-        vm.startPrank(governance);
         uint256[] memory tokenIds = new uint256[](1);
         tokenIds[0] = tokenId + 1;
         rentable.emergencyBatchWithdrawERC721(address(testNFT), tokenIds, true);
         assertEq(testNFT.ownerOf(tokenId + 1), governance);
-        vm.stopPrank();
     }
 }

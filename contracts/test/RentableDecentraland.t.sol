@@ -64,13 +64,13 @@ contract RentableDecentraland is SharedSetup {
         Transfer to newRenter
         newOwner redeem after expire*/
 
-        address originalOwner = vm.addr(10);
+        address originalOwner = getNewAddress();
         uint256 tokenId = 123;
-        address originalOperator = vm.addr(11);
-        address renter = vm.addr(12);
-        address newRenter = vm.addr(13);
-        address newOwner = vm.addr(14);
-        address offRentableOperator = vm.addr(15);
+        address originalOperator = getNewAddress();
+        address renter = getNewAddress();
+        address newRenter = getNewAddress();
+        address newOwner = getNewAddress();
+        address offRentableOperator = getNewAddress();
 
         vm.startPrank(originalOwner);
 
@@ -111,17 +111,15 @@ contract RentableDecentraland is SharedSetup {
         );
 
         //non-owners cannot change rentals
-        vm.stopPrank();
-        vm.startPrank(newOwner);
+        switchUser(newOwner);
         vm.expectRevert(bytes("User not allowed"));
         ILandRegistry(address(orentable)).setUpdateOperator(
             tokenId,
             offRentableOperator
         );
-        vm.stopPrank();
-        vm.startPrank(originalOwner);
 
         //Transfer ownership not rented should change operator
+        switchUser(originalOwner);
         orentable.safeTransferFrom(originalOwner, newOwner, tokenId);
         assertEq(testLand.updateOperator(tokenId), newOwner);
 
@@ -133,8 +131,7 @@ contract RentableDecentraland is SharedSetup {
         );
 
         // new owner must be able to change operator when rentals are not in place
-        vm.stopPrank();
-        vm.startPrank(newOwner);
+        switchUser(newOwner);
         ILandRegistry(address(orentable)).setUpdateOperator(
             tokenId,
             offRentableOperator
@@ -142,8 +139,7 @@ contract RentableDecentraland is SharedSetup {
         assertEq(testLand.updateOperator(tokenId), offRentableOperator);
 
         //Rent
-        vm.stopPrank();
-        vm.startPrank(renter);
+        switchUser(renter);
         depositAndApprove(renter, 1 ether, address(0), 0);
 
         rentable.rent{value: 1 ether}(
@@ -156,10 +152,8 @@ contract RentableDecentraland is SharedSetup {
         wrentable.safeTransferFrom(renter, newRenter, tokenId);
         assertEq(testLand.updateOperator(tokenId), newRenter);
 
-        vm.stopPrank();
-        vm.startPrank(newOwner);
-
         // owner can't change operator during rental
+        switchUser(newOwner);
         vm.expectRevert(bytes("Operation not allowed during rental"));
         ILandRegistry(address(orentable)).setUpdateOperator(
             tokenId,
@@ -173,8 +167,7 @@ contract RentableDecentraland is SharedSetup {
         vm.warp(maxTimeDuration / 2 + 1);
 
         // update must be possible after lease expired even if not explicitly
-        vm.stopPrank();
-        vm.startPrank(originalOwner);
+        switchUser(originalOwner);
         ILandRegistry(address(orentable)).setUpdateOperator(
             tokenId,
             offRentableOperator
@@ -190,13 +183,8 @@ contract RentableDecentraland is SharedSetup {
 
         assertEq(testLand.updateOperator(tokenId), originalOwner);
 
-        vm.stopPrank();
-        vm.startPrank(originalOwner);
-
         rentable.withdraw(address(testLand), tokenId);
 
         assertEq(testLand.updateOperator(tokenId), address(0));
-
-        vm.stopPrank();
     }
 }

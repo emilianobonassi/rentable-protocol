@@ -25,60 +25,47 @@ contract RentableProxyCall is SharedSetup {
         vm.stopPrank();
     }
 
-    function testProxyCall() public {
-        address user1 = vm.addr(1);
-
-        vm.startPrank(user1);
-
+    function testProxyCall() public executeByUser(user) {
         vm.expectRevert(bytes("Only w/o tokens are authorized"));
 
         rentable.proxyCall(
             address(testNFT),
             0,
             testNFT.balanceOf.selector,
-            abi.encode(user1)
+            abi.encode(user)
         );
 
         vm.expectRevert(bytes("Only w/o tokens are authorized"));
-        oTestNFT.proxiedBalanceOf(user1);
-        vm.stopPrank();
+        oTestNFT.proxiedBalanceOf(user);
 
-        vm.startPrank(governance);
+        switchUser(governance);
         rentable.setORentable(address(testNFT), address(oTestNFT));
-        vm.stopPrank();
 
-        vm.startPrank(user1);
+        switchUser(user);
         vm.expectRevert(bytes("Proxy call unauthorized"));
-        oTestNFT.proxiedBalanceOf(user1);
-        vm.stopPrank();
+        oTestNFT.proxiedBalanceOf(user);
 
-        vm.startPrank(governance);
+        switchUser(governance);
         rentable.enableProxyCall(
             address(oTestNFT),
             testNFT.balanceOf.selector,
             true
         );
-        vm.stopPrank();
 
-        vm.startPrank(user1);
-        oTestNFT.proxiedBalanceOf(user1);
-        vm.stopPrank();
+        switchUser(user);
+        oTestNFT.proxiedBalanceOf(user);
 
-        vm.startPrank(governance);
+        switchUser(governance);
         rentable.setORentable(address(testNFT), address(0));
-        vm.stopPrank();
 
-        vm.startPrank(user1);
+        switchUser(user);
         vm.expectRevert(bytes("Only w/o tokens are authorized"));
-        oTestNFT.proxiedBalanceOf(user1);
-        vm.stopPrank();
+        oTestNFT.proxiedBalanceOf(user);
 
-        vm.startPrank(governance);
+        switchUser(governance);
         rentable.setWRentable(address(testNFT), address(oTestNFT));
-        vm.stopPrank();
 
-        vm.startPrank(user1);
-        oTestNFT.proxiedBalanceOf(user1);
-        vm.stopPrank();
+        switchUser(user);
+        oTestNFT.proxiedBalanceOf(user);
     }
 }

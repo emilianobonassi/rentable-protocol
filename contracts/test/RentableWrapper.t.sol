@@ -7,6 +7,8 @@ import {TestNFT} from "./mocks/TestNFT.sol";
 
 import {Vm} from "forge-std/Vm.sol";
 
+import {TestHelper} from "./TestHelper.t.sol";
+
 import {ERC721ReadOnlyProxy} from "../tokenization/ERC721ReadOnlyProxy.sol";
 import {ERC721ReadOnlyProxyInitializable} from "./mocks/ERC721ReadOnlyProxyInitializable.sol";
 
@@ -14,7 +16,7 @@ import {ImmutableAdminUpgradeableBeaconProxy} from "../upgradability/ImmutableAd
 import {ProxyAdmin} from "@openzeppelin/contracts/proxy/transparent/ProxyAdmin.sol";
 import {UpgradeableBeacon} from "@openzeppelin/contracts/proxy/beacon/UpgradeableBeacon.sol";
 
-contract RentableWrapper is DSTest {
+contract RentableWrapper is DSTest, TestHelper {
     Vm public constant vm = Vm(HEVM_ADDRESS);
 
     TestNFT testNFT;
@@ -22,7 +24,7 @@ contract RentableWrapper is DSTest {
     address deployer;
 
     function setUp() public virtual {
-        deployer = vm.addr(1);
+        deployer = getNewAddress();
 
         vm.startPrank(deployer);
 
@@ -31,9 +33,7 @@ contract RentableWrapper is DSTest {
         vm.stopPrank();
     }
 
-    function testWrapper() public virtual {
-        vm.startPrank(deployer);
-
+    function testWrapper() public virtual executeByUser(deployer) {
         testNFT.mint(deployer, 123);
 
         string memory prefix = "z";
@@ -52,18 +52,16 @@ contract RentableWrapper is DSTest {
         );
         assertEq(wrapper.tokenURI(123), testNFT.tokenURI(123));
 
-        address minter = vm.addr(2);
-        address user = vm.addr(3);
+        address minter = getNewAddress();
+        address user = getNewAddress();
         wrapper.setMinter(minter);
         assertEq(wrapper.getMinter(), minter);
 
-        vm.stopPrank();
-        vm.startPrank(minter);
+        switchUser(minter);
         uint256 tokenId = 50;
         wrapper.mint(user, tokenId);
 
-        vm.stopPrank();
-        vm.startPrank(user);
+        switchUser(user);
 
         vm.expectRevert(bytes("Only minter"));
         wrapper.mint(user, tokenId + 1);
@@ -71,20 +69,17 @@ contract RentableWrapper is DSTest {
         vm.expectRevert(bytes("Only minter"));
         wrapper.burn(tokenId);
 
-        vm.stopPrank();
-        vm.startPrank(minter);
+        switchUser(minter);
         wrapper.burn(tokenId);
         vm.expectRevert("ERC721: owner query for nonexistent token");
         wrapper.ownerOf(tokenId);
-
-        vm.stopPrank();
     }
 
     function testWrapperProxyInit() public {
         TestNFT t1 = new TestNFT();
         TestNFT t2 = new TestNFT();
 
-        address owner = vm.addr(2);
+        address owner = getNewAddress();
 
         ERC721ReadOnlyProxyInitializable wrapper = new ERC721ReadOnlyProxyInitializable(
                 address(t1),
@@ -127,7 +122,7 @@ contract RentableWrapper is DSTest {
         TestNFT t1 = new TestNFT();
         TestNFT t2 = new TestNFT();
 
-        address owner = vm.addr(2);
+        address owner = getNewAddress();
 
         ERC721ReadOnlyProxyInitializable wrapper = new ERC721ReadOnlyProxyInitializable(
                 address(t1),
