@@ -24,5 +24,6 @@ contract TestHelper {
     modifier executeByUser(address user) {
         vm_test_helper.startPrank(user);
         _;
+        vm_test_helper.stopPrank();
     }
 }
