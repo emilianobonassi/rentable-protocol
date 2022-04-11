@@ -8,17 +8,20 @@ import {TestHelper} from "./TestHelper.t.sol";
 
 import {TestImplLogicV1} from "./mocks/TestImplLogicV1.sol";
 import {TestImplLogicV2} from "./mocks/TestImplLogicV2.sol";
-import {ImmutableAdminTransparentUpgradeableProxy} from "../upgradability/ImmutableAdminTransparentUpgradeableProxy.sol";
+import {ImmutableAdminUpgradeableBeaconProxy} from "../upgradability/ImmutableAdminUpgradeableBeaconProxy.sol";
 import {ProxyAdmin, TransparentUpgradeableProxy} from "@openzeppelin/contracts/proxy/transparent/ProxyAdmin.sol";
 
-contract ImmutableAdminTransparentUpgradeableProxyTest is DSTest, TestHelper {
+import {UpgradeableBeacon} from "@openzeppelin/contracts/proxy/beacon/UpgradeableBeacon.sol";
+
+contract ImmutableAdminUpgradeableBeaconProxyTest is DSTest, TestHelper {
     Vm public constant vm = Vm(HEVM_ADDRESS);
 
     uint256 initialTestNumber;
 
     TestImplLogicV1 logicV1;
 
-    ImmutableAdminTransparentUpgradeableProxy proxy;
+    ImmutableAdminUpgradeableBeaconProxy proxy;
+    UpgradeableBeacon beacon;
     ProxyAdmin proxyAdmin;
     address owner;
 
@@ -43,9 +46,12 @@ contract ImmutableAdminTransparentUpgradeableProxyTest is DSTest, TestHelper {
             initialTestNumber
         );
 
-        // 3. deploy proxy
-        proxy = new ImmutableAdminTransparentUpgradeableProxy(
-            address(logicV1),
+        // 3. deploy beacon
+        beacon = new UpgradeableBeacon(address(logicV1));
+
+        // 4. deploy proxy
+        proxy = new ImmutableAdminUpgradeableBeaconProxy(
+            address(beacon),
             address(proxyAdmin),
             _data
         );
@@ -79,23 +85,46 @@ contract ImmutableAdminTransparentUpgradeableProxyTest is DSTest, TestHelper {
         );
     }
 
-    function testUpgradeProxy() public {
+    function testUpgradeProxyViaBeacon() public {
         // deploy new logic
         TestImplLogicV2 logicV2 = new TestImplLogicV2();
         logicV2.init(initialTestNumber);
+
+        // upgrade beacon
+        switchUser(owner);
+        beacon.upgradeTo(address(logicV2));
+
+        // check is still initialized
+        vm.expectRevert(
+            bytes("Initializable: contract is already initialized")
+        );
+        TestImplLogicV2(address(proxy)).init(5);
+        // and new logic is in place
+        assertEq(
+            TestImplLogicV2(address(proxy)).getTestNumber(),
+            initialTestNumber * 2
+        );
+    }
+
+    function testChangeProxyBeacon() public {
+        // deploy new logic
+        TestImplLogicV2 logicV2 = new TestImplLogicV2();
+        logicV2.init(initialTestNumber);
+
+        UpgradeableBeacon newBeacon = new UpgradeableBeacon(address(logicV2));
 
         // change implementation to the proxy
         // only proxyadmin can
         address anotherUser = getNewAddress();
         switchUser(anotherUser);
         vm.expectRevert(bytes(""));
-        proxy.upgradeTo(address(logicV2));
+        proxy.upgradeTo(address(newBeacon));
 
-        // upgrade as proxyadmin
+        // call proxyadmin
         switchUser(owner);
         proxyAdmin.upgrade(
             TransparentUpgradeableProxy(payable(address(proxy))),
-            address(logicV2)
+            address(newBeacon)
         );
 
         // check is still initialized
