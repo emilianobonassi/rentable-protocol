@@ -146,6 +146,25 @@ contract RentableTest is SharedSetup {
         }
     }
 
+    function testDepositAndListWrongPaymentToken() public executeByUser(user) {
+        prepareTestDeposit();
+        vm.expectRevert(bytes("Not supported payment token"));
+        testNFT.safeTransferFrom(
+            user,
+            address(rentable),
+            tokenId,
+            abi.encode(
+                RentableTypes.RentalConditions({
+                    maxTimeDuration: 10 days,
+                    pricePerSecond: 0.001 ether,
+                    paymentTokenId: 0,
+                    paymentTokenAddress: getNewAddress(),
+                    privateRenter: address(0)
+                })
+            )
+        );
+    }
+
     function testWithdraw() public executeByUser(user) {
         prepareTestDeposit();
         testNFT.safeTransferFrom(user, address(rentable), tokenId);
