@@ -25,9 +25,9 @@ contract RentableProxyCall is SharedSetup {
         vm.stopPrank();
     }
 
-    function testProxyCall() public executeByUser(user) {
+    function testOTokenOrWToken() public executeByUser(user) {
         vm.expectRevert(bytes("Only w/o tokens are authorized"));
-
+        address operator = getNewAddress();
         rentable.proxyCall(
             address(testNFT),
             0,
@@ -36,36 +36,75 @@ contract RentableProxyCall is SharedSetup {
         );
 
         vm.expectRevert(bytes("Only w/o tokens are authorized"));
-        oTestNFT.proxiedBalanceOf(user);
+        oTestNFT.proxiedSetApprovalForAll(operator, true);
 
         switchUser(governance);
+        // set as oToken
         rentable.setORentable(address(testNFT), address(oTestNFT));
 
-        switchUser(user);
+        // should not revert for not being w/o tokens
         vm.expectRevert(bytes("Proxy call unauthorized"));
-        oTestNFT.proxiedBalanceOf(user);
+        oTestNFT.proxiedSetApprovalForAll(operator, true);
 
         switchUser(governance);
+        // set as wToken
+        rentable.setWRentable(address(testNFT), address(oTestNFT));
+
+        // should not revert for not being w/o tokens
+        vm.expectRevert(bytes("Proxy call unauthorized"));
+        oTestNFT.proxiedSetApprovalForAll(operator, true);
+    }
+
+    function testOnlyAllowedSelectors() public executeByUser(governance) {
+        rentable.setORentable(address(testNFT), address(oTestNFT));
+        vm.expectRevert(bytes("Proxy call unauthorized"));
+        oTestNFT.proxiedSetApprovalForAll(operator, true);
+
         rentable.enableProxyCall(
             address(oTestNFT),
-            testNFT.balanceOf.selector,
+            testNFT.setApprovalForAll.selector,
             true
         );
 
-        switchUser(user);
-        oTestNFT.proxiedBalanceOf(user);
+        oTestNFT.proxiedSetApprovalForAll(operator, true);
+    }
 
-        switchUser(governance);
-        rentable.setORentable(address(testNFT), address(0));
+    function testProxyCallWithData() public executeByUser(governance) {
+        rentable.setORentable(address(testNFT), address(oTestNFT));
+        rentable.enableProxyCall(
+            address(oTestNFT),
+            testNFT.setApprovalForAll.selector,
+            true
+        );
+        oTestNFT.proxiedSetApprovalForAll(user, true);
+        assertTrue(testNFT.isApprovedForAll(address(rentable), user));
+        oTestNFT.proxiedSetApprovalForAll(user, false);
+        assertTrue(!testNFT.isApprovedForAll(address(rentable), user));
+    }
 
-        switchUser(user);
-        vm.expectRevert(bytes("Only w/o tokens are authorized"));
-        oTestNFT.proxiedBalanceOf(user);
+    function testProxyCallWithNoData() public executeByUser(governance) {
+        rentable.setORentable(address(testNFT), address(oTestNFT));
+        rentable.enableProxyCall(
+            address(oTestNFT),
+            testNFT.name.selector,
+            true
+        );
 
-        switchUser(governance);
-        rentable.setWRentable(address(testNFT), address(oTestNFT));
+        assertEq(oTestNFT.proxiedName(), testNFT.name());
+    }
 
-        switchUser(user);
-        oTestNFT.proxiedBalanceOf(user);
+    function testProxyCallWithValue() public executeByUser(governance) {
+        rentable.setORentable(address(testNFT), address(oTestNFT));
+        rentable.enableProxyCall(
+            address(oTestNFT),
+            testNFT.donate.selector,
+            true
+        );
+
+        assertEq(address(testNFT).balance, 0);
+        uint256 value = 1000;
+        vm.deal(governance, value);
+        oTestNFT.proxiedDonate{value: value}();
+        assertEq(address(testNFT).balance, value);
     }
 }
