@@ -196,6 +196,39 @@ contract RentableRent is SharedSetup {
         rentable.withdraw(address(testNFT), tokenId);
     }
 
+    function testCannotRentOnRent() public payable executeByUser(user) {
+        _prepareRent();
+
+        uint256 rentalDuration = 80;
+        uint256 value = 0.08 ether;
+
+        switchUser(renter);
+        depositAndApprove(renter, value, paymentTokenAddress, paymentTokenId);
+
+        rentable.rent{value: paymentTokenAddress == address(0) ? value : 0}(
+            address(testNFT),
+            tokenId,
+            rentalDuration
+        );
+
+        address anotherRenter = getNewAddress();
+        switchUser(anotherRenter);
+        depositAndApprove(
+            anotherRenter,
+            value,
+            paymentTokenAddress,
+            paymentTokenId
+        );
+
+        vm.expectRevert(bytes("Current rent still pending"));
+
+        rentable.rent{value: paymentTokenAddress == address(0) ? value : 0}(
+            address(testNFT),
+            tokenId,
+            rentalDuration
+        );
+    }
+
     function testTransferWToken() public payable executeByUser(user) {
         _prepareRent();
 
