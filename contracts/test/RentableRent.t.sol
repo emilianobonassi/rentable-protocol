@@ -8,20 +8,21 @@ import {IRentable} from "../interfaces/IRentable.sol";
 import {RentableTypes} from "./../RentableTypes.sol";
 
 contract RentableRent is SharedSetup {
-    function testRent()
-        public
-        payable
-        protocolFeeCoverage
-        paymentTokensCoverage
-        executeByUser(user)
-    {
-        uint256 maxTimeDuration = 1000;
-        uint256 pricePerSecond = 0.001 ether;
+    uint256 pricePerSecond;
+    uint256 maxTimeDuration;
+    address renter;
 
-        address renter = getNewAddress();
-        address privateRenter = address(0);
+    function _prepareRent() internal {
+        _prepareRent(getNewAddress());
+    }
+
+    function _prepareRent(address _renter) internal {
+        maxTimeDuration = 10 days;
+        pricePerSecond = 0.001 ether;
+
+        renter = _renter;
         prepareTestDeposit();
-        //1tx
+
         testNFT.safeTransferFrom(
             user,
             address(rentable),
@@ -36,6 +37,16 @@ contract RentableRent is SharedSetup {
                 })
             )
         );
+    }
+
+    function testRent()
+        public
+        payable
+        protocolFeeCoverage
+        paymentTokensCoverage
+        executeByUser(user)
+    {
+        _prepareRent();
 
         uint256 rentalDuration = 80;
         uint256 value = 0.08 ether;
@@ -130,28 +141,9 @@ contract RentableRent is SharedSetup {
     }
 
     function testRentPrivate() public payable executeByUser(user) {
-        uint256 maxTimeDuration = 10 days;
-        uint256 pricePerSecond = 0.001 ether;
-
-        address renter = getNewAddress();
-        address privateRenter = renter;
-
-        prepareTestDeposit();
-
-        testNFT.safeTransferFrom(
-            user,
-            address(rentable),
-            tokenId,
-            abi.encode(
-                RentableTypes.RentalConditions({
-                    maxTimeDuration: maxTimeDuration,
-                    pricePerSecond: pricePerSecond,
-                    paymentTokenId: paymentTokenId,
-                    paymentTokenAddress: paymentTokenAddress,
-                    privateRenter: privateRenter
-                })
-            )
-        );
+        renter = getNewAddress();
+        privateRenter = renter;
+        _prepareRent(renter);
 
         uint256 rentalDuration = 80;
         uint256 value = 0.08 ether;
@@ -184,29 +176,7 @@ contract RentableRent is SharedSetup {
     }
 
     function testCannotWithdrawOnRent() public payable executeByUser(user) {
-        uint256 maxTimeDuration = 1000;
-        uint256 pricePerSecond = 0.001 ether;
-
-        address renter = vm.addr(5);
-        address privateRenter = address(0);
-
-        prepareTestDeposit();
-
-        //1tx
-        testNFT.safeTransferFrom(
-            user,
-            address(rentable),
-            tokenId,
-            abi.encode(
-                RentableTypes.RentalConditions({
-                    maxTimeDuration: maxTimeDuration,
-                    pricePerSecond: pricePerSecond,
-                    paymentTokenId: paymentTokenId,
-                    paymentTokenAddress: paymentTokenAddress,
-                    privateRenter: privateRenter
-                })
-            )
-        );
+        _prepareRent();
 
         uint256 rentalDuration = 80;
         uint256 value = 0.08 ether;
@@ -233,29 +203,7 @@ contract RentableRent is SharedSetup {
     }
 
     function testTransferWToken() public payable executeByUser(user) {
-        uint256 maxTimeDuration = 1000;
-        uint256 pricePerSecond = 0.001 ether;
-
-        address renter = vm.addr(5);
-        address privateRenter = address(0);
-
-        prepareTestDeposit();
-
-        //1tx
-        testNFT.safeTransferFrom(
-            user,
-            address(rentable),
-            tokenId,
-            abi.encode(
-                RentableTypes.RentalConditions({
-                    maxTimeDuration: maxTimeDuration,
-                    pricePerSecond: pricePerSecond,
-                    paymentTokenId: paymentTokenId,
-                    paymentTokenAddress: paymentTokenAddress,
-                    privateRenter: privateRenter
-                })
-            )
-        );
+        _prepareRent();
 
         uint256 rentalDuration = 80;
         uint256 value = 0.08 ether;
@@ -284,28 +232,7 @@ contract RentableRent is SharedSetup {
     }
 
     function testTransferOToken() public payable executeByUser(user) {
-        uint256 maxTimeDuration = 1000;
-        uint256 pricePerSecond = 0.001 ether;
-
-        address renter = vm.addr(5);
-        address privateRenter = address(0);
-        prepareTestDeposit();
-
-        //1tx
-        testNFT.safeTransferFrom(
-            user,
-            address(rentable),
-            tokenId,
-            abi.encode(
-                RentableTypes.RentalConditions({
-                    maxTimeDuration: maxTimeDuration,
-                    pricePerSecond: pricePerSecond,
-                    paymentTokenId: paymentTokenId,
-                    paymentTokenAddress: paymentTokenAddress,
-                    privateRenter: privateRenter
-                })
-            )
-        );
+        _prepareRent();
 
         uint256 rentalDuration = 80;
         uint256 value = 0.08 ether;
@@ -336,29 +263,7 @@ contract RentableRent is SharedSetup {
     }
 
     function testRentAfterExpire() public payable executeByUser(user) {
-        uint256 maxTimeDuration = 1000;
-        uint256 pricePerSecond = 0.001 ether;
-
-        address renter = getNewAddress();
-        address privateRenter = address(0);
-
-        prepareTestDeposit();
-
-        //1tx
-        testNFT.safeTransferFrom(
-            user,
-            address(rentable),
-            tokenId,
-            abi.encode(
-                RentableTypes.RentalConditions({
-                    maxTimeDuration: maxTimeDuration,
-                    pricePerSecond: pricePerSecond,
-                    paymentTokenId: paymentTokenId,
-                    paymentTokenAddress: paymentTokenAddress,
-                    privateRenter: privateRenter
-                })
-            )
-        );
+        _prepareRent();
 
         uint256 rentalDuration = 80;
         uint256 value = 0.08 ether;
