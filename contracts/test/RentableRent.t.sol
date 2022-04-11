@@ -8,13 +8,18 @@ import {IRentable} from "../interfaces/IRentable.sol";
 import {RentableTypes} from "./../RentableTypes.sol";
 
 contract RentableRent is SharedSetup {
-    function testRent() public payable executeByUser(user) {
+    function testRent()
+        public
+        payable
+        paymentTokensCoverage
+        executeByUser(user)
+    {
         uint256 maxTimeDuration = 1000;
         uint256 pricePerSecond = 0.001 ether;
 
         address renter = getNewAddress();
         address privateRenter = address(0);
-        prepareTestDeposit(tokenId);
+        prepareTestDeposit();
         //1tx
         testNFT.safeTransferFrom(
             user,
@@ -128,7 +133,7 @@ contract RentableRent is SharedSetup {
         address renter = getNewAddress();
         address privateRenter = renter;
 
-        prepareTestDeposit(tokenId);
+        prepareTestDeposit();
 
         //1tx
         testNFT.safeTransferFrom(
@@ -260,7 +265,7 @@ contract RentableRent is SharedSetup {
         address renter = vm.addr(5);
         address privateRenter = address(0);
 
-        prepareTestDeposit(tokenId);
+        prepareTestDeposit();
 
         //1tx
         testNFT.safeTransferFrom(
@@ -309,7 +314,7 @@ contract RentableRent is SharedSetup {
         address renter = vm.addr(5);
         address privateRenter = address(0);
 
-        prepareTestDeposit(tokenId);
+        prepareTestDeposit();
 
         //1tx
         testNFT.safeTransferFrom(
@@ -359,7 +364,7 @@ contract RentableRent is SharedSetup {
 
         address renter = vm.addr(5);
         address privateRenter = address(0);
-        prepareTestDeposit(tokenId);
+        prepareTestDeposit();
 
         //1tx
         testNFT.safeTransferFrom(
@@ -412,7 +417,7 @@ contract RentableRent is SharedSetup {
         address renter = getNewAddress();
         address privateRenter = address(0);
 
-        prepareTestDeposit(tokenId);
+        prepareTestDeposit();
 
         //1tx
         testNFT.safeTransferFrom(

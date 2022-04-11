@@ -62,6 +62,15 @@ abstract contract SharedSetup is DSTest, TestHelper, IRentableEvents {
     uint256 paymentTokenId = 0;
     uint256 tokenId = 123;
 
+    address[] paymentTokens = new address[](3);
+
+    modifier paymentTokensCoverage() {
+        for (uint256 i = 0; i < paymentTokens.length; i++) {
+            paymentTokenAddress = paymentTokens[i];
+            _;
+        }
+    }
+
     function setUp() public virtual {
         user = getNewAddress();
         governance = getNewAddress();
@@ -146,17 +155,26 @@ abstract contract SharedSetup is DSTest, TestHelper, IRentableEvents {
 
         rentable.enablePaymentToken(address(0));
         rentable.enablePaymentToken(address(weth));
-        rentable.enablePaymentToken(address(dummy1155));
+        rentable.enable1155PaymentToken(address(dummy1155));
 
         rentable.setFeeCollector(feeCollector);
 
         rentable.setLibrary(address(testNFT), address(dummyLib));
 
+        initPaymentTokens();
+
         vm.stopPrank();
     }
 
-    function prepareTestDeposit(uint256 tokenId) internal {
-        testNFT.mint(user, tokenId);
+    function initPaymentTokens() internal {
+        paymentTokens = new address[](3);
+        paymentTokens.push(address(0));
+        paymentTokens.push(address(weth));
+        paymentTokens.push(address(dummy1155));
+    }
+
+    function prepareTestDeposit() internal {
+        testNFT.mint(user, ++tokenId);
     }
 
     function depositAndApprove(
