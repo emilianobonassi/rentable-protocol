@@ -267,6 +267,27 @@ contract RentableRent is SharedSetup {
         );
     }
 
+    function testCannotRentWhenDelisted() public payable executeByUser(user) {
+        _prepareRent();
+
+        switchUser(user);
+        rentable.deleteRentalConditions(address(testNFT), tokenId);
+
+        uint256 rentalDuration = 80;
+        uint256 value = 0.08 ether;
+
+        switchUser(renter);
+        depositAndApprove(renter, value, paymentTokenAddress, paymentTokenId);
+
+        vm.expectRevert(bytes("Not available"));
+
+        rentable.rent{value: paymentTokenAddress == address(0) ? value : 0}(
+            address(testNFT),
+            tokenId,
+            rentalDuration
+        );
+    }
+
     function testTransferWToken() public payable executeByUser(user) {
         _prepareRent();
 
