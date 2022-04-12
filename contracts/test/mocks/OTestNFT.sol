@@ -20,7 +20,6 @@ contract OTestNFT is ORentable {
     {
         IORentableHooks(getRentable()).proxyCall(
             getWrapped(),
-            0,
             ERC721URIStorageUpgradeable(getWrapped())
                 .setApprovalForAll
                 .selector,
@@ -33,7 +32,6 @@ contract OTestNFT is ORentable {
             abi.decode(
                 IORentableHooks(getRentable()).proxyCall(
                     getWrapped(),
-                    0,
                     ERC721URIStorageUpgradeable(getWrapped()).name.selector,
                     ""
                 ),
@@ -44,7 +42,6 @@ contract OTestNFT is ORentable {
     function proxiedSimplePayable() external payable {
         IORentableHooks(getRentable()).proxyCall{value: msg.value}(
             getWrapped(),
-            msg.value,
             TestNFT(getWrapped()).simplePayable.selector,
             ""
         );

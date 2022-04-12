@@ -30,7 +30,6 @@ contract RentableProxyCall is SharedSetup {
         address operator = getNewAddress();
         rentable.proxyCall(
             address(testNFT),
-            0,
             testNFT.balanceOf.selector,
             abi.encode(user)
         );

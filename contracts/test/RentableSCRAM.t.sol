@@ -114,7 +114,7 @@ contract RentableSCRAM is SharedSetup {
 
         // proxyCall
         vm.expectRevert(bytes("Pausable: paused"));
-        rentable.proxyCall(address(0), 0, "", "");
+        rentable.proxyCall(address(0), "", "");
 
         switchUser(user);
 

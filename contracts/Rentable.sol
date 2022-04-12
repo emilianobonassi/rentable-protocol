@@ -883,7 +883,6 @@ contract Rentable is
     /// @inheritdoc IRentableHooks
     function proxyCall(
         address to,
-        uint256 value,
         bytes4 selector,
         bytes memory data
     )
@@ -900,6 +899,10 @@ contract Rentable is
         );
 
         return
-            to.functionCallWithValue(bytes.concat(selector, data), value, "");
+            to.functionCallWithValue(
+                bytes.concat(selector, data),
+                msg.value,
+                ""
+            );
     }
 }
