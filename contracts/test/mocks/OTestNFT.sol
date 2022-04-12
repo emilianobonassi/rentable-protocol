@@ -41,11 +41,11 @@ contract OTestNFT is ORentable {
             );
     }
 
-    function proxiedDonate() external payable {
+    function proxiedSimplePayable() external payable {
         IORentableHooks(getRentable()).proxyCall{value: msg.value}(
             getWrapped(),
             msg.value,
-            TestNFT(getWrapped()).donate.selector,
+            TestNFT(getWrapped()).simplePayable.selector,
             ""
         );
     }

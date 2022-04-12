@@ -97,14 +97,14 @@ contract RentableProxyCall is SharedSetup {
         rentable.setORentable(address(testNFT), address(oTestNFT));
         rentable.enableProxyCall(
             address(oTestNFT),
-            testNFT.donate.selector,
+            testNFT.simplePayable.selector,
             true
         );
 
         assertEq(address(testNFT).balance, 0);
         uint256 value = 1000;
         vm.deal(governance, value);
-        oTestNFT.proxiedDonate{value: value}();
+        oTestNFT.proxiedSimplePayable{value: value}();
         assertEq(address(testNFT).balance, value);
     }
 }
