@@ -87,6 +87,7 @@ contract RentableLibrary is SharedSetup {
     }
 
     function testPostDeposit() public executeByUser(user) {
+        minTimeDuration = 0;
         maxTimeDuration = 10 days;
         pricePerSecond = 0.001 ether;
 
@@ -98,6 +99,7 @@ contract RentableLibrary is SharedSetup {
             address(testNFT),
             tokenId,
             user,
+            minTimeDuration,
             maxTimeDuration,
             pricePerSecond
         );
@@ -109,6 +111,7 @@ contract RentableLibrary is SharedSetup {
             tokenId,
             abi.encode(
                 RentableTypes.RentalConditions({
+                    minTimeDuration: minTimeDuration,
                     maxTimeDuration: maxTimeDuration,
                     pricePerSecond: pricePerSecond,
                     paymentTokenId: paymentTokenId,

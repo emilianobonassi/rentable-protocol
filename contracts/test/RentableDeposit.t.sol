@@ -27,6 +27,7 @@ contract RentableTest is SharedSetup {
         uint256 tokenId,
         address paymentTokenAddress,
         uint256 paymentTokenId,
+        uint256 minTimeDuration,
         uint256 maxTimeDuration,
         uint256 pricePerSecond,
         address privateRenter
@@ -39,6 +40,7 @@ contract RentableTest is SharedSetup {
             tokenId,
             paymentTokenAddress,
             paymentTokenId,
+            minTimeDuration,
             maxTimeDuration,
             pricePerSecond,
             privateRenter
@@ -49,6 +51,7 @@ contract RentableTest is SharedSetup {
             address(testNFT),
             tokenId,
             user,
+            minTimeDuration,
             maxTimeDuration,
             pricePerSecond
         );
@@ -59,6 +62,7 @@ contract RentableTest is SharedSetup {
         uint256 tokenId,
         address paymentTokenAddress,
         uint256 paymentTokenId,
+        uint256 minTimeDuration,
         uint256 maxTimeDuration,
         uint256 pricePerSecond,
         address privateRenter
@@ -67,6 +71,7 @@ contract RentableTest is SharedSetup {
             address(testNFT),
             tokenId
         );
+        assertEq(rcs.minTimeDuration, minTimeDuration);
         assertEq(rcs.maxTimeDuration, maxTimeDuration);
         assertEq(rcs.pricePerSecond, pricePerSecond);
         assertEq(rcs.paymentTokenAddress, paymentTokenAddress);
@@ -88,6 +93,7 @@ contract RentableTest is SharedSetup {
         paymentTokensCoverage
         executeByUser(user)
     {
+        uint256 minTimeDuration = 1 days;
         uint256 maxTimeDuration = 10 days;
         uint256 pricePerSecond = 0.001 ether;
 
@@ -98,6 +104,7 @@ contract RentableTest is SharedSetup {
             tokenId,
             paymentTokenAddress,
             paymentTokenId,
+            minTimeDuration,
             maxTimeDuration,
             pricePerSecond,
             privateRenter
@@ -109,6 +116,7 @@ contract RentableTest is SharedSetup {
             tokenId,
             abi.encode(
                 RentableTypes.RentalConditions({
+                    minTimeDuration: minTimeDuration,
                     maxTimeDuration: maxTimeDuration,
                     pricePerSecond: pricePerSecond,
                     paymentTokenId: paymentTokenId,
@@ -124,6 +132,7 @@ contract RentableTest is SharedSetup {
             tokenId,
             paymentTokenAddress,
             paymentTokenId,
+            minTimeDuration,
             maxTimeDuration,
             pricePerSecond,
             privateRenter
@@ -139,6 +148,7 @@ contract RentableTest is SharedSetup {
             tokenId,
             abi.encode(
                 RentableTypes.RentalConditions({
+                    minTimeDuration: 0,
                     maxTimeDuration: 10 days,
                     pricePerSecond: 0.001 ether,
                     paymentTokenId: 0,
@@ -171,6 +181,7 @@ contract RentableTest is SharedSetup {
         paymentTokensCoverage
         executeByUser(user)
     {
+        uint256 minTimeDuration = 1 days;
         uint256 maxTimeDuration = 10 days;
         uint256 pricePerSecond = 0.001 ether;
 
@@ -182,6 +193,7 @@ contract RentableTest is SharedSetup {
             tokenId,
             paymentTokenAddress,
             paymentTokenId,
+            minTimeDuration,
             maxTimeDuration,
             pricePerSecond,
             privateRenter
@@ -191,6 +203,7 @@ contract RentableTest is SharedSetup {
             .RentalConditions({
                 paymentTokenAddress: paymentTokenAddress,
                 paymentTokenId: paymentTokenId,
+                minTimeDuration: minTimeDuration,
                 maxTimeDuration: maxTimeDuration,
                 pricePerSecond: pricePerSecond,
                 privateRenter: privateRenter
@@ -202,6 +215,7 @@ contract RentableTest is SharedSetup {
             tokenId,
             paymentTokenAddress,
             paymentTokenId,
+            minTimeDuration,
             maxTimeDuration,
             pricePerSecond,
             privateRenter
@@ -220,12 +234,37 @@ contract RentableTest is SharedSetup {
             .RentalConditions({
                 paymentTokenAddress: getNewAddress(),
                 paymentTokenId: 0,
+                minTimeDuration: 0,
                 maxTimeDuration: 10 days,
                 pricePerSecond: 0.001 ether,
                 privateRenter: address(0)
             });
 
         vm.expectRevert(bytes("Not supported payment token"));
+        rentable.createOrUpdateRentalConditions(address(testNFT), tokenId, rc);
+    }
+
+    function testCreateRentalConditionsWrongMinMaxDuration()
+        public
+        executeByUser(user)
+    {
+        prepareTestDeposit();
+
+        testNFT.safeTransferFrom(user, address(rentable), tokenId);
+
+        RentableTypes.RentalConditions memory rc = RentableTypes
+            .RentalConditions({
+                paymentTokenAddress: paymentTokenAddress,
+                paymentTokenId: 0,
+                minTimeDuration: 2 days,
+                maxTimeDuration: 1 days,
+                pricePerSecond: 0.001 ether,
+                privateRenter: address(0)
+            });
+
+        vm.expectRevert(
+            bytes("Minimum duration cannot be greater than maximum")
+        );
         rentable.createOrUpdateRentalConditions(address(testNFT), tokenId, rc);
     }
 
@@ -238,6 +277,7 @@ contract RentableTest is SharedSetup {
             .RentalConditions({
                 paymentTokenAddress: address(0),
                 paymentTokenId: 0,
+                minTimeDuration: 0,
                 maxTimeDuration: 10 days,
                 pricePerSecond: 0.001 ether,
                 privateRenter: address(0)
@@ -259,6 +299,7 @@ contract RentableTest is SharedSetup {
         uint256 _tokenId,
         address _paymentTokenAddress,
         uint256 _paymentTokenId,
+        uint256 _minTimeDuration,
         uint256 _maxTimeDuration,
         uint256 _pricePerSecond,
         address _privateRenter
@@ -267,6 +308,7 @@ contract RentableTest is SharedSetup {
             _tokenId,
             _paymentTokenAddress,
             _paymentTokenId,
+            _minTimeDuration,
             _maxTimeDuration,
             _pricePerSecond,
             _privateRenter
@@ -276,6 +318,7 @@ contract RentableTest is SharedSetup {
             .RentalConditions({
                 paymentTokenAddress: _paymentTokenAddress,
                 paymentTokenId: _paymentTokenId,
+                minTimeDuration: _minTimeDuration,
                 maxTimeDuration: _maxTimeDuration,
                 pricePerSecond: _pricePerSecond,
                 privateRenter: _privateRenter
@@ -287,6 +330,7 @@ contract RentableTest is SharedSetup {
             _tokenId,
             _paymentTokenAddress,
             _paymentTokenId,
+            _minTimeDuration,
             _maxTimeDuration,
             _pricePerSecond,
             _privateRenter
@@ -294,6 +338,7 @@ contract RentableTest is SharedSetup {
     }
 
     function testUpdateRentalConditions() public executeByUser(user) {
+        uint256 minTimeDuration = 0;
         uint256 maxTimeDuration = 10 days;
         uint256 pricePerSecond = 0.001 ether;
 
@@ -305,6 +350,7 @@ contract RentableTest is SharedSetup {
             tokenId,
             paymentTokenAddress,
             paymentTokenId,
+            minTimeDuration,
             maxTimeDuration,
             pricePerSecond,
             privateRenter
@@ -314,6 +360,7 @@ contract RentableTest is SharedSetup {
             .RentalConditions({
                 paymentTokenAddress: paymentTokenAddress,
                 paymentTokenId: paymentTokenId,
+                minTimeDuration: minTimeDuration,
                 maxTimeDuration: maxTimeDuration,
                 pricePerSecond: pricePerSecond,
                 privateRenter: privateRenter
@@ -328,6 +375,7 @@ contract RentableTest is SharedSetup {
             tokenId,
             address(dummy1155),
             paymentTokenId,
+            minTimeDuration,
             maxTimeDuration,
             pricePerSecond,
             privateRenter
@@ -338,6 +386,18 @@ contract RentableTest is SharedSetup {
             tokenId,
             paymentTokenAddress,
             paymentTokenId + 1,
+            minTimeDuration,
+            maxTimeDuration,
+            pricePerSecond,
+            privateRenter
+        );
+
+        // MinDuration
+        _testRentalConditions(
+            tokenId,
+            paymentTokenAddress,
+            paymentTokenId,
+            minTimeDuration + 2 days,
             maxTimeDuration,
             pricePerSecond,
             privateRenter
@@ -348,6 +408,7 @@ contract RentableTest is SharedSetup {
             tokenId,
             paymentTokenAddress,
             paymentTokenId,
+            minTimeDuration,
             maxTimeDuration + 2 days,
             pricePerSecond,
             privateRenter
@@ -358,6 +419,7 @@ contract RentableTest is SharedSetup {
             tokenId,
             paymentTokenAddress,
             paymentTokenId,
+            minTimeDuration,
             maxTimeDuration,
             pricePerSecond + 0.05 ether,
             privateRenter
@@ -368,6 +430,7 @@ contract RentableTest is SharedSetup {
             tokenId,
             paymentTokenAddress,
             paymentTokenId,
+            minTimeDuration,
             maxTimeDuration,
             pricePerSecond,
             getNewAddress()

@@ -5,6 +5,7 @@ pragma solidity >=0.8.7;
 /// @author Rentable Team <hello@rentable.world>
 library RentableTypes {
     struct RentalConditions {
+        uint256 minTimeDuration; // min duration allowed for the rental
         uint256 maxTimeDuration; // max duration allowed for the rental
         uint256 pricePerSecond; // price per second in payment token units
         uint256 paymentTokenId; // payment token id allowed for the rental (0 for ETH and ERC20)

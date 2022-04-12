@@ -81,6 +81,7 @@ contract RentableDecentraland is SharedSetup {
         assertEq(testLand.updateOperator(tokenId), originalOperator);
 
         uint256 maxTimeDuration = 10;
+        uint256 minTimeDuration = 0;
         uint256 pricePerSecond = 0.1 ether;
 
         testLand.safeTransferFrom(
@@ -89,6 +90,7 @@ contract RentableDecentraland is SharedSetup {
             tokenId,
             abi.encode(
                 RentableTypes.RentalConditions({
+                    minTimeDuration: minTimeDuration,
                     maxTimeDuration: maxTimeDuration,
                     pricePerSecond: pricePerSecond,
                     paymentTokenId: 0,

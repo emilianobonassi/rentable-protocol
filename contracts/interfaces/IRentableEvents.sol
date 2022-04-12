@@ -35,6 +35,7 @@ interface IRentableEvents {
         uint256 indexed tokenId,
         address paymentTokenAddress,
         uint256 paymentTokenId,
+        uint256 minTimeDuration,
         uint256 maxTimeDuration,
         uint256 pricePerSecond,
         address privateRenter
