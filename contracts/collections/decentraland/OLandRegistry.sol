@@ -47,7 +47,6 @@ contract OLandRegistry is ORentable {
         // slither-disable-next-line unused-return
         IORentableHooks(rentable).proxyCall(
             wrapped,
-            0,
             ILandRegistry(wrapped).setUpdateOperator.selector,
             abi.encode(tokenId, operator)
         );

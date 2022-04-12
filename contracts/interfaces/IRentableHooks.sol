@@ -9,12 +9,10 @@ interface IRentableHooks {
 
     /// @dev Implementer will execute the call on the wrapped token
     /// @param to wrapped token address
-    /// @param value (optional) ether vaule
     /// @param selector function selector on the target
     /// @param data function data
     function proxyCall(
         address to,
-        uint256 value,
         bytes4 selector,
         bytes memory data
     ) external payable returns (bytes memory);

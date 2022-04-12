@@ -2,12 +2,13 @@
 pragma solidity >=0.8.7;
 
 import {DSTest} from "ds-test/test.sol";
+import {Vm} from "forge-std/Vm.sol";
+
+import {TestHelper} from "./TestHelper.t.sol";
 
 import {TestNFT} from "./mocks/TestNFT.sol";
 import {WETH} from "solmate/tokens/WETH.sol";
 import {DummyERC1155} from "./mocks/DummyERC1155.sol";
-
-import {ICollectionLibrary} from "../collections/ICollectionLibrary.sol";
 import {IRentable} from "../interfaces/IRentable.sol";
 import {BaseTokenInitializable} from "../tokenization/BaseTokenInitializable.sol";
 
@@ -27,33 +28,8 @@ import {ProxyAdmin} from "@openzeppelin/contracts/proxy/transparent/ProxyAdmin.s
 
 import {UpgradeableBeacon} from "@openzeppelin/contracts/proxy/beacon/UpgradeableBeacon.sol";
 
-interface CheatCodes {
-    function prank(address) external;
-
-    function addr(uint256) external returns (address);
-
-    function startPrank(address) external;
-
-    function stopPrank() external;
-
-    function expectEmit(
-        bool checkTopic1,
-        bool checkTopic2,
-        bool checkTopic3,
-        bool checkData
-    ) external;
-
-    function expectCall(address where, bytes calldata data) external;
-
-    function expectRevert(bytes calldata) external;
-
-    function warp(uint256) external;
-
-    function deal(address who, uint256 newBalance) external;
-}
-
-abstract contract SharedSetup is DSTest, IRentableEvents {
-    CheatCodes cheats = CheatCodes(HEVM_ADDRESS);
+abstract contract SharedSetup is DSTest, TestHelper, IRentableEvents {
+    Vm public constant vm = Vm(HEVM_ADDRESS);
 
     address user;
 
@@ -80,13 +56,61 @@ abstract contract SharedSetup is DSTest, IRentableEvents {
     UpgradeableBeacon wbeacon;
     WRentable wrentableLogic;
 
-    function setUp() public virtual {
-        governance = cheats.addr(1);
-        operator = cheats.addr(2);
-        feeCollector = payable(cheats.addr(3));
-        user = cheats.addr(4);
+    address paymentTokenAddress = address(0);
+    uint256 paymentTokenId = 0;
+    uint256 tokenId = 123;
 
-        cheats.startPrank(governance);
+    address[] paymentTokens;
+
+    address[] privateRenters;
+    address privateRenter;
+
+    uint256 pricePerSecond;
+    uint256 maxTimeDuration;
+    address renter;
+
+    modifier paymentTokensCoverage() {
+        for (uint256 i = 0; i < paymentTokens.length; i++) {
+            paymentTokenAddress = paymentTokens[i];
+            _;
+        }
+    }
+
+    modifier privateRentersCoverage() {
+        for (uint256 i = 0; i < privateRenters.length; i++) {
+            privateRenter = privateRenters[i];
+            _;
+        }
+    }
+
+    modifier protocolFeeCoverage() {
+        // 0%
+        vm.prank(governance);
+        rentable.setFee(0);
+        _;
+
+        // 2.5%
+        vm.prank(governance);
+        rentable.setFee(250);
+        _;
+
+        // 5%
+        vm.prank(governance);
+        rentable.setFee(500);
+        _;
+
+        // Reset
+        vm.prank(governance);
+        rentable.setFee(0);
+    }
+
+    function setUp() public virtual {
+        user = getNewAddress();
+        governance = getNewAddress();
+        operator = getNewAddress();
+        feeCollector = payable(getNewAddress());
+
+        vm.startPrank(governance);
 
         dummyLib = new DummyCollectionLibrary();
 
@@ -164,32 +188,88 @@ abstract contract SharedSetup is DSTest, IRentableEvents {
 
         rentable.enablePaymentToken(address(0));
         rentable.enablePaymentToken(address(weth));
-        rentable.enablePaymentToken(address(dummy1155));
+        rentable.enable1155PaymentToken(address(dummy1155));
 
         rentable.setFeeCollector(feeCollector);
 
         rentable.setLibrary(address(testNFT), address(dummyLib));
 
-        cheats.stopPrank();
+        initPaymentTokens();
+
+        vm.stopPrank();
     }
 
-    function prepareTestDeposit(uint256 tokenId) internal {
-        testNFT.mint(user, tokenId);
+    function initPaymentTokens() internal {
+        paymentTokens = new address[](3);
+        paymentTokens.push(address(0));
+        paymentTokens.push(address(weth));
+        paymentTokens.push(address(dummy1155));
+    }
+
+    function initPrivateRenters() internal {
+        privateRenters = new address[](2);
+        privateRenters.push(address(0));
+        privateRenters.push(getNewAddress());
+    }
+
+    function prepareTestDeposit() internal {
+        testNFT.mint(user, ++tokenId);
     }
 
     function depositAndApprove(
         address _user,
         uint256 value,
-        address paymentToken,
-        uint256 paymentTokenId
+        address _paymentToken,
+        uint256 _paymentTokenId
     ) public {
-        cheats.deal(_user, value);
-        if (paymentToken == address(weth)) {
+        vm.deal(_user, value);
+        if (_paymentToken == address(weth)) {
             weth.deposit{value: value}();
             weth.approve(address(rentable), ~uint256(0));
-        } else if (paymentToken == address(dummy1155)) {
-            dummy1155.deposit{value: value}(paymentTokenId);
+        } else if (_paymentToken == address(dummy1155)) {
+            dummy1155.deposit{value: value}(_paymentTokenId);
             dummy1155.setApprovalForAll(address(rentable), true);
         }
+    }
+
+    function getBalance(
+        address _user,
+        address paymentToken,
+        uint256 _paymentTokenId
+    ) public view returns (uint256) {
+        if (paymentToken == address(weth)) {
+            return weth.balanceOf(_user);
+        } else if (paymentToken == address(dummy1155)) {
+            return dummy1155.balanceOf(_user, _paymentTokenId);
+        } else {
+            return _user.balance;
+        }
+    }
+
+    function _prepareRent() internal {
+        _prepareRent(getNewAddress());
+    }
+
+    function _prepareRent(address _renter) internal {
+        maxTimeDuration = 10 days;
+        pricePerSecond = 0.001 ether;
+
+        renter = _renter;
+        prepareTestDeposit();
+
+        testNFT.safeTransferFrom(
+            user,
+            address(rentable),
+            tokenId,
+            abi.encode(
+                RentableTypes.RentalConditions({
+                    maxTimeDuration: maxTimeDuration,
+                    pricePerSecond: pricePerSecond,
+                    paymentTokenId: paymentTokenId,
+                    paymentTokenAddress: paymentTokenAddress,
+                    privateRenter: privateRenter
+                })
+            )
+        );
     }
 }

@@ -1,61 +1,27 @@
 // SPDX-License-Identifier: AGPL-3.0-only
 pragma solidity >=0.8.7;
 
-import {SharedSetup, CheatCodes} from "./SharedSetup.t.sol";
+import {SharedSetup} from "./SharedSetup.t.sol";
 
 import {ICollectionLibrary} from "../collections/ICollectionLibrary.sol";
 import {IRentable} from "../interfaces/IRentable.sol";
 import {RentableTypes} from "./../RentableTypes.sol";
 
 contract RentableRent is SharedSetup {
-    address paymentTokenAddress = address(0);
-    uint256 paymentTokenId = 0;
-    uint256 tokenId = 123;
-
-    function getBalance(
-        address user,
-        address paymentToken,
-        uint256 _paymentTokenId
-    ) public view returns (uint256) {
-        if (paymentToken == address(weth)) {
-            return weth.balanceOf(user);
-        } else if (paymentToken == address(dummy1155)) {
-            return dummy1155.balanceOf(user, _paymentTokenId);
-        } else {
-            return user.balance;
-        }
-    }
-
-    function testRent() public payable {
-        cheats.startPrank(user);
-
-        uint256 maxTimeDuration = 1000;
-        uint256 pricePerSecond = 0.001 ether;
-
-        address renter = cheats.addr(5);
-        address privateRenter = address(0);
-        prepareTestDeposit(tokenId);
-        //1tx
-        testNFT.safeTransferFrom(
-            user,
-            address(rentable),
-            tokenId,
-            abi.encode(
-                RentableTypes.RentalConditions({
-                    maxTimeDuration: maxTimeDuration,
-                    pricePerSecond: pricePerSecond,
-                    paymentTokenId: paymentTokenId,
-                    paymentTokenAddress: paymentTokenAddress,
-                    privateRenter: privateRenter
-                })
-            )
-        );
+    function testRent()
+        public
+        payable
+        protocolFeeCoverage
+        paymentTokensCoverage
+        executeByUser(user)
+    {
+        _prepareRent();
 
         uint256 rentalDuration = 80;
         uint256 value = 0.08 ether;
 
         // Test event emitted
-        cheats.expectEmit(true, true, true, true);
+        vm.expectEmit(true, true, true, true);
 
         emit Rent(
             user,
@@ -67,8 +33,7 @@ contract RentableRent is SharedSetup {
             block.timestamp + rentalDuration
         );
 
-        cheats.stopPrank();
-        cheats.startPrank(renter);
+        switchUser(renter);
         depositAndApprove(renter, value, paymentTokenAddress, paymentTokenId);
 
         uint256 preBalanceUser = getBalance(
@@ -93,8 +58,7 @@ contract RentableRent is SharedSetup {
             rentalDuration
         );
 
-        cheats.stopPrank();
-        cheats.startPrank(user);
+        switchUser(user);
 
         uint256 postBalanceUser = getBalance(
             user,
@@ -114,6 +78,8 @@ contract RentableRent is SharedSetup {
 
         uint256 rentPayed = preBalanceRenter - postBalanceRenter;
 
+        assertEq(rentPayed, rentalDuration * pricePerSecond);
+
         assertEq(
             rentable.expiresAt(address(testNFT), tokenId),
             block.timestamp + rentalDuration
@@ -126,196 +92,85 @@ contract RentableRent is SharedSetup {
             totalFeesToPay
         );
 
-        uint256 renteePayout = preBalanceRenter - postBalanceRenter;
+        uint256 renteePayout = rentPayed - totalFeesToPay;
 
         assertEq(postBalanceUser - preBalanceUser, renteePayout);
 
         assertEq(wrentable.ownerOf(tokenId), renter);
 
-        cheats.warp(block.timestamp + rentalDuration + 1);
-
-        assertEq(wrentable.ownerOf(tokenId), address(0));
+        vm.warp(block.timestamp + rentalDuration + 1);
 
         // Test event emitted
-        cheats.expectEmit(true, true, true, true);
+        vm.expectEmit(true, true, true, true);
         emit RentEnds(address(testNFT), tokenId);
 
         rentable.expireRental(address(testNFT), tokenId);
-
-        cheats.stopPrank();
     }
 
-    function testRentPrivate() public payable {
-        cheats.startPrank(user);
-
-        uint256 maxTimeDuration = 1000;
-        uint256 pricePerSecond = 0.001 ether;
-
-        address renter = cheats.addr(5);
-        address privateRenter = renter;
-
-        prepareTestDeposit(tokenId);
-
-        //1tx
-        testNFT.safeTransferFrom(
-            user,
-            address(rentable),
-            tokenId,
-            abi.encode(
-                RentableTypes.RentalConditions({
-                    maxTimeDuration: maxTimeDuration,
-                    pricePerSecond: pricePerSecond,
-                    paymentTokenId: paymentTokenId,
-                    paymentTokenAddress: paymentTokenAddress,
-                    privateRenter: privateRenter
-                })
-            )
-        );
+    function testRentPrivate() public payable executeByUser(user) {
+        renter = getNewAddress();
+        privateRenter = renter;
+        _prepareRent(renter);
 
         uint256 rentalDuration = 80;
         uint256 value = 0.08 ether;
 
-        cheats.stopPrank();
-        cheats.startPrank(renter);
+        switchUser(renter);
         depositAndApprove(renter, value, paymentTokenAddress, paymentTokenId);
 
-        uint256 preBalanceUser = getBalance(
-            user,
-            paymentTokenAddress,
-            paymentTokenId
-        );
-        uint256 preBalanceFeeCollector = getBalance(
-            feeCollector,
-            paymentTokenAddress,
-            paymentTokenId
-        );
-        uint256 preBalanceRenter = getBalance(
-            renter,
-            paymentTokenAddress,
-            paymentTokenId
-        );
-
-        cheats.stopPrank();
-        cheats.startPrank(cheats.addr(8));
+        address wrongRenter = getNewAddress();
+        switchUser(wrongRenter);
         depositAndApprove(
-            cheats.addr(8),
+            wrongRenter,
             value,
             paymentTokenAddress,
             paymentTokenId
         );
-        cheats.expectRevert(bytes("Rental reserved for another user"));
+        vm.expectRevert(bytes("Rental reserved for another user"));
         rentable.rent{value: paymentTokenAddress == address(0) ? value : 0}(
             address(testNFT),
             tokenId,
             rentalDuration
         );
 
-        cheats.stopPrank();
-        cheats.startPrank(renter);
-
-        // Test event emitted
-        cheats.expectEmit(true, true, true, true);
-
-        emit Rent(
-            user,
-            renter,
-            address(testNFT),
-            tokenId,
-            paymentTokenAddress,
-            paymentTokenId,
-            block.timestamp + rentalDuration
-        );
+        switchUser(renter);
 
         rentable.rent{value: paymentTokenAddress == address(0) ? value : 0}(
             address(testNFT),
             tokenId,
             rentalDuration
         );
+    }
 
-        cheats.stopPrank();
-        cheats.startPrank(user);
+    function testWTokenExpiresOnRentalEnd() public payable executeByUser(user) {
+        _prepareRent();
 
-        uint256 postBalanceUser = getBalance(
-            user,
-            paymentTokenAddress,
-            paymentTokenId
+        uint256 rentalDuration = 80;
+        uint256 value = 0.08 ether;
+
+        switchUser(renter);
+        depositAndApprove(renter, value, paymentTokenAddress, paymentTokenId);
+
+        rentable.rent{value: paymentTokenAddress == address(0) ? value : 0}(
+            address(testNFT),
+            tokenId,
+            rentalDuration
         );
-        uint256 postBalanceFeeCollector = getBalance(
-            feeCollector,
-            paymentTokenAddress,
-            paymentTokenId
-        );
-        uint256 postBalanceRenter = getBalance(
-            renter,
-            paymentTokenAddress,
-            paymentTokenId
-        );
-
-        uint256 rentPayed = preBalanceRenter - postBalanceRenter;
-
-        assertEq(
-            rentable.expiresAt(address(testNFT), tokenId),
-            block.timestamp + rentalDuration
-        );
-
-        uint256 totalFeesToPay = (rentPayed * rentable.getFee()) / 10_000;
-
-        assertEq(
-            postBalanceFeeCollector - preBalanceFeeCollector,
-            totalFeesToPay
-        );
-
-        uint256 renteePayout = preBalanceRenter - postBalanceRenter;
-
-        assertEq(postBalanceUser - preBalanceUser, renteePayout);
 
         assertEq(wrentable.ownerOf(tokenId), renter);
 
-        cheats.warp(block.timestamp + rentalDuration + 1);
+        vm.warp(block.timestamp + rentalDuration + 1);
 
         assertEq(wrentable.ownerOf(tokenId), address(0));
-
-        // Test event emitted
-        cheats.expectEmit(true, true, true, true);
-        emit RentEnds(address(testNFT), tokenId);
-
-        rentable.expireRental(address(testNFT), tokenId);
-
-        cheats.stopPrank();
     }
 
-    function testCannotWithdrawOnRent() public payable {
-        cheats.startPrank(user);
-
-        uint256 maxTimeDuration = 1000;
-        uint256 pricePerSecond = 0.001 ether;
-
-        address renter = cheats.addr(5);
-        address privateRenter = address(0);
-
-        prepareTestDeposit(tokenId);
-
-        //1tx
-        testNFT.safeTransferFrom(
-            user,
-            address(rentable),
-            tokenId,
-            abi.encode(
-                RentableTypes.RentalConditions({
-                    maxTimeDuration: maxTimeDuration,
-                    pricePerSecond: pricePerSecond,
-                    paymentTokenId: paymentTokenId,
-                    paymentTokenAddress: paymentTokenAddress,
-                    privateRenter: privateRenter
-                })
-            )
-        );
+    function testCannotWithdrawOnRent() public payable executeByUser(user) {
+        _prepareRent();
 
         uint256 rentalDuration = 80;
         uint256 value = 0.08 ether;
 
-        cheats.stopPrank();
-        cheats.startPrank(renter);
+        switchUser(renter);
         depositAndApprove(renter, value, paymentTokenAddress, paymentTokenId);
 
         rentable.rent{value: paymentTokenAddress == address(0) ? value : 0}(
@@ -324,192 +179,148 @@ contract RentableRent is SharedSetup {
             rentalDuration
         );
 
-        cheats.stopPrank();
-        cheats.startPrank(user);
+        switchUser(user);
 
-        cheats.expectRevert(bytes("Current rent still pending"));
+        vm.expectRevert(bytes("Current rent still pending"));
         rentable.withdraw(address(testNFT), tokenId);
+    }
 
-        cheats.warp(block.timestamp + rentalDuration + 1);
+    function testCannotRentOnRent() public payable executeByUser(user) {
+        _prepareRent();
 
+        uint256 rentalDuration = 80;
+        uint256 value = 0.08 ether;
+
+        switchUser(renter);
+        depositAndApprove(renter, value, paymentTokenAddress, paymentTokenId);
+
+        rentable.rent{value: paymentTokenAddress == address(0) ? value : 0}(
+            address(testNFT),
+            tokenId,
+            rentalDuration
+        );
+
+        address anotherRenter = getNewAddress();
+        switchUser(anotherRenter);
+        depositAndApprove(
+            anotherRenter,
+            value,
+            paymentTokenAddress,
+            paymentTokenId
+        );
+
+        vm.expectRevert(bytes("Current rent still pending"));
+
+        rentable.rent{value: paymentTokenAddress == address(0) ? value : 0}(
+            address(testNFT),
+            tokenId,
+            rentalDuration
+        );
+    }
+
+    function testCannotRentMoreThanAllowed()
+        public
+        payable
+        executeByUser(user)
+    {
+        _prepareRent();
+
+        uint256 rentalDuration = maxTimeDuration + 1 days;
+        uint256 value = rentalDuration * pricePerSecond;
+
+        switchUser(renter);
+        depositAndApprove(renter, value, paymentTokenAddress, paymentTokenId);
+
+        vm.expectRevert(bytes("Duration greater than conditions"));
+        rentable.rent{value: paymentTokenAddress == address(0) ? value : 0}(
+            address(testNFT),
+            tokenId,
+            rentalDuration
+        );
+    }
+
+    function testCannotRentForZeroSeconds() public payable executeByUser(user) {
+        _prepareRent();
+
+        uint256 rentalDuration = 0;
+        uint256 value = 0;
+
+        switchUser(renter);
+        depositAndApprove(renter, value, paymentTokenAddress, paymentTokenId);
+
+        vm.expectRevert(bytes("Duration cannot be zero"));
+        rentable.rent{value: paymentTokenAddress == address(0) ? value : 0}(
+            address(testNFT),
+            tokenId,
+            rentalDuration
+        );
+    }
+
+    function testCannotRentWhenDelisted() public payable executeByUser(user) {
+        _prepareRent();
+
+        switchUser(user);
+        rentable.deleteRentalConditions(address(testNFT), tokenId);
+
+        uint256 rentalDuration = 80;
+        uint256 value = 0.08 ether;
+
+        switchUser(renter);
+        depositAndApprove(renter, value, paymentTokenAddress, paymentTokenId);
+
+        vm.expectRevert(bytes("Not available"));
+
+        rentable.rent{value: paymentTokenAddress == address(0) ? value : 0}(
+            address(testNFT),
+            tokenId,
+            rentalDuration
+        );
+    }
+
+    function testRentAfterExpire() public payable executeByUser(user) {
+        _prepareRent();
+
+        uint256 rentalDuration = 80;
+        uint256 value = 0.08 ether;
+
+        switchUser(renter);
+        depositAndApprove(renter, value, paymentTokenAddress, paymentTokenId);
+
+        rentable.rent{value: paymentTokenAddress == address(0) ? value : 0}(
+            address(testNFT),
+            tokenId,
+            rentalDuration
+        );
+
+        vm.warp(block.timestamp + rentalDuration + 1);
+
+        depositAndApprove(renter, value, paymentTokenAddress, paymentTokenId);
+
+        rentable.rent{value: paymentTokenAddress == address(0) ? value : 0}(
+            address(testNFT),
+            tokenId,
+            rentalDuration
+        );
+    }
+
+    function testWithdrawAfterExpire() public payable executeByUser(user) {
+        _prepareRent();
+
+        uint256 rentalDuration = 80;
+        uint256 value = 0.08 ether;
+
+        switchUser(renter);
+        depositAndApprove(renter, value, paymentTokenAddress, paymentTokenId);
+
+        rentable.rent{value: paymentTokenAddress == address(0) ? value : 0}(
+            address(testNFT),
+            tokenId,
+            rentalDuration
+        );
+
+        vm.warp(block.timestamp + rentalDuration + 1);
+
+        switchUser(user);
         rentable.withdraw(address(testNFT), tokenId);
-
-        tokenId++;
-
-        cheats.stopPrank();
-    }
-
-    function testTransferWToken() public payable {
-        cheats.startPrank(user);
-
-        uint256 maxTimeDuration = 1000;
-        uint256 pricePerSecond = 0.001 ether;
-
-        address renter = cheats.addr(5);
-        address privateRenter = address(0);
-
-        prepareTestDeposit(tokenId);
-
-        //1tx
-        testNFT.safeTransferFrom(
-            user,
-            address(rentable),
-            tokenId,
-            abi.encode(
-                RentableTypes.RentalConditions({
-                    maxTimeDuration: maxTimeDuration,
-                    pricePerSecond: pricePerSecond,
-                    paymentTokenId: paymentTokenId,
-                    paymentTokenAddress: paymentTokenAddress,
-                    privateRenter: privateRenter
-                })
-            )
-        );
-
-        uint256 rentalDuration = 80;
-        uint256 value = 0.08 ether;
-
-        cheats.stopPrank();
-        cheats.startPrank(renter);
-        depositAndApprove(renter, value, paymentTokenAddress, paymentTokenId);
-
-        rentable.rent{value: paymentTokenAddress == address(0) ? value : 0}(
-            address(testNFT),
-            tokenId,
-            rentalDuration
-        );
-
-        bytes memory expectedData = abi.encodeWithSelector(
-            ICollectionLibrary.postWTokenTransfer.selector,
-            address(testNFT),
-            tokenId,
-            renter,
-            cheats.addr(9)
-        );
-        cheats.expectCall(address(dummyLib), expectedData);
-
-        wrentable.transferFrom(renter, cheats.addr(9), tokenId);
-
-        assertEq(wrentable.ownerOf(tokenId), cheats.addr(9));
-
-        cheats.stopPrank();
-        cheats.startPrank(user);
-
-        cheats.stopPrank();
-    }
-
-    function testTransferOToken() public payable {
-        cheats.startPrank(user);
-
-        uint256 maxTimeDuration = 1000;
-        uint256 pricePerSecond = 0.001 ether;
-
-        address renter = cheats.addr(5);
-        address privateRenter = address(0);
-        prepareTestDeposit(tokenId);
-
-        //1tx
-        testNFT.safeTransferFrom(
-            user,
-            address(rentable),
-            tokenId,
-            abi.encode(
-                RentableTypes.RentalConditions({
-                    maxTimeDuration: maxTimeDuration,
-                    pricePerSecond: pricePerSecond,
-                    paymentTokenId: paymentTokenId,
-                    paymentTokenAddress: paymentTokenAddress,
-                    privateRenter: privateRenter
-                })
-            )
-        );
-
-        uint256 rentalDuration = 80;
-        uint256 value = 0.08 ether;
-
-        cheats.stopPrank();
-        cheats.startPrank(renter);
-        depositAndApprove(renter, value, paymentTokenAddress, paymentTokenId);
-
-        rentable.rent{value: paymentTokenAddress == address(0) ? value : 0}(
-            address(testNFT),
-            tokenId,
-            rentalDuration
-        );
-
-        cheats.stopPrank();
-        cheats.startPrank(user);
-
-        bytes memory expectedData = abi.encodeWithSelector(
-            ICollectionLibrary.postOTokenTransfer.selector,
-            address(testNFT),
-            tokenId,
-            user,
-            cheats.addr(9),
-            true
-        );
-        cheats.expectCall(address(dummyLib), expectedData);
-
-        orentable.transferFrom(user, cheats.addr(9), tokenId);
-
-        assertEq(orentable.ownerOf(tokenId), cheats.addr(9));
-
-        cheats.stopPrank();
-    }
-
-    function testRentAfterExpire() public payable {
-        cheats.startPrank(user);
-
-        uint256 maxTimeDuration = 1000;
-        uint256 pricePerSecond = 0.001 ether;
-
-        address renter = cheats.addr(5);
-        address privateRenter = address(0);
-
-        prepareTestDeposit(tokenId);
-
-        //1tx
-        testNFT.safeTransferFrom(
-            user,
-            address(rentable),
-            tokenId,
-            abi.encode(
-                RentableTypes.RentalConditions({
-                    maxTimeDuration: maxTimeDuration,
-                    pricePerSecond: pricePerSecond,
-                    paymentTokenId: paymentTokenId,
-                    paymentTokenAddress: paymentTokenAddress,
-                    privateRenter: privateRenter
-                })
-            )
-        );
-
-        uint256 rentalDuration = 80;
-        uint256 value = 0.08 ether;
-
-        cheats.stopPrank();
-        cheats.startPrank(renter);
-        depositAndApprove(renter, value, paymentTokenAddress, paymentTokenId);
-
-        rentable.rent{value: paymentTokenAddress == address(0) ? value : 0}(
-            address(testNFT),
-            tokenId,
-            rentalDuration
-        );
-
-        cheats.warp(block.timestamp + rentalDuration + 1);
-
-        depositAndApprove(renter, value, paymentTokenAddress, paymentTokenId);
-
-        rentable.rent{value: paymentTokenAddress == address(0) ? value : 0}(
-            address(testNFT),
-            tokenId,
-            rentalDuration
-        );
-
-        cheats.stopPrank();
-        cheats.startPrank(user);
-
-        cheats.stopPrank();
     }
 }
