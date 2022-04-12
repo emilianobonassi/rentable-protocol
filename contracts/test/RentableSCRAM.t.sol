@@ -25,6 +25,7 @@ contract RentableSCRAM is SharedSetup {
         testNFT.safeTransferFrom(user, address(rentable), tokenId);
         testNFT.safeTransferFrom(user, address(rentable), tokenId + 1);
 
+        uint256 minTimeDuration = 0;
         uint256 maxTimeDuration = 1000;
         uint256 pricePerSecond = 0.001 ether;
 
@@ -32,6 +33,7 @@ contract RentableSCRAM is SharedSetup {
             .RentalConditions({
                 paymentTokenAddress: address(0),
                 paymentTokenId: 0,
+                minTimeDuration: minTimeDuration,
                 maxTimeDuration: maxTimeDuration,
                 pricePerSecond: pricePerSecond,
                 privateRenter: address(0)

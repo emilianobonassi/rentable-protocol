@@ -457,12 +457,18 @@ contract Rentable is
             "Not supported payment token"
         );
 
+        require(
+            rc.minTimeDuration <= rc.maxTimeDuration,
+            "Minimum duration cannot be greater than maximum"
+        );
+
         _rentalConditions[tokenAddress][tokenId] = rc;
 
         _postList(
             tokenAddress,
             tokenId,
             user,
+            rc.minTimeDuration,
             rc.maxTimeDuration,
             rc.pricePerSecond
         );
@@ -472,6 +478,7 @@ contract Rentable is
             tokenId,
             rc.paymentTokenAddress,
             rc.paymentTokenId,
+            rc.minTimeDuration,
             rc.maxTimeDuration,
             rc.pricePerSecond,
             rc.privateRenter
@@ -553,6 +560,7 @@ contract Rentable is
         address tokenAddress,
         uint256 tokenId,
         address user,
+        uint256 minTimeDuration,
         uint256 maxTimeDuration,
         uint256 pricePerSecond
     ) internal skipIfLibraryNotSet(tokenAddress) {
@@ -563,6 +571,7 @@ contract Rentable is
                 tokenAddress,
                 tokenId,
                 user,
+                minTimeDuration,
                 maxTimeDuration,
                 pricePerSecond
             ),
@@ -717,6 +726,11 @@ contract Rentable is
 
         // 2. validate renter offer with rentee conditions
         require(duration > 0, "Duration cannot be zero");
+
+        require(
+            duration >= rcs.minTimeDuration,
+            "Duration lower than conditions"
+        );
 
         require(
             duration <= rcs.maxTimeDuration,

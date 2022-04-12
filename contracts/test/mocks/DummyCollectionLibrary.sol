@@ -15,6 +15,7 @@ contract DummyCollectionLibrary is ICollectionLibrary {
         address tokenAddress,
         uint256 tokenId,
         address user,
+        uint256 minTimeDuration,
         uint256 maxTimeDuration,
         uint256 pricePerSecond
     ) external override {}

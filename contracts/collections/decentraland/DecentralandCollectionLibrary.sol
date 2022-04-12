@@ -30,6 +30,7 @@ contract DecentralandCollectionLibrary is ICollectionLibrary {
         uint256,
         address,
         uint256,
+        uint256,
         uint256
     ) external override {}
 

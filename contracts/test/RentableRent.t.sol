@@ -218,6 +218,28 @@ contract RentableRent is SharedSetup {
         );
     }
 
+    function testCannotRentLowerThanAllowed()
+        public
+        payable
+        executeByUser(user)
+    {
+        minTimeDuration = 1 days;
+        _prepareRent();
+
+        uint256 rentalDuration = minTimeDuration - 1;
+        uint256 value = 0;
+
+        switchUser(renter);
+        depositAndApprove(renter, value, paymentTokenAddress, paymentTokenId);
+
+        vm.expectRevert(bytes("Duration lower than conditions"));
+        rentable.rent{value: paymentTokenAddress == address(0) ? value : 0}(
+            address(testNFT),
+            tokenId,
+            rentalDuration
+        );
+    }
+
     function testCannotRentMoreThanAllowed()
         public
         payable

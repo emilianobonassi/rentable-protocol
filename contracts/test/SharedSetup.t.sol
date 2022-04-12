@@ -66,7 +66,10 @@ abstract contract SharedSetup is DSTest, TestHelper, IRentableEvents {
     address privateRenter;
 
     uint256 pricePerSecond;
+
+    uint256 minTimeDuration;
     uint256 maxTimeDuration;
+
     address renter;
 
     modifier paymentTokensCoverage() {
@@ -263,6 +266,7 @@ abstract contract SharedSetup is DSTest, TestHelper, IRentableEvents {
             tokenId,
             abi.encode(
                 RentableTypes.RentalConditions({
+                    minTimeDuration: minTimeDuration,
                     maxTimeDuration: maxTimeDuration,
                     pricePerSecond: pricePerSecond,
                     paymentTokenId: paymentTokenId,
