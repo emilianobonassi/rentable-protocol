@@ -87,9 +87,6 @@ contract RentableSCRAM is SharedSetup {
         // expireRental
         vm.expectRevert(bytes("Pausable: paused"));
         rentable.expireRental(address(testNFT), 1);
-        /*
-        proxyCall
-        */
 
         // expireRentals
         address[] memory addressesToExpire = new address[](1);
