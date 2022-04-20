@@ -12,7 +12,7 @@ def chunks(lst, n):
 
 def main():
     dev = accounts.load("rentable-deployer")
-    testNFT = TestNFT.at("0x34Da09AB3BA60F8e03145D240e8C7113Db8C0268")
+    testNFT = TestNFT.at("0xF88C792bba0D3eA1F4ef6787b9235D65AC71785c")
 
     file = open("./fixtures/nfts-to-be-minted.txt")
     uris = file.read().splitlines()

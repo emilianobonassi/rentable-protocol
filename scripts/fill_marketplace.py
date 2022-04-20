@@ -29,10 +29,12 @@ def listOnMarket(
             "uint256",
             "uint256",
             "uint256",
+            "uint256",
             "address",
             "address",
         ],
         (
+            1,
             maxTimeDuration,
             pricePerSecond,
             paymentTokenId,
@@ -45,11 +47,11 @@ def listOnMarket(
 
 def main():
     dev = accounts.load("rentable-deployer")
-    testNFT = TestNFT.at("0x34Da09AB3BA60F8e03145D240e8C7113Db8C0268")
-    rentable = "0xb98108005848Ff5CAE9fDFCd5095ef89ab44136a"
+    testNFT = TestNFT.at("0xF88C792bba0D3eA1F4ef6787b9235D65AC71785c")
+    rentable = "0xC3f747a87D01b35c6A6eac7844cDf91189438fE9"
 
     startId = 1
-    endId = 10
+    endId = 51
 
     day = 24 * 60 * 60
     maxTimeDurationLow = 3 * day
