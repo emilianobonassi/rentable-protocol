@@ -167,6 +167,8 @@ contract Rentable is
     /// @dev Set fee (percentage)
     /// @param newFee fee in 1e4 units (e.g. 100% = 10000)
     function setFee(uint16 newFee) external onlyGovernance {
+        require(newFee <= BASE_FEE, "Fee greater than max value");
+
         uint16 previousFee = _fee;
 
         _fee = newFee;
@@ -876,21 +878,28 @@ contract Rentable is
         address to,
         uint256 tokenId
     ) external override whenNotPaused onlyWToken(tokenAddress) {
-        _expireRental(address(0), tokenAddress, tokenId, true);
+        bool currentlyRented = _expireRental(
+            address(0),
+            tokenAddress,
+            tokenId,
+            true
+        );
 
-        address lib = _libraries[tokenAddress];
-        if (lib != address(0)) {
-            // slither-disable-next-line unused-return
-            lib.functionDelegateCall(
-                abi.encodeWithSelector(
-                    ICollectionLibrary.postWTokenTransfer.selector,
-                    tokenAddress,
-                    tokenId,
-                    from,
-                    to
-                ),
-                ""
-            );
+        if (currentlyRented) {
+            address lib = _libraries[tokenAddress];
+            if (lib != address(0)) {
+                // slither-disable-next-line unused-return
+                lib.functionDelegateCall(
+                    abi.encodeWithSelector(
+                        ICollectionLibrary.postWTokenTransfer.selector,
+                        tokenAddress,
+                        tokenId,
+                        from,
+                        to
+                    ),
+                    ""
+                );
+            }
         }
     }
 

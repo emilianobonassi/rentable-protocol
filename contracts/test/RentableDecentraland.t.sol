@@ -189,4 +189,61 @@ contract RentableDecentraland is SharedSetup {
 
         assertEq(testLand.updateOperator(tokenId), address(0));
     }
+
+    function testWTransferAfterExpireResetOperatorCorrectly() public {
+        /// in the case you transfer an expired wtoken the operator
+        /// was set to the recipient and not reset
+        /// verify it's reset to the current otoken owner
+
+        address originalOwner = getNewAddress();
+        uint256 tokenId = 123;
+        address originalOperator = getNewAddress();
+        address renter = getNewAddress();
+        address newRenter = getNewAddress();
+
+        vm.startPrank(originalOwner);
+
+        testLand.mint(originalOwner, tokenId);
+        assertEq(testLand.ownerOf(tokenId), originalOwner);
+
+        testLand.setUpdateOperator(tokenId, originalOperator);
+        assertEq(testLand.updateOperator(tokenId), originalOperator);
+
+        uint256 maxTimeDuration = 10;
+        uint256 minTimeDuration = 0;
+        uint256 pricePerSecond = 0.1 ether;
+
+        testLand.safeTransferFrom(
+            originalOwner,
+            address(rentable),
+            tokenId,
+            abi.encode(
+                RentableTypes.RentalConditions({
+                    minTimeDuration: minTimeDuration,
+                    maxTimeDuration: maxTimeDuration,
+                    pricePerSecond: pricePerSecond,
+                    paymentTokenId: 0,
+                    paymentTokenAddress: address(0),
+                    privateRenter: address(0)
+                })
+            )
+        );
+
+        // Rent
+        switchUser(renter);
+        depositAndApprove(renter, 1 ether, address(0), 0);
+
+        rentable.rent{value: 1 ether}(
+            address(testLand),
+            tokenId,
+            maxTimeDuration / 2
+        );
+
+        vm.warp(maxTimeDuration / 2 + 1);
+
+        // Transfer newRenter when expired should burn the token
+        // and change the operator to the current otoken owner
+        wrentable.safeTransferFrom(renter, newRenter, tokenId);
+        assertEq(testLand.updateOperator(tokenId), orentable.ownerOf(tokenId));
+    }
 }

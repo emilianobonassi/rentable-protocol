@@ -115,7 +115,7 @@ abstract contract SharedSetup is DSTest, TestHelper, IRentableEvents {
 
         vm.startPrank(governance);
 
-        dummyLib = new DummyCollectionLibrary();
+        dummyLib = new DummyCollectionLibrary(false);
 
         weth = new WETH();
 
