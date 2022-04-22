@@ -878,21 +878,28 @@ contract Rentable is
         address to,
         uint256 tokenId
     ) external override whenNotPaused onlyWToken(tokenAddress) {
-        _expireRental(address(0), tokenAddress, tokenId, true);
+        bool currentlyRented = _expireRental(
+            address(0),
+            tokenAddress,
+            tokenId,
+            true
+        );
 
-        address lib = _libraries[tokenAddress];
-        if (lib != address(0)) {
-            // slither-disable-next-line unused-return
-            lib.functionDelegateCall(
-                abi.encodeWithSelector(
-                    ICollectionLibrary.postWTokenTransfer.selector,
-                    tokenAddress,
-                    tokenId,
-                    from,
-                    to
-                ),
-                ""
-            );
+        if (currentlyRented) {
+            address lib = _libraries[tokenAddress];
+            if (lib != address(0)) {
+                // slither-disable-next-line unused-return
+                lib.functionDelegateCall(
+                    abi.encodeWithSelector(
+                        ICollectionLibrary.postWTokenTransfer.selector,
+                        tokenAddress,
+                        tokenId,
+                        from,
+                        to
+                    ),
+                    ""
+                );
+            }
         }
     }
 

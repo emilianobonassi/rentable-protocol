@@ -5,6 +5,8 @@ import {SharedSetup} from "./SharedSetup.t.sol";
 
 import {ICollectionLibrary} from "../collections/ICollectionLibrary.sol";
 
+import {DummyCollectionLibrary} from "./mocks/DummyCollectionLibrary.sol";
+
 import {RentableTypes} from "./../RentableTypes.sol";
 
 contract RentableLibrary is SharedSetup {
@@ -120,5 +122,34 @@ contract RentableLibrary is SharedSetup {
                 })
             )
         );
+    }
+
+    function testWTransferAfterExpireDontCallLibrary() public payable {
+        // inject a library which revert on wtoken transfer
+        switchUser(governance);
+        rentable.setLibrary(
+            address(testNFT),
+            address(new DummyCollectionLibrary(true))
+        );
+
+        switchUser(user);
+        _prepareRent();
+
+        uint256 rentalDuration = 80;
+        uint256 value = 0.08 ether;
+
+        switchUser(renter);
+        depositAndApprove(renter, value, paymentTokenAddress, paymentTokenId);
+
+        rentable.rent{value: paymentTokenAddress == address(0) ? value : 0}(
+            address(testNFT),
+            tokenId,
+            rentalDuration
+        );
+
+        vm.warp(block.timestamp + rentalDuration + 1);
+
+        address newRenter = getNewAddress();
+        wrentable.safeTransferFrom(renter, newRenter, tokenId);
     }
 }

@@ -5,6 +5,12 @@ pragma solidity >=0.8.7;
 import {ICollectionLibrary} from "../../collections/ICollectionLibrary.sol";
 
 contract DummyCollectionLibrary is ICollectionLibrary {
+    bool public immutable revertOnWTransfer;
+
+    constructor(bool _revertOnWTransfer) {
+        revertOnWTransfer = _revertOnWTransfer;
+    }
+
     function postDeposit(
         address tokenAddress,
         uint256 tokenId,
@@ -35,11 +41,13 @@ contract DummyCollectionLibrary is ICollectionLibrary {
     ) external payable override {}
 
     function postWTokenTransfer(
-        address tokenAddress,
-        uint256 tokenId,
-        address from,
-        address to
-    ) external override {}
+        address,
+        uint256,
+        address,
+        address
+    ) external override {
+        require(!revertOnWTransfer, "always revert");
+    }
 
     function postOTokenTransfer(
         address tokenAddress,
