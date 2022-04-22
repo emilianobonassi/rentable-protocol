@@ -167,6 +167,8 @@ contract Rentable is
     /// @dev Set fee (percentage)
     /// @param newFee fee in 1e4 units (e.g. 100% = 10000)
     function setFee(uint16 newFee) external onlyGovernance {
+        require(newFee <= 10000, "Fee greater than max value");
+
         uint16 previousFee = _fee;
 
         _fee = newFee;

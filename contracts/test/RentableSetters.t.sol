@@ -84,6 +84,13 @@ contract RentableSetters is SharedSetup {
         assertEq(rentable.getFee(), fees);
     }
 
+    function testSetFeeTooHigh() public {
+        uint16 fee = 10_000 + 1;
+        vm.prank(governance);
+        vm.expectRevert(bytes("Fee greater than max value"));
+        rentable.setFee(fee);
+    }
+
     function testSetORentable() public {
         address token = getNewAddress();
         _onlyGovernance(
