@@ -37,6 +37,9 @@ contract SimpleWallet is
 
     /* ========== CONSTRUCTOR ========== */
 
+    /// @dev Instatiate SimpleWallet
+    /// @param owner address for owner role
+    /// @param user address for user role
     constructor(address owner, address user) {
         _initialize(owner, user);
     }
