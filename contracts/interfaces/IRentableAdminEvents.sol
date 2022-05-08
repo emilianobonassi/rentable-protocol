@@ -37,6 +37,14 @@ interface IRentableAdminEvents {
         address indexed newValue
     );
 
+    /// @notice Emitted on WalletFactory change
+    /// @param previousWalletFactory previous wallet factory address
+    /// @param newWalletFactory new wallet factory address
+    event WalletFactoryChanged(
+        address indexed previousWalletFactory,
+        address indexed newWalletFactory
+    );
+
     /// @notice Emitted on fee change
     /// @param previousFee previous fee
     /// @param newFee new fee

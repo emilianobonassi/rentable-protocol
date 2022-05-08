@@ -22,6 +22,9 @@ import {IERC1155Upgradeable} from "@openzeppelin/contracts-upgradeable/token/ERC
 import {IERC721ReadOnlyProxy} from "./interfaces/IERC721ReadOnlyProxy.sol";
 import {IERC721ExistExtension} from "./interfaces/IERC721ExistExtension.sol";
 import {ICollectionLibrary} from "./collections/ICollectionLibrary.sol";
+
+import {IWalletFactory} from "./wallet/IWalletFactory.sol";
+import {SimpleWallet} from "./wallet/SimpleWallet.sol";
 import {RentableTypes} from "./RentableTypes.sol";
 
 /// @title Rentable main contract
@@ -162,6 +165,18 @@ contract Rentable is
         _wrentables[tokenAddress] = wRentable;
 
         emit WRentableChanged(tokenAddress, previousValue, wRentable);
+    }
+
+    /// @dev Set wallet factory
+    /// @param walletFactory wallet factory address
+    function setWalletFactory(address walletFactory) external onlyGovernance {
+        require(walletFactory != address(0), "Wallet Factory cannot be 0");
+
+        address previousWalletFactory = walletFactory;
+
+        _walletFactory = walletFactory;
+
+        emit WalletFactoryChanged(previousWalletFactory, walletFactory);
     }
 
     /// @dev Set fee (percentage)
@@ -335,6 +350,19 @@ contract Rentable is
         return _wrentables[tokenAddress];
     }
 
+    /// @notice Get wallet factory address
+    /// @return wallet factory address
+    function getWalletFactory() external view returns (address) {
+        return _walletFactory;
+    }
+
+    /// @notice Get wallet for user
+    /// @param user user address
+    /// @return wallet address
+    function getWallet(address user) external view returns (address) {
+        return _wallets[user];
+    }
+
     /// @notice Show current protocol fee
     /// @return protocol fee in 1e4 units, e.g. 100 = 1%
     function getFee() external view returns (uint16) {
@@ -403,6 +431,27 @@ contract Rentable is
     /* ========== MUTATIVE FUNCTIONS ========== */
 
     /* ---------- Internal ---------- */
+
+    /// @dev Get user wallet address (create if not exist)
+    /// @param user user address
+    /// @return wallet address
+    function _getOrCreateWalletForUser(address user)
+        internal
+        returns (address wallet)
+    {
+        wallet = _wallets[user];
+
+        if (wallet == address(0)) {
+            // slither-disable-next-line reentrancy-no-eth
+            wallet = IWalletFactory(_walletFactory).createWallet(
+                address(this),
+                user
+            );
+            _wallets[user] = wallet;
+        }
+
+        return wallet;
+    }
 
     /// @dev Deposit only a wrapped token and mint respective OToken
     /// @param tokenAddress wrapped token address
@@ -520,7 +569,29 @@ contract Rentable is
                         tokenId
                     )
                     : oTokenOwner;
+
+                // recover asset from renter smart wallet to rentable contracts
+                address wRentable = _wrentables[tokenAddress];
+                // cannot be 0x0 because transferFrom avoid it
+                address renter = IERC721Upgradeable(wRentable).ownerOf(tokenId);
+                address renterWallet = _wallets[renter];
+                // slither-disable-next-line unused-return
+                SimpleWallet(renterWallet).execute(
+                    tokenAddress,
+                    0,
+                    abi.encodeWithSelector(
+                        IERC721Upgradeable.transferFrom.selector, // we don't want to trigger onERC721Receiver
+                        renterWallet,
+                        address(this),
+                        tokenId
+                    ),
+                    false
+                );
+
+                // burn
                 IERC721ReadOnlyProxy(_wrentables[tokenAddress]).burn(tokenId);
+
+                // post
                 _postExpireRental(tokenAddress, tokenId, currentRentee);
                 emit RentEnds(tokenAddress, tokenId);
             } else {
@@ -752,7 +823,15 @@ contract Rentable is
             tokenId
         );
 
-        // 4. fees distribution
+        // 4. transfer token to the renter smart wallet
+        IERC721Upgradeable(tokenAddress).safeTransferFrom(
+            address(this),
+            _getOrCreateWalletForUser(msg.sender),
+            tokenId,
+            ""
+        );
+
+        // 5. fees distribution
         // gross due amount
         uint256 paymentQty = rcs.pricePerSecond * duration;
         // protocol and rentee fees calc
@@ -807,7 +886,7 @@ contract Rentable is
             );
         }
 
-        // 5. after rent custom logic
+        // 6. after rent custom logic
         _postRent(tokenAddress, tokenId, duration, rentee, msg.sender);
 
         emit Rent(
@@ -886,6 +965,22 @@ contract Rentable is
         );
 
         if (currentlyRented) {
+            // move to the recipient smart wallet
+            address fromWallet = _wallets[from];
+            // slither-disable-next-line unused-return
+            SimpleWallet(fromWallet).execute(
+                tokenAddress,
+                0,
+                abi.encodeWithSignature(
+                    "safeTransferFrom(address,address,uint256)",
+                    fromWallet,
+                    _getOrCreateWalletForUser(to),
+                    tokenId
+                ),
+                false
+            );
+
+            // execute lib code
             address lib = _libraries[tokenAddress];
             if (lib != address(0)) {
                 // slither-disable-next-line unused-return

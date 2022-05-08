@@ -49,6 +49,14 @@ contract RentableStorageV1 {
     // slither-disable-next-line naming-convention
     mapping(address => mapping(bytes4 => bool)) internal _proxyAllowList;
 
+    // user wallet factory
+    // slither-disable-next-line naming-convention
+    address internal _walletFactory;
+
+    // user => wallet mapping, for account abstraction
+    // slither-disable-next-line naming-convention
+    mapping(address => address) internal _wallets;
+
     // protocol fee
     // slither-disable-next-line naming-convention
     uint16 internal _fee;
