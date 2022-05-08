@@ -2,20 +2,28 @@
 pragma solidity >=0.8.7;
 
 // Inheritance
-import {ERC721Holder} from "@openzeppelin/contracts/token/ERC721/utils/ERC721Holder.sol";
-import {Ownable} from "@openzeppelin/contracts/access/Ownable.sol";
+import {Initializable} from "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol";
+import {OwnableUpgradeable} from "@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol";
+import {ERC721HolderUpgradeable} from "@openzeppelin/contracts-upgradeable/token/ERC721/utils/ERC721HolderUpgradeable.sol";
+import {ERC1155HolderUpgradeable} from "@openzeppelin/contracts-upgradeable/token/ERC1155/utils/ERC1155HolderUpgradeable.sol";
 
 // References
-import {IERC721} from "@openzeppelin/contracts/token/ERC721/IERC721.sol";
 import {ECDSA} from "@openzeppelin/contracts/utils/cryptography/ECDSA.sol";
+import {Address} from "@openzeppelin/contracts/utils/Address.sol";
 
 /// @title Rentable account abstraction
 /// @author Rentable Team <hello@rentable.world>
 /// @notice Account Abstraction
-contract SimpleWallet is ERC721Holder, Ownable {
+contract SimpleWallet is
+    Initializable,
+    OwnableUpgradeable,
+    ERC721HolderUpgradeable,
+    ERC1155HolderUpgradeable
+{
     /* ========== LIBRARIES ========== */
 
     using ECDSA for bytes32;
+    using Address for address;
 
     /* ========== CONSTANTS ========== */
 
@@ -27,14 +35,53 @@ contract SimpleWallet is ERC721Holder, Ownable {
     // current owner for the content
     address private _user;
 
+    /* ========== CONSTRUCTOR ========== */
+
+    constructor(address owner, address user) {
+        _initialize(owner, user);
+    }
+
+    /* ---------- INITIALIZER ---------- */
+
+    /// @notice Initializer for the wallet
+    /// @param owner address for owner role
+    /// @param user address for user role
+    function initialize(address owner, address user) external {
+        _initialize(owner, user);
+    }
+
+    /// @dev Internal intializer for the wallet
+    /// @param owner address for owner role
+    /// @param user address for user role
+    function _initialize(address owner, address user) internal initializer {
+        require(owner != address(0), "Owner cannot be null");
+
+        __Ownable_init();
+        _transferOwnership(owner);
+        __ERC721Holder_init();
+        __ERC1155Holder_init();
+
+        _setUser(user);
+    }
+
     /* ========== SETTERS ========== */
+
+    /* ---------- Internal ---------- */
+
+    /// @dev Set current user for the wallet
+    /// @param user user address
+    function _setUser(address user) internal {
+        // it's ok to se to 0x0, disabling signatures
+        // slither-disable-next-line missing-zero-check
+        _user = user;
+    }
+
+    /* ---------- Public ---------- */
 
     /// @notice Set current user for the wallet
     /// @param user user address
     function setUser(address user) external onlyOwner {
-        // it's ok to se to 0x0, disabling signatures
-        // slither-disable-next-line missing-zero-check
-        _user = user;
+        _setUser(user);
     }
 
     /* ========== VIEWS ========== */
@@ -64,28 +111,21 @@ contract SimpleWallet is ERC721Holder, Ownable {
 
     /* ========== MUTATIVE FUNCTIONS ========== */
 
-    /// @notice Withdraw asset ERC721
-    /// @param assetAddress token address
-    /// @param tokenId token id
-    function withdrawERC721(
-        address assetAddress,
-        uint256 tokenId,
-        bool notSafe
-    ) external onlyOwner {
-        if (notSafe) {
-            // slither-disable-next-line calls-loop
-            IERC721(assetAddress).transferFrom(
-                address(this),
-                msg.sender,
-                tokenId
-            );
+    /// @notice Execute any tx
+    /// @param to target
+    /// @param value ether value
+    /// @param data function+data
+    /// @param isDelegateCall true will execute a delegate call, false a call
+    function execute(
+        address to,
+        uint256 value,
+        bytes memory data,
+        bool isDelegateCall
+    ) external payable onlyOwner returns (bytes memory returnData) {
+        if (isDelegateCall) {
+            returnData = to.functionDelegateCall(data, "");
         } else {
-            // slither-disable-next-line calls-loop
-            IERC721(assetAddress).safeTransferFrom(
-                address(this),
-                msg.sender,
-                tokenId
-            );
+            returnData = to.functionCallWithValue(data, value, "");
         }
     }
 }
