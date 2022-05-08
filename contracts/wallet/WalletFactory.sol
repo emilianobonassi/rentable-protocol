@@ -68,9 +68,7 @@ contract WalletFactory is Ownable, IWalletFactory {
 
     /* ========== MUTATIVE FUNCTIONS ========== */
 
-    /// @notice Create a new wallet
-    /// @param owner address for owner role
-    /// @param user address for user role
+    /// @inheritdoc IWalletFactory
     function createWallet(address owner, address user)
         external
         override
