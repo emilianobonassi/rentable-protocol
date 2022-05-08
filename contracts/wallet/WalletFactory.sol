@@ -3,6 +3,7 @@ pragma solidity >=0.8.7;
 
 // Inheritance
 import {Ownable} from "@openzeppelin/contracts/access/Ownable.sol";
+import {IWalletFactory} from "./IWalletFactory.sol";
 
 // References
 import {ImmutableAdminUpgradeableBeaconProxy} from "../upgradability/ImmutableAdminUpgradeableBeaconProxy.sol";
@@ -12,7 +13,7 @@ import {SimpleWallet} from "./SimpleWallet.sol";
 /// @title Rentable wallet factory
 /// @author Rentable Team <hello@rentable.world>
 /// @notice Wallet factory
-contract WalletFactory is Ownable {
+contract WalletFactory is Ownable, IWalletFactory {
     /* ========== STATE VARIABLES ========== */
 
     // logic for new wallets
@@ -72,6 +73,7 @@ contract WalletFactory is Ownable {
     /// @param user address for user role
     function createWallet(address owner, address user)
         external
+        override
         returns (address wallet)
     {
         bytes memory _data = abi.encodeWithSelector(
