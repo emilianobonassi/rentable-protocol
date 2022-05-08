@@ -16,8 +16,8 @@ import {SimpleWallet} from "./SimpleWallet.sol";
 contract WalletFactory is Ownable, IWalletFactory {
     /* ========== STATE VARIABLES ========== */
 
-    // logic for new wallets
-    address private _logic;
+    // beacon for new wallets
+    address private _beacon;
 
     // admin for new proxies
     address private _admin;
@@ -25,10 +25,10 @@ contract WalletFactory is Ownable, IWalletFactory {
     /* ========== CONSTRUCTOR ========== */
 
     /// @dev Instatiate WalletFactory
-    /// @param logic logic address
+    /// @param beacon beacon address
     /// @param admin proxy admin address
-    constructor(address logic, address admin) {
-        _setLogic(logic);
+    constructor(address beacon, address admin) {
+        _setBeacon(beacon);
         _setAdmin(admin);
     }
 
@@ -36,12 +36,12 @@ contract WalletFactory is Ownable, IWalletFactory {
 
     /* ---------- Internal ---------- */
 
-    /// @dev Set logic for new wallets
-    /// @param logic logic address
-    function _setLogic(address logic) internal {
+    /// @dev Set beacon for new wallets
+    /// @param beacon beacon address
+    function _setBeacon(address beacon) internal {
         // it's ok to se to 0x0, disabling factory
         // slither-disable-next-line missing-zero-check
-        _logic = logic;
+        _beacon = beacon;
     }
 
     /// @dev Set proxy admin for new wallets
@@ -54,10 +54,10 @@ contract WalletFactory is Ownable, IWalletFactory {
 
     /* ---------- Public ---------- */
 
-    /// @notice Set logic for new wallets
-    /// @param logic logic address
-    function setLogic(address logic) external onlyOwner {
-        _setLogic(logic);
+    /// @notice Set beacon for new wallets
+    /// @param beacon beacon address
+    function setBeacon(address beacon) external onlyOwner {
+        _setBeacon(beacon);
     }
 
     /// @notice Set proxy admin for new wallets
@@ -82,7 +82,7 @@ contract WalletFactory is Ownable, IWalletFactory {
 
         return
             address(
-                new ImmutableAdminUpgradeableBeaconProxy(_logic, _admin, _data)
+                new ImmutableAdminUpgradeableBeaconProxy(_beacon, _admin, _data)
             );
     }
 }
