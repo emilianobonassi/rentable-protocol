@@ -573,7 +573,10 @@ contract Rentable is
                 // recover asset from renter smart wallet to rentable contracts
                 address wRentable = _wrentables[tokenAddress];
                 // cannot be 0x0 because transferFrom avoid it
-                address renter = IERC721Upgradeable(wRentable).ownerOf(tokenId);
+                address renter = IERC721ExistExtension(wRentable).ownerOf(
+                    tokenId,
+                    true
+                );
                 address renterWallet = _wallets[renter];
                 // slither-disable-next-line unused-return
                 SimpleWallet(renterWallet).execute(

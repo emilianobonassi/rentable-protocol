@@ -10,4 +10,13 @@ interface IERC721ExistExtension {
     /// @param tokenId token id
     /// @return true for existing token, false otw
     function exists(uint256 tokenId) external view returns (bool);
+
+    /// @notice Check ownership eventually skipping expire check
+    /// @param tokenId token id
+    /// @param skipExpirationCheck when true, return current owner skipping expire check
+    /// @return owner address
+    function ownerOf(uint256 tokenId, bool skipExpirationCheck)
+        external
+        view
+        returns (address);
 }

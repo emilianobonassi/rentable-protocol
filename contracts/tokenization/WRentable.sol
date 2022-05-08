@@ -37,16 +37,41 @@ contract WRentable is IERC721ExistExtension, BaseTokenInitializable {
         return "w";
     }
 
-    /* ---------- Public ---------- */
-
-    /// @inheritdoc IERC721Upgradeable
-    function ownerOf(uint256 tokenId) public view override returns (address) {
-        // Check rental expiration
-        if (!IRentable(getRentable()).isExpired(getWrapped(), tokenId)) {
+    /// @dev Check ownership eventually skipping expire check
+    /// @param tokenId token id
+    /// @param skipExpirationCheck when true, return current owner skipping expire check
+    /// @return owner address
+    function _ownerOf(uint256 tokenId, bool skipExpirationCheck)
+        internal
+        view
+        returns (address)
+    {
+        // Eventually check rental expiration
+        if (
+            skipExpirationCheck ||
+            !IRentable(getRentable()).isExpired(getWrapped(), tokenId)
+        ) {
             return super.ownerOf(tokenId);
         } else {
             return address(0);
         }
+    }
+
+    /* ---------- Public ---------- */
+
+    /// @inheritdoc IERC721Upgradeable
+    function ownerOf(uint256 tokenId) public view override returns (address) {
+        return _ownerOf(tokenId, false);
+    }
+
+    /// @inheritdoc IERC721ExistExtension
+    function ownerOf(uint256 tokenId, bool skipExpirationCheck)
+        external
+        view
+        override
+        returns (address)
+    {
+        return _ownerOf(tokenId, skipExpirationCheck);
     }
 
     /// @inheritdoc IERC721ExistExtension
