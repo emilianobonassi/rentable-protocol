@@ -16,6 +16,8 @@ import {Rentable} from "../Rentable.sol";
 import {ORentable} from "../tokenization/ORentable.sol";
 import {WRentable} from "../tokenization/WRentable.sol";
 
+import {SimpleWallet} from "../wallet/SimpleWallet.sol";
+import {WalletFactory} from "../wallet/WalletFactory.sol";
 import {DummyCollectionLibrary} from "./mocks/DummyCollectionLibrary.sol";
 
 import {RentableTypes} from "./../RentableTypes.sol";
@@ -55,6 +57,10 @@ abstract contract SharedSetup is DSTest, TestHelper, IRentableEvents {
     ORentable orentableLogic;
     UpgradeableBeacon wbeacon;
     WRentable wrentableLogic;
+
+    SimpleWallet simpleWalletLogic;
+    UpgradeableBeacon simpleWalletBeacon;
+    WalletFactory walletFactory;
 
     address paymentTokenAddress = address(0);
     uint256 paymentTokenId = 0;
@@ -188,6 +194,15 @@ abstract contract SharedSetup is DSTest, TestHelper, IRentableEvents {
         );
 
         rentable.setWRentable(address(testNFT), address(wrentable));
+
+        simpleWalletLogic = new SimpleWallet(address(rentable), address(0));
+        simpleWalletBeacon = new UpgradeableBeacon(address(simpleWalletLogic));
+        walletFactory = new WalletFactory(
+            address(simpleWalletBeacon),
+            address(proxyAdmin)
+        );
+
+        rentable.setWalletFactory(address(walletFactory));
 
         rentable.enablePaymentToken(address(0));
         rentable.enablePaymentToken(address(weth));

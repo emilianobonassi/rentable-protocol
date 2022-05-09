@@ -24,6 +24,7 @@ contract TestLand is ERC721, ILandRegistry {
         external
         override
     {
+        require(ownerOf(assetId) == msg.sender, "You are not the owner");
         _updateOperator[assetId] = operator;
     }
 

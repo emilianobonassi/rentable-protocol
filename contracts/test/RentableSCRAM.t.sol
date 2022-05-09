@@ -8,13 +8,14 @@ import {RentableTypes} from "./../RentableTypes.sol";
 
 import {ORentable} from "../tokenization/ORentable.sol";
 import {WRentable} from "../tokenization/WRentable.sol";
+import {SimpleWallet} from "../wallet/SimpleWallet.sol";
 
 contract RentableSCRAM is SharedSetup {
     function testSCRAM() public executeByUser(user) {
         //2 subscription, SCRAM, operation stopped, safe withdrawal by governance
         address renter = getNewAddress();
 
-        uint256 tokenId = 123;
+        tokenId = 123;
         testNFT.mint(user, tokenId);
         testNFT.mint(user, tokenId + 1);
         testNFT.mint(user, tokenId + 2);
@@ -125,14 +126,24 @@ contract RentableSCRAM is SharedSetup {
 
         switchUser(governance);
 
+        address renterSmartWallet = rentable.getWallet(
+            wrentable.ownerOf(tokenId)
+        );
+
         rentable.emergencyExecute(
-            address(testNFT),
+            renterSmartWallet,
             0,
             abi.encodeWithSelector(
-                IERC721Upgradeable.transferFrom.selector,
-                address(rentable),
-                governance,
-                tokenId
+                SimpleWallet.execute.selector,
+                address(testNFT),
+                0,
+                abi.encodeWithSelector(
+                    IERC721Upgradeable.transferFrom.selector,
+                    renterSmartWallet,
+                    governance,
+                    tokenId
+                ),
+                false
             ),
             false
         );
