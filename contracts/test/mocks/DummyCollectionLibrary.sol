@@ -31,7 +31,8 @@ contract DummyCollectionLibrary is ICollectionLibrary {
         uint256 tokenId,
         uint256 duration,
         address from,
-        address to
+        address to,
+        address toWallet
     ) external payable override {}
 
     function postExpireRental(
@@ -43,6 +44,7 @@ contract DummyCollectionLibrary is ICollectionLibrary {
     function postWTokenTransfer(
         address,
         uint256,
+        address,
         address,
         address
     ) external override {

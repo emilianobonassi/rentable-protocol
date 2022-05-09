@@ -39,12 +39,14 @@ interface ICollectionLibrary {
     /// @param duration rental duration
     /// @param from rentee
     /// @param to renter
+    /// @param toWallet renter wallet
     function postRent(
         address tokenAddress,
         uint256 tokenId,
         uint256 duration,
         address from,
-        address to
+        address to,
+        address toWallet
     ) external payable;
 
     /// @notice Called after expiration settlement on-chain
@@ -62,11 +64,13 @@ interface ICollectionLibrary {
     /// @param tokenId wrapped token id
     /// @param from sender
     /// @param to receiver
+    /// @param toWallet receiver wallet
     function postWTokenTransfer(
         address tokenAddress,
         uint256 tokenId,
         address from,
-        address to
+        address to,
+        address toWallet
     ) external;
 
     /// @notice Called after OToken transfer

@@ -660,12 +660,14 @@ contract Rentable is
     /// @param duration rental duration
     /// @param from rentee
     /// @param to renter
+    /// @param toWallet receiver wallet
     function _postRent(
         address tokenAddress,
         uint256 tokenId,
         uint256 duration,
         address from,
-        address to
+        address to,
+        address toWallet
     ) internal skipIfLibraryNotSet(tokenAddress) {
         // slither-disable-next-line unused-return
         _libraries[tokenAddress].functionDelegateCall(
@@ -675,7 +677,8 @@ contract Rentable is
                 tokenId,
                 duration,
                 from,
-                to
+                to,
+                toWallet
             ),
             ""
         );
@@ -826,9 +829,10 @@ contract Rentable is
         );
 
         // 4. transfer token to the renter smart wallet
+        address renterWallet = _getOrCreateWalletForUser(msg.sender);
         IERC721Upgradeable(tokenAddress).safeTransferFrom(
             address(this),
-            _getOrCreateWalletForUser(msg.sender),
+            renterWallet,
             tokenId,
             ""
         );
@@ -889,8 +893,14 @@ contract Rentable is
         }
 
         // 6. after rent custom logic
-        // TODO: evaluate to pass renterWallet for executing custom logic
-        _postRent(tokenAddress, tokenId, duration, rentee, msg.sender);
+        _postRent(
+            tokenAddress,
+            tokenId,
+            duration,
+            rentee,
+            msg.sender,
+            renterWallet
+        );
 
         emit Rent(
             rentee,
@@ -1004,7 +1014,6 @@ contract Rentable is
             // execute lib code
             address lib = _libraries[tokenAddress];
             if (lib != address(0)) {
-                // TODO: evaluate to pass renterWallet for executing custom logic
                 // slither-disable-next-line unused-return
                 lib.functionDelegateCall(
                     abi.encodeWithSelector(
@@ -1012,7 +1021,8 @@ contract Rentable is
                         tokenAddress,
                         tokenId,
                         from,
-                        to
+                        to,
+                        _wallets[to]
                     ),
                     ""
                 );

@@ -8,6 +8,8 @@ import {ICollectionLibrary} from "../ICollectionLibrary.sol";
 // References
 import {ILandRegistry} from "./ILandRegistry.sol";
 
+import {SimpleWallet} from "../../wallet/SimpleWallet.sol";
+
 /// @title Decentraland LAND collection library
 /// @author Rentable Team <hello@rentable.world>
 /// @notice Implement dedicated logic for LAND rentals
@@ -41,10 +43,21 @@ contract DecentralandCollectionLibrary is ICollectionLibrary {
         uint256 tokenId,
         uint256,
         address,
-        address to
+        address to,
+        address toWallet
     ) external payable override {
         // Set renter as land operator
-        ILandRegistry(tokenAddress).setUpdateOperator(tokenId, to);
+        // slither-disable-next-line unused-return
+        SimpleWallet(toWallet).execute(
+            tokenAddress,
+            0,
+            abi.encodeWithSelector(
+                ILandRegistry.setUpdateOperator.selector,
+                tokenId,
+                to
+            ),
+            false
+        );
     }
 
     /// @inheritdoc ICollectionLibrary
@@ -63,10 +76,21 @@ contract DecentralandCollectionLibrary is ICollectionLibrary {
         address tokenAddress,
         uint256 tokenId,
         address,
-        address to
+        address to,
+        address toWallet
     ) external override {
         // Enable subletting, renter can transfer the right to update a land
-        ILandRegistry(tokenAddress).setUpdateOperator(tokenId, to);
+        // slither-disable-next-line unused-return
+        SimpleWallet(toWallet).execute(
+            tokenAddress,
+            0,
+            abi.encodeWithSelector(
+                ILandRegistry.setUpdateOperator.selector,
+                tokenId,
+                to
+            ),
+            false
+        );
     }
 
     /// @inheritdoc ICollectionLibrary
