@@ -14,6 +14,11 @@ import {RentableTypes} from "../RentableTypes.sol";
 interface IRentable is IRentableEvents, IERC721ReceiverUpgradeable {
     /* ========== VIEWS ========== */
 
+    /// @notice Get wallet for user
+    /// @param user user address
+    /// @return wallet address
+    function userWallet(address user) external view returns (address);
+
     /// @notice Show current rental conditions for a specific wrapped token
     /// @param tokenAddress wrapped token address
     /// @param tokenId wrapped token id

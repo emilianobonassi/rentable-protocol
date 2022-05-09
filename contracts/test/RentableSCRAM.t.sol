@@ -126,7 +126,7 @@ contract RentableSCRAM is SharedSetup {
 
         switchUser(governance);
 
-        address renterSmartWallet = rentable.getWallet(
+        address renterSmartWallet = rentable.userWallet(
             wrentable.ownerOf(tokenId)
         );
 

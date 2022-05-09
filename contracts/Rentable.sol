@@ -356,13 +356,6 @@ contract Rentable is
         return _walletFactory;
     }
 
-    /// @notice Get wallet for user
-    /// @param user user address
-    /// @return wallet address
-    function getWallet(address user) external view returns (address) {
-        return _wallets[user];
-    }
-
     /// @notice Show current protocol fee
     /// @return protocol fee in 1e4 units, e.g. 100 = 1%
     function getFee() external view returns (uint16) {
@@ -396,6 +389,11 @@ contract Rentable is
         returns (bool)
     {
         return _proxyAllowList[caller][selector];
+    }
+
+    /// @inheritdoc IRentable
+    function userWallet(address user) external view override returns (address) {
+        return _wallets[user];
     }
 
     /// @inheritdoc IRentable
