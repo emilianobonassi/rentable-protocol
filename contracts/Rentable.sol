@@ -547,6 +547,7 @@ contract Rentable is
     }
 
     /// @dev Expire explicitely rental and update data structures for a specific wrapped token
+    /// @param currentUserHolder (optional) current user holder address
     /// @param oTokenOwner (optional) otoken owner address
     /// @param tokenAddress wrapped token address
     /// @param tokenId wrapped token id
@@ -554,6 +555,7 @@ contract Rentable is
     /// @return currentlyRented true if rental is not expired
     // slither-disable-next-line calls-loop
     function _expireRental(
+        address currentUserHolder,
         address oTokenOwner,
         address tokenAddress,
         uint256 tokenId,
@@ -573,10 +575,9 @@ contract Rentable is
                 // recover asset from renter smart wallet to rentable contracts
                 address wRentable = _wrentables[tokenAddress];
                 // cannot be 0x0 because transferFrom avoid it
-                address renter = IERC721ExistExtension(wRentable).ownerOf(
-                    tokenId,
-                    true
-                );
+                address renter = currentUserHolder == address(0)
+                    ? IERC721ExistExtension(wRentable).ownerOf(tokenId, true)
+                    : currentUserHolder;
                 address renterWallet = _wallets[renter];
                 // slither-disable-next-line unused-return
                 SimpleWallet(renterWallet).execute(
@@ -742,7 +743,7 @@ contract Rentable is
         );
 
         require(
-            !_expireRental(user, tokenAddress, tokenId, false),
+            !_expireRental(address(0), user, tokenAddress, tokenId, false),
             "Current rent still pending"
         );
 
@@ -796,7 +797,7 @@ contract Rentable is
         require(rcs.maxTimeDuration > 0, "Not available");
 
         require(
-            !_expireRental(rentee, tokenAddress, tokenId, false),
+            !_expireRental(address(0), rentee, tokenAddress, tokenId, false),
             "Current rent still pending"
         );
 
@@ -910,7 +911,7 @@ contract Rentable is
         external
         whenNotPaused
     {
-        _expireRental(address(0), tokenAddress, tokenId, false);
+        _expireRental(address(0), address(0), tokenAddress, tokenId, false);
     }
 
     /// @notice Batch expireRental
@@ -921,7 +922,13 @@ contract Rentable is
         uint256[] calldata tokenIds
     ) external whenNotPaused {
         for (uint256 i = 0; i < tokenAddresses.length; i++) {
-            _expireRental(address(0), tokenAddresses[i], tokenIds[i], false);
+            _expireRental(
+                address(0),
+                address(0),
+                tokenAddresses[i],
+                tokenIds[i],
+                false
+            );
         }
     }
 
@@ -934,7 +941,13 @@ contract Rentable is
         address to,
         uint256 tokenId
     ) external override whenNotPaused onlyOToken(tokenAddress) {
-        bool rented = _expireRental(from, tokenAddress, tokenId, false);
+        bool rented = _expireRental(
+            address(0),
+            from,
+            tokenAddress,
+            tokenId,
+            false
+        );
 
         address lib = _libraries[tokenAddress];
         if (lib != address(0)) {
@@ -960,7 +973,13 @@ contract Rentable is
         address to,
         uint256 tokenId
     ) external override whenNotPaused onlyWToken(tokenAddress) {
+        // we need to pass from as current holder in the expire func
+        // otw in the case is expired, wewould try to fetch from the recipient wallet
+        // which doesn't hold it
+        // could be better to check for expire in a preWTokenTransfer
+
         bool currentlyRented = _expireRental(
+            from,
             address(0),
             tokenAddress,
             tokenId,
