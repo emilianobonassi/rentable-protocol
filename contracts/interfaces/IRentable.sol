@@ -89,4 +89,11 @@ interface IRentable is IRentableEvents, IERC721ReceiverUpgradeable {
         uint256 tokenId,
         uint256 duration
     ) external payable;
+
+    /// @notice Trigger on-chain rental expire for expired rentals
+    /// @param tokenAddress wrapped token address
+    /// @param tokenId wrapped token id
+    function expireRental(address tokenAddress, uint256 tokenId)
+        external
+        returns (bool currentlyRented);
 }

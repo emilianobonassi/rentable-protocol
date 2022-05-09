@@ -40,7 +40,7 @@ contract OLandRegistry is ORentable {
         address rentable = getRentable();
 
         require(
-            IRentable(rentable).isExpired(wrapped, tokenId),
+            !IRentable(rentable).expireRental(wrapped, tokenId),
             "Operation not allowed during rental"
         );
 

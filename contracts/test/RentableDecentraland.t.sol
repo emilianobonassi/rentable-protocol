@@ -179,12 +179,6 @@ contract RentableDecentraland is SharedSetup {
             offRentableOperator
         );
 
-        rentable.expireRental(address(testLand), tokenId);
-
-        // Original Owner will be the updateOperator again
-
-        assertEq(testLand.updateOperator(tokenId), originalOwner);
-
         rentable.withdraw(address(testLand), tokenId);
 
         assertEq(testLand.updateOperator(tokenId), address(0));

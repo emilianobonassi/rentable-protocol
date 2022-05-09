@@ -913,14 +913,15 @@ contract Rentable is
         );
     }
 
-    /// @notice Trigger on-chain rental expire for expired rentals
-    /// @param tokenAddress wrapped token address
-    /// @param tokenId wrapped token id
+    /// @inheritdoc IRentable
     function expireRental(address tokenAddress, uint256 tokenId)
         external
+        override
         whenNotPaused
+        returns (bool currentlyRented)
     {
-        _expireRental(address(0), address(0), tokenAddress, tokenId, false);
+        return
+            _expireRental(address(0), address(0), tokenAddress, tokenId, false);
     }
 
     /// @notice Batch expireRental
