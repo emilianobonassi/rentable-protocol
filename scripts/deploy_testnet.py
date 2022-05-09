@@ -5,6 +5,8 @@ from brownie import (
     Rentable,
     ORentable,
     WRentable,
+    SimpleWallet,
+    WalletFactory,
     TestNFT,
     ImmutableAdminTransparentUpgradeableProxy,
     ImmutableAdminUpgradeableBeaconProxy,
@@ -78,6 +80,12 @@ def main():
 
     r.setWRentable(testNFT, wrentable)
 
+    simpleWalletLogic = SimpleWallet.deploy(r, eth, {"from": dev})
+    simpleWalletBeacon = UpgradeableBeacon.deploy(simpleWalletLogic, {"from": dev})
+    walletFactory = WalletFactory.deploy(simpleWalletBeacon, proxyAdmin, {"from": dev})
+
+    r.setWalletFactory(walletFactory)
+
     r.enablePaymentToken(eth)
     r.setFeeCollector(feeCollector)
 
@@ -97,6 +105,9 @@ def main():
              ORentable: {orentable.address}
                WBeacon: {wbeacon.address}
              WRentable: {wrentable.address}
+     SimpleWalletLogic: {simpleWalletLogic.address}
+    SimpleWalletBeacon: {simpleWalletBeacon.address}
+         WalletFactory: {walletFactory.address}
               Rentable: {r.address}
          RentableLogic: {rLogic.address}
             ProxyAdmin: {proxyAdmin.address}
