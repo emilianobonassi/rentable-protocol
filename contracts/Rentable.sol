@@ -891,6 +891,7 @@ contract Rentable is
         }
 
         // 6. after rent custom logic
+        // TODO: evaluate to pass renterWallet for executing custom logic
         _postRent(tokenAddress, tokenId, duration, rentee, msg.sender);
 
         emit Rent(
@@ -1005,6 +1006,7 @@ contract Rentable is
             // execute lib code
             address lib = _libraries[tokenAddress];
             if (lib != address(0)) {
+                // TODO: evaluate to pass renterWallet for executing custom logic
                 // slither-disable-next-line unused-return
                 lib.functionDelegateCall(
                     abi.encodeWithSelector(
