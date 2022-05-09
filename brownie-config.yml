@@ -8,7 +8,7 @@ compiler:
     version: 0.8.7
     optimizer:
       enabled: true
-      runs: 1000
+      runs: 10000
     remappings:
       - "@openzeppelin/contracts-upgradeable/=lib/openzeppelin-contracts-upgradeable/contracts/"
       - "@openzeppelin/contracts/=lib/openzeppelin-contracts/contracts/"
