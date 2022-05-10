@@ -144,7 +144,7 @@ contract SimpleWalletTest is DSTest, TestHelper {
         );
 
         bytes
-            memory signature = hex"6e75985bb24a53c8c612c426a1c5b0994be3dce252f0ba6c804e000a3022d3b0344c2685ba3f5c92730a72359af81e618cd8bb63f81816a262211283af6000581b";
+            memory signature = hex"6e75985bb24a53c8c612c426a1c5b0994be3dce252f0ba6c804e000a3022d3b0344c2685ba3f5c92730a72359af81e618cd8bb63f81816a262211283af6000581b"; // solhint-disable-line
 
         assertEq(
             ERC1271_IS_VALID_SIGNATURE,
@@ -159,7 +159,7 @@ contract SimpleWalletTest is DSTest, TestHelper {
         );
 
         bytes
-            memory signature = hex"6e75985bb24a53c8c612c426a1c5b0994be3dce252f0ba6c804e000a3022d3b0344c2685ba3f5c92730a72359af81e618cd8bb63f81816a262211283af6000581b";
+            memory signature = hex"6e75985bb24a53c8c612c426a1c5b0994be3dce252f0ba6c804e000a3022d3b0344c2685ba3f5c92730a72359af81e618cd8bb63f81816a262211283af6000581b"; // solhint-disable-line
 
         vm.expectRevert(bytes("Invalid signer"));
         simpleWalletLogic.isValidSignature(msgHash, signature);
