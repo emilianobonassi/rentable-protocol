@@ -17,7 +17,7 @@ interface IRentable is IRentableEvents, IERC721ReceiverUpgradeable {
     /// @notice Get wallet for user
     /// @param user user address
     /// @return wallet address
-    function userWallet(address user) external view returns (address);
+    function userWallet(address user) external view returns (address payable);
 
     /// @notice Show current rental conditions for a specific wrapped token
     /// @param tokenAddress wrapped token address

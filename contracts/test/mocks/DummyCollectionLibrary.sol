@@ -32,7 +32,7 @@ contract DummyCollectionLibrary is ICollectionLibrary {
         uint256 duration,
         address from,
         address to,
-        address toWallet
+        address payable toWallet
     ) external payable override {}
 
     function postExpireRental(
@@ -46,7 +46,7 @@ contract DummyCollectionLibrary is ICollectionLibrary {
         uint256,
         address,
         address,
-        address
+        address payable
     ) external override {
         require(!revertOnWTransfer, "always revert");
     }
@@ -56,7 +56,7 @@ contract DummyCollectionLibrary is ICollectionLibrary {
         uint256 tokenId,
         address from,
         address to,
-        address currentRenterWallet,
+        address payable currentRenterWallet,
         bool rented
     ) external override {}
 }

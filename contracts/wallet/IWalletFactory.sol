@@ -8,7 +8,8 @@ interface IWalletFactory {
     /// @notice Create a new wallet
     /// @param owner address for owner role
     /// @param user address for user role
+    /// @return wallet newly created
     function createWallet(address owner, address user)
         external
-        returns (address wallet);
+        returns (address payable wallet);
 }

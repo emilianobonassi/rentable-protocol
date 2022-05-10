@@ -55,7 +55,7 @@ contract RentableStorageV1 {
 
     // user => wallet mapping, for account abstraction
     // slither-disable-next-line naming-convention
-    mapping(address => address) internal _wallets;
+    mapping(address => address payable) internal _wallets;
 
     // protocol fee
     // slither-disable-next-line naming-convention

@@ -392,7 +392,12 @@ contract Rentable is
     }
 
     /// @inheritdoc IRentable
-    function userWallet(address user) external view override returns (address) {
+    function userWallet(address user)
+        external
+        view
+        override
+        returns (address payable)
+    {
         return _wallets[user];
     }
 
@@ -435,7 +440,7 @@ contract Rentable is
     /// @return wallet address
     function _getOrCreateWalletForUser(address user)
         internal
-        returns (address wallet)
+        returns (address payable wallet)
     {
         wallet = _wallets[user];
 
@@ -579,7 +584,7 @@ contract Rentable is
                 address renter = currentUserHolder == address(0)
                     ? IERC721ExistExtension(wRentable).ownerOf(tokenId, true)
                     : currentUserHolder;
-                address renterWallet = _wallets[renter];
+                address payable renterWallet = _wallets[renter];
                 // slither-disable-next-line unused-return
                 SimpleWallet(renterWallet).execute(
                     tokenAddress,
@@ -1007,7 +1012,7 @@ contract Rentable is
 
         if (currentlyRented) {
             // move to the recipient smart wallet
-            address fromWallet = _wallets[from];
+            address payable fromWallet = _wallets[from];
             // slither-disable-next-line unused-return
             SimpleWallet(fromWallet).execute(
                 tokenAddress,

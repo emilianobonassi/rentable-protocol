@@ -131,4 +131,7 @@ contract SimpleWallet is
             returnData = to.functionCallWithValue(data, value, "");
         }
     }
+
+    /// @notice Can receive ETH
+    receive() external payable {}
 }

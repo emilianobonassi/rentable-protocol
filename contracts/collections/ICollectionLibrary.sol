@@ -46,7 +46,7 @@ interface ICollectionLibrary {
         uint256 duration,
         address from,
         address to,
-        address toWallet
+        address payable toWallet
     ) external payable;
 
     /// @notice Called after expiration settlement on-chain
@@ -70,7 +70,7 @@ interface ICollectionLibrary {
         uint256 tokenId,
         address from,
         address to,
-        address toWallet
+        address payable toWallet
     ) external;
 
     /// @notice Called after OToken transfer
@@ -85,7 +85,7 @@ interface ICollectionLibrary {
         uint256 tokenId,
         address from,
         address to,
-        address currentRenterWallet,
+        address payable currentRenterWallet,
         bool rented
     ) external;
 }

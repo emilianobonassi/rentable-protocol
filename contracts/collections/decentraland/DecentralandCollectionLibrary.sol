@@ -44,7 +44,7 @@ contract DecentralandCollectionLibrary is ICollectionLibrary {
         uint256,
         address,
         address to,
-        address toWallet
+        address payable toWallet
     ) external payable override {
         // Set renter as land operator
         // slither-disable-next-line unused-return
@@ -77,7 +77,7 @@ contract DecentralandCollectionLibrary is ICollectionLibrary {
         uint256 tokenId,
         address,
         address to,
-        address toWallet
+        address payable toWallet
     ) external override {
         // Enable subletting, renter can transfer the right to update a land
         // slither-disable-next-line unused-return
@@ -99,7 +99,7 @@ contract DecentralandCollectionLibrary is ICollectionLibrary {
         uint256 tokenId,
         address,
         address to,
-        address,
+        address payable,
         bool rented
     ) external override {
         // Depositor can transfer the right to update a land when not rented out

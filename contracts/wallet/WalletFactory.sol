@@ -86,7 +86,7 @@ contract WalletFactory is Ownable, IWalletFactory {
     function createWallet(address owner, address user)
         external
         override
-        returns (address wallet)
+        returns (address payable wallet)
     {
         bytes memory _data = abi.encodeWithSelector(
             SimpleWallet.initialize.selector,
@@ -95,8 +95,14 @@ contract WalletFactory is Ownable, IWalletFactory {
         );
 
         return
-            address(
-                new ImmutableAdminUpgradeableBeaconProxy(_beacon, _admin, _data)
+            payable(
+                address(
+                    new ImmutableAdminUpgradeableBeaconProxy(
+                        _beacon,
+                        _admin,
+                        _data
+                    )
+                )
             );
     }
 }
