@@ -47,8 +47,8 @@ def listOnMarket(
 
 def main():
     dev = accounts.load("rentable-deployer")
-    testNFT = TestNFT.at("0xF88C792bba0D3eA1F4ef6787b9235D65AC71785c")
-    rentable = "0xC3f747a87D01b35c6A6eac7844cDf91189438fE9"
+    testNFT = TestNFT.at("0x8fA4d7B0C204B8f03C9f037E05Cece57decE2214")
+    rentable = "0xb8Cd02CbCc05Ac25D77F63FAbB2501Bb71f9e2BB"
 
     startId = 1
     endId = 51
