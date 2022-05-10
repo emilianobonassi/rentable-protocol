@@ -132,6 +132,12 @@ contract SimpleWallet is
         }
     }
 
+    /// @notice Withdraw ETH
+    /// @param amount amount to withdraw
+    function withdrawETH(uint256 amount) external onlyOwner {
+        Address.sendValue(payable(msg.sender), amount);
+    }
+
     /// @notice Can receive ETH
     receive() external payable {}
 }
