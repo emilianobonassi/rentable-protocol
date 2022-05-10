@@ -6,8 +6,6 @@ import {Vm} from "forge-std/Vm.sol";
 
 import {TestHelper} from "./TestHelper.t.sol";
 
-import {ImmutableAdminUpgradeableBeaconProxy} from "../upgradability/ImmutableAdminUpgradeableBeaconProxy.sol";
-
 import {SimpleWallet} from "../wallet/SimpleWallet.sol";
 import {WalletFactory} from "../wallet/WalletFactory.sol";
 
