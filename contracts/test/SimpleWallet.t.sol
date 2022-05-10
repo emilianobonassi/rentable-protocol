@@ -25,7 +25,7 @@ import {Address} from "@openzeppelin/contracts/utils/Address.sol";
 
 import {DummyContract} from "./mocks/DummyContract.sol";
 
-contract RentableSimpleWalletTest is DSTest, TestHelper {
+contract SimpleWalletTest is DSTest, TestHelper {
     using Address for address;
 
     Vm public constant vm = Vm(HEVM_ADDRESS);

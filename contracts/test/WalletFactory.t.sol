@@ -13,7 +13,7 @@ import {UpgradeableBeacon} from "@openzeppelin/contracts/proxy/beacon/Upgradeabl
 
 import {ProxyAdmin, TransparentUpgradeableProxy} from "@openzeppelin/contracts/proxy/transparent/ProxyAdmin.sol";
 
-contract RentableWalletFactoryTest is DSTest, TestHelper {
+contract WalletFactoryTest is DSTest, TestHelper {
     Vm public constant vm = Vm(HEVM_ADDRESS);
 
     address owner;
