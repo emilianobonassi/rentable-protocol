@@ -56,6 +56,7 @@ contract DummyCollectionLibrary is ICollectionLibrary {
         uint256 tokenId,
         address from,
         address to,
+        address currentRenterWallet,
         bool rented
     ) external override {}
 }

@@ -961,6 +961,11 @@ contract Rentable is
 
         address lib = _libraries[tokenAddress];
         if (lib != address(0)) {
+            address wRentable = _wrentables[tokenAddress];
+            address currentRenterWallet = IERC721ExistExtension(wRentable)
+                .exists(tokenId)
+                ? _wallets[IERC721Upgradeable(wRentable).ownerOf(tokenId)]
+                : address(0);
             // slither-disable-next-line unused-return
             lib.functionDelegateCall(
                 abi.encodeWithSelector(
@@ -969,6 +974,7 @@ contract Rentable is
                     tokenId,
                     from,
                     to,
+                    currentRenterWallet,
                     rented
                 ),
                 ""

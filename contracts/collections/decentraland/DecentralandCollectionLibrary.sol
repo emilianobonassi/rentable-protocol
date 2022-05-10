@@ -99,6 +99,7 @@ contract DecentralandCollectionLibrary is ICollectionLibrary {
         uint256 tokenId,
         address,
         address to,
+        address,
         bool rented
     ) external override {
         // Depositor can transfer the right to update a land when not rented out

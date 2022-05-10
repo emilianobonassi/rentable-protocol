@@ -58,6 +58,7 @@ contract RentableLibrary is SharedSetup {
         switchUser(user);
 
         address receiver = getNewAddress();
+        address currentRenterWallet = rentable.userWallet(renter);
 
         bytes memory expectedData = abi.encodeWithSelector(
             ICollectionLibrary.postOTokenTransfer.selector,
@@ -65,6 +66,7 @@ contract RentableLibrary is SharedSetup {
             tokenId,
             user,
             receiver,
+            currentRenterWallet,
             true
         );
         vm.expectCall(address(dummyLib), expectedData);

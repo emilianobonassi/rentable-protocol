@@ -78,12 +78,14 @@ interface ICollectionLibrary {
     /// @param tokenId wrapped token id
     /// @param from sender
     /// @param to receiver
+    /// @param currentRenterWallet current renter wallet
     /// @param rented true when a rental is in place, false otw
     function postOTokenTransfer(
         address tokenAddress,
         uint256 tokenId,
         address from,
         address to,
+        address currentRenterWallet,
         bool rented
     ) external;
 }
