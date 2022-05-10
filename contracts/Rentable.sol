@@ -440,12 +440,15 @@ contract Rentable is
         wallet = _wallets[user];
 
         if (wallet == address(0)) {
-            // slither-disable-next-line reentrancy-no-eth
+            // slither-disable-next-line reentrancy-no-eth reentrancy-events
             wallet = IWalletFactory(_walletFactory).createWallet(
                 address(this),
                 user
             );
             _wallets[user] = wallet;
+
+            // slither-disable-next-line reentrancy-events
+            emit WalletCreated(user, wallet);
         }
 
         return wallet;

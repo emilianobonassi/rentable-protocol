@@ -7,6 +7,11 @@ pragma solidity >=0.8.7;
 interface IRentableEvents {
     /* ========== EVENTS ========== */
 
+    /// @notice Emitted on smart wallet created for user
+    /// @param user user address
+    /// @param walletAddress smart wallet address
+    event WalletCreated(address indexed user, address indexed walletAddress);
+
     /// @notice Emitted on token deposit
     /// @param who depositor
     /// @param tokenAddress wrapped token address
