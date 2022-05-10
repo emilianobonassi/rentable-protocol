@@ -66,6 +66,20 @@ contract WalletFactory is Ownable, IWalletFactory {
         _setAdmin(admin);
     }
 
+    /* ========== VIEWS ========== */
+
+    /// @notice Get beacon to be used for proxies
+    /// @return beacon address
+    function getBeacon() external view returns (address beacon) {
+        return _beacon;
+    }
+
+    /// @notice Get admin for proxies
+    /// @return admin address
+    function getAdmin() external view returns (address admin) {
+        return _admin;
+    }
+
     /* ========== MUTATIVE FUNCTIONS ========== */
 
     /// @inheritdoc IWalletFactory
