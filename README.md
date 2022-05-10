@@ -8,6 +8,8 @@ NFT Renting Protocol
 - [`ORentable.sol`](contracts/tokenization/ORentable.sol): ERC721 token representing deposits (and asset ownership). Each NFT collection has a respective `ORentable` with the same token ids. It is minted on deposit and burnt on withdraw. `ORentable` can contain custom logic and use `Rentable.proxyCall` to operate on deposited assets.
 - [`WRentable.sol`](contracts/tokenization/WRentable.sol): ERC721 token, wrapper of the original NFT representing the rental. Each NFT collection has a respective `WRentable` with the same token ids. It is minted when rental starts and burnt on expiry. `WRentable.ownerOf` reflects rental duration (i.e., renter loses `WRentable` owerniship when rental period is over). `WRentable` can contain custom logic and use `Rentable.proxyCall` to operate on deposited assets.
 - [`ICollectionLibrary.sol`](contracts/collections/ICollectionLibrary.sol): interface to implement hooks on protocol events (e.g., `postDeposit`, `postRent`) for a given collection. Governance can set a Collection Library via `Rentable.setLibrary`.
+- [`SimpleWallet.sol`](contracts/wallet/simplewallet.sol): smart wallet used by the renter, cannot withdraw the rented assets but only interact with allowed protocols/methods. Implements EIP1217 for Standard Signature Validation enabling Wallet Connect logins.
+- [`WalletFactory.sol`](contracts/wallet/simplewallet.sol): factory for smart wallets, used by Rentable to generate upgradeable smart wallets for users.
 
 The following diagram shows the main components and their interactions. _ERC721 NFT Collection_ represents a generic NFT collection (e.g., Decentraland LAND) and it is not part of Rentable.
 
@@ -31,6 +33,7 @@ The following diagram shows the main components and their interactions. _ERC721 
     - if payment token is Ether, renter must pay `pricePerSecond*duration`
     - if payment token is ERC20 or ERC1155, renter must have an amount equals to `pricePerSecond*duration` and approve Rentable to transfer it
   - Renter receives a `WRentable`
+  - Renter receives the original NFT in its own `SimpleWallet` (cannot withdraw, only interact on owner approved protocols/methods)
 
 ## Requirements
 
