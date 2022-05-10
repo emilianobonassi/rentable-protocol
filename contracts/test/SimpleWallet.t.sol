@@ -15,7 +15,6 @@ import {DummyERC1155V2} from "./mocks/DummyERC1155V2.sol";
 import {ImmutableAdminUpgradeableBeaconProxy} from "../upgradability/ImmutableAdminUpgradeableBeaconProxy.sol";
 
 import {SimpleWallet} from "../wallet/SimpleWallet.sol";
-import {WalletFactory} from "../wallet/WalletFactory.sol";
 
 import {UpgradeableBeacon} from "@openzeppelin/contracts/proxy/beacon/UpgradeableBeacon.sol";
 
@@ -37,7 +36,6 @@ contract SimpleWalletTest is DSTest, TestHelper {
 
     SimpleWallet simpleWalletLogic;
     UpgradeableBeacon simpleWalletBeacon;
-    WalletFactory walletFactory;
 
     WETH weth;
     TestNFT testNFT;
@@ -54,10 +52,6 @@ contract SimpleWalletTest is DSTest, TestHelper {
 
         simpleWalletLogic = new SimpleWallet(owner, user);
         simpleWalletBeacon = new UpgradeableBeacon(address(simpleWalletLogic));
-        walletFactory = new WalletFactory(
-            address(simpleWalletBeacon),
-            address(proxyAdmin)
-        );
 
         weth = new WETH();
         testNFT = new TestNFT();
