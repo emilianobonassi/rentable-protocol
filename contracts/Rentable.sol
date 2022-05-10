@@ -435,6 +435,26 @@ contract Rentable is
 
     /* ---------- Internal ---------- */
 
+    /// @dev Create user wallet address
+    /// @param user user address
+    /// @return wallet address
+    function _createWalletForUser(address user)
+        internal
+        returns (address payable wallet)
+    {
+        // slither-disable-next-line reentrancy-benign
+        wallet = IWalletFactory(_walletFactory).createWallet(
+            address(this),
+            user
+        );
+        _wallets[user] = wallet;
+
+        // slither-disable-next-line reentrancy-events
+        emit WalletCreated(user, wallet);
+
+        return wallet;
+    }
+
     /// @dev Get user wallet address (create if not exist)
     /// @param user user address
     /// @return wallet address
@@ -445,15 +465,7 @@ contract Rentable is
         wallet = _wallets[user];
 
         if (wallet == address(0)) {
-            // slither-disable-next-line reentrancy-no-eth reentrancy-events
-            wallet = IWalletFactory(_walletFactory).createWallet(
-                address(this),
-                user
-            );
-            _wallets[user] = wallet;
-
-            // slither-disable-next-line reentrancy-events
-            emit WalletCreated(user, wallet);
+            wallet = _createWalletForUser(user);
         }
 
         return wallet;
@@ -715,6 +727,22 @@ contract Rentable is
     }
 
     /* ---------- Public ---------- */
+
+    /// @inheritdoc IRentable
+    function createWalletForUser(address user)
+        external
+        override
+        returns (address payable wallet)
+    {
+        require(
+            user != address(0),
+            "Cannot create a smart wallet for the void"
+        );
+
+        require(_wallets[user] == address(0), "Wallet already existing");
+
+        return _createWalletForUser(user);
+    }
 
     /// @inheritdoc IRentable
     function onERC721Received(

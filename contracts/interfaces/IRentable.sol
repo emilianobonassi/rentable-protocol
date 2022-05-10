@@ -48,6 +48,13 @@ interface IRentable is IRentableEvents, IERC721ReceiverUpgradeable {
 
     /* ========== MUTATIVE FUNCTIONS ========== */
 
+    /// @notice Create user wallet address
+    /// @param user user address
+    /// @return wallet address
+    function createWalletForUser(address user)
+        external
+        returns (address payable wallet);
+
     /// @notice Entry point for deposits used by wrapped token safeTransferFrom
     /// @param from depositor
     /// @param tokenId wrapped token id
