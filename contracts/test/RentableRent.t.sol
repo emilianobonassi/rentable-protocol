@@ -98,6 +98,8 @@ contract RentableRent is SharedSetup {
 
         assertEq(wrentable.ownerOf(tokenId), renter);
 
+        assertEq(testNFT.ownerOf(tokenId), rentable.userWallet(renter));
+
         vm.warp(block.timestamp + rentalDuration + 1);
 
         // Test event emitted
@@ -105,6 +107,8 @@ contract RentableRent is SharedSetup {
         emit RentEnds(address(testNFT), tokenId);
 
         rentable.expireRental(address(testNFT), tokenId);
+
+        assertEq(testNFT.ownerOf(tokenId), address(rentable));
     }
 
     function testRentPrivate() public payable executeByUser(user) {
@@ -344,5 +348,7 @@ contract RentableRent is SharedSetup {
 
         switchUser(user);
         rentable.withdraw(address(testNFT), tokenId);
+
+        assertEq(testNFT.ownerOf(tokenId), user);
     }
 }
