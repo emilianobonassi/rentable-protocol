@@ -447,6 +447,12 @@ contract Rentable is
             address(this),
             user
         );
+
+        require(
+            wallet != address(0),
+            "Wallet Factory is not returning a valid wallet address"
+        );
+
         _wallets[user] = wallet;
 
         // slither-disable-next-line reentrancy-events
