@@ -39,6 +39,8 @@ contract RentableLibrary is SharedSetup {
         wrentable.transferFrom(renter, receiver, tokenId);
 
         assertEq(wrentable.ownerOf(tokenId), receiver);
+
+        assertEq(testNFT.ownerOf(tokenId), rentable.userWallet(receiver));
     }
 
     function testTransferOToken() public payable executeByUser(user) {
