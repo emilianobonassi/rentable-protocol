@@ -318,6 +318,9 @@ contract RentableRent is SharedSetup {
             rentalDuration
         );
 
+        address renterWallet = rentable.userWallet(renter);
+        assertTrue(renterWallet != address(0));
+
         vm.warp(block.timestamp + rentalDuration + 1);
 
         depositAndApprove(renter, value, paymentTokenAddress, paymentTokenId);
@@ -327,6 +330,9 @@ contract RentableRent is SharedSetup {
             tokenId,
             rentalDuration
         );
+
+        // check we do not create a new wallet every new rent from the same user
+        assertEq(rentable.userWallet(renter), renterWallet);
     }
 
     function testWithdrawAfterExpire() public payable executeByUser(user) {
