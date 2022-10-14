@@ -2,6 +2,8 @@
 
 NFT Renting Protocol
 
+Archived => https://medium.com/@emiliano.bonassi/rentable-is-shutting-down-b80731ef4326
+
 ## Architecture
 
 - [`Rentable.sol`](contracts/Rentable.sol): protocol core logic. It holds all the NFT deposited.
